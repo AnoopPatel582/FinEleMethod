@@ -22,6 +22,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Fetch pinned vcpkg baseline
+        shell: pwsh
+        run: |
+          $baseline = (Get-Content vcpkg.json -Raw | ConvertFrom-Json).'builtin-baseline'
+          git -C $env:VCPKG_ROOT fetch --depth=1 origin $baseline
+
       - name: Configure
         run: cmake --preset windows-msvc
 
