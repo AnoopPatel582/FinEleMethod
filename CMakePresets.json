@@ -11,7 +11,8 @@
       "displayName": "Windows MSVC x64",
       "generator": "Visual Studio 18 2026",
       "architecture": "x64",
-      "binaryDir": "${sourceDir}/out/build/${presetName}"
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
     }
   ],
   "buildPresets": [
@@ -23,4 +24,3 @@
     }
   ]
 }
-
