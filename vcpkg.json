@@ -1,0 +1,8 @@
+{
+  "name": "finelemethod",
+  "dependencies": [
+    "gtest",
+    "nlohmann-json",
+    "spdlog"
+  ]
+}
