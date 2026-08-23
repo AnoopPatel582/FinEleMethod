@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.25)
 
 project(FinEleMethod LANGUAGES CXX)
 
+include(CTest)
+
 add_executable(FinEleMethod
     src/main.cpp
 )
@@ -12,3 +14,6 @@ if(MSVC)
     target_compile_options(FinEleMethod PRIVATE /W4 /permissive-)
 endif()
 
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
