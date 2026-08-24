@@ -8,6 +8,7 @@ add_library(FinEleMethodCore STATIC
     src/core/application.cpp
     src/math/dense_matrix.cpp
     src/math/dense_vector.cpp
+    src/math/linear_solver.cpp
 )
 
 add_library(FinEleMethod::Core ALIAS FinEleMethodCore)
