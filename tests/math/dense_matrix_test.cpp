@@ -258,4 +258,48 @@ TEST(DenseMatrix, RejectsMultiplicationWithMismatchedInnerDimensions)
 
     EXPECT_THROW(static_cast<void>(two_by_three * two_by_two), std::invalid_argument);
 }
+
+TEST(DenseMatrix, TransposesRectangularMatrix)
+{
+    DenseMatrix matrix(2, 3);
+    matrix(0, 0) = 1.0;
+    matrix(0, 1) = 2.0;
+    matrix(0, 2) = 3.0;
+    matrix(1, 0) = 4.0;
+    matrix(1, 1) = 5.0;
+    matrix(1, 2) = 6.0;
+
+    const DenseMatrix result = finelemethod::math::transpose(matrix);
+
+    EXPECT_EQ(result.rows(), 3);
+    EXPECT_EQ(result.columns(), 2);
+    EXPECT_DOUBLE_EQ(result(0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(result(0, 1), 4.0);
+    EXPECT_DOUBLE_EQ(result(1, 0), 2.0);
+    EXPECT_DOUBLE_EQ(result(1, 1), 5.0);
+    EXPECT_DOUBLE_EQ(result(2, 0), 3.0);
+    EXPECT_DOUBLE_EQ(result(2, 1), 6.0);
+    EXPECT_DOUBLE_EQ(matrix(0, 1), 2.0);
+}
+
+TEST(DenseMatrix, DoubleTransposeRestoresOriginalMatrix)
+{
+    DenseMatrix matrix(2, 3);
+    matrix(0, 0) = -1.0;
+    matrix(0, 1) = 0.5;
+    matrix(0, 2) = 8.0;
+    matrix(1, 0) = 3.0;
+    matrix(1, 1) = 2.0;
+    matrix(1, 2) = -4.0;
+
+    const DenseMatrix result = finelemethod::math::transpose(finelemethod::math::transpose(matrix));
+
+    for (DenseMatrix::size_type row = 0; row < matrix.rows(); ++row)
+    {
+        for (DenseMatrix::size_type column = 0; column < matrix.columns(); ++column)
+        {
+            EXPECT_DOUBLE_EQ(result(row, column), matrix(row, column));
+        }
+    }
+}
 } // namespace

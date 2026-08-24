@@ -151,4 +151,19 @@ DenseMatrix operator*(const DenseMatrix &left, const DenseMatrix &right)
 
     return result;
 }
+
+DenseMatrix transpose(const DenseMatrix &matrix)
+{
+    DenseMatrix result(matrix.columns(), matrix.rows());
+
+    for (DenseMatrix::size_type row = 0; row < matrix.rows(); ++row)
+    {
+        for (DenseMatrix::size_type column = 0; column < matrix.columns(); ++column)
+        {
+            result(column, row) = matrix(row, column);
+        }
+    }
+
+    return result;
+}
 } // namespace finelemethod::math
