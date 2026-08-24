@@ -1,5 +1,6 @@
 #include "finelemethod/math/dense_vector.hpp"
 
+#include <cmath>
 #include <stdexcept>
 
 namespace finelemethod::math
@@ -115,5 +116,10 @@ double dot(const DenseVector &left, const DenseVector &right)
     }
 
     return result;
+}
+
+double norm(const DenseVector &vector)
+{
+    return std::sqrt(dot(vector, vector));
 }
 } // namespace finelemethod::math

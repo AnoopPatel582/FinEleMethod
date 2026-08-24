@@ -30,4 +30,5 @@ class DenseVector
 [[nodiscard]] DenseVector operator*(DenseVector vector, double scalar) noexcept;
 [[nodiscard]] DenseVector operator*(double scalar, DenseVector vector) noexcept;
 [[nodiscard]] double dot(const DenseVector &left, const DenseVector &right);
+[[nodiscard]] double norm(const DenseVector &vector);
 } // namespace finelemethod::math

@@ -204,4 +204,20 @@ TEST(DenseVector, RejectsDotProductWithMismatchedSizes)
 
     EXPECT_THROW(static_cast<void>(finelemethod::math::dot(left, right)), std::invalid_argument);
 }
+
+TEST(DenseVector, ComputesEuclideanNorm)
+{
+    DenseVector vector(2);
+    vector[0] = 3.0;
+    vector[1] = -4.0;
+
+    EXPECT_DOUBLE_EQ(finelemethod::math::norm(vector), 5.0);
+}
+
+TEST(DenseVector, ZeroVectorHasZeroNorm)
+{
+    const DenseVector vector(3);
+
+    EXPECT_DOUBLE_EQ(finelemethod::math::norm(vector), 0.0);
+}
 } // namespace
