@@ -7,6 +7,7 @@ add_executable(FinEleMethodTests
     math/dense_matrix_test.cpp
     math/dense_vector_test.cpp
     math/linear_solver_test.cpp
+    solver/boundary_conditions_test.cpp
 )
 
 target_compile_features(FinEleMethodTests PRIVATE cxx_std_20)
