@@ -5,6 +5,7 @@ add_executable(FinEleMethodTests
     core/application_test.cpp
     core/exit_code_test.cpp
     math/dense_matrix_test.cpp
+    math/dense_vector_test.cpp
 )
 
 target_compile_features(FinEleMethodTests PRIVATE cxx_std_20)
