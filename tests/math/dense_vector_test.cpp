@@ -168,4 +168,40 @@ TEST(DenseVector, MultipliesExistingVectorByScalar)
     EXPECT_DOUBLE_EQ(vector[0], -3.0);
     EXPECT_DOUBLE_EQ(vector[1], -3.0);
 }
+
+TEST(DenseVector, ComputesDotProduct)
+{
+    DenseVector left(3);
+    left[0] = 1.0;
+    left[1] = -2.0;
+    left[2] = 3.0;
+
+    DenseVector right(3);
+    right[0] = 4.0;
+    right[1] = 0.5;
+    right[2] = 2.0;
+
+    EXPECT_DOUBLE_EQ(finelemethod::math::dot(left, right), 9.0);
+}
+
+TEST(DenseVector, DotProductIsCommutative)
+{
+    DenseVector left(2);
+    left[0] = 2.0;
+    left[1] = -3.0;
+
+    DenseVector right(2);
+    right[0] = 4.0;
+    right[1] = 5.0;
+
+    EXPECT_DOUBLE_EQ(finelemethod::math::dot(left, right), finelemethod::math::dot(right, left));
+}
+
+TEST(DenseVector, RejectsDotProductWithMismatchedSizes)
+{
+    const DenseVector left(2);
+    const DenseVector right(3);
+
+    EXPECT_THROW(static_cast<void>(finelemethod::math::dot(left, right)), std::invalid_argument);
+}
 } // namespace

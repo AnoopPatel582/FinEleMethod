@@ -100,4 +100,20 @@ DenseVector operator*(const double scalar, DenseVector vector) noexcept
     vector *= scalar;
     return vector;
 }
+
+double dot(const DenseVector &left, const DenseVector &right)
+{
+    if (left.size() != right.size())
+    {
+        throw std::invalid_argument("DenseVector sizes must match for dot product.");
+    }
+
+    double result = 0.0;
+    for (DenseVector::size_type index = 0; index < left.size(); ++index)
+    {
+        result += left[index] * right[index];
+    }
+
+    return result;
+}
 } // namespace finelemethod::math
