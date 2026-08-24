@@ -1,6 +1,7 @@
 find_package(GTest CONFIG REQUIRED)
 
 add_executable(FinEleMethodTests
+    cli/command_line_test.cpp
     core/application_test.cpp
     core/exit_code_test.cpp
 )
@@ -9,6 +10,7 @@ target_compile_features(FinEleMethodTests PRIVATE cxx_std_20)
 target_link_libraries(FinEleMethodTests
     PRIVATE
         FinEleMethod::Core
+        FinEleMethod::Cli
         GTest::gtest_main
 )
 

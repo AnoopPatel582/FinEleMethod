@@ -16,15 +16,29 @@ target_include_directories(FinEleMethodCore
         ${PROJECT_SOURCE_DIR}/include
 )
 
+add_library(FinEleMethodCli STATIC
+    src/cli/command_line.cpp
+)
+
+add_library(FinEleMethod::Cli ALIAS FinEleMethodCli)
+
+target_compile_features(FinEleMethodCli PUBLIC cxx_std_20)
+target_include_directories(FinEleMethodCli
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+)
+target_link_libraries(FinEleMethodCli PUBLIC FinEleMethod::Core)
+
 add_executable(FinEleMethod
     apps/cli/main.cpp
 )
 
 target_compile_features(FinEleMethod PRIVATE cxx_std_20)
-target_link_libraries(FinEleMethod PRIVATE FinEleMethod::Core)
+target_link_libraries(FinEleMethod PRIVATE FinEleMethod::Cli)
 
 if(MSVC)
     target_compile_options(FinEleMethodCore PRIVATE /W4 /permissive-)
+    target_compile_options(FinEleMethodCli PRIVATE /W4 /permissive-)
     target_compile_options(FinEleMethod PRIVATE /W4 /permissive-)
 endif()
 

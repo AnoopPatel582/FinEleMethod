@@ -56,13 +56,16 @@ ctest --preset windows-msvc-debug
 ## Run
 
 ```powershell
-.\out\build\windows-msvc\Debug\FinEleMethod.exe
+.\out\build\windows-msvc\Debug\FinEleMethod.exe --help
 ```
 
-The current executable prints:
+The current executable prints its available command-line interface. Analysis
+execution will be added in a later feature.
 
 ```text
 FinEleMethod command-line solver
+Usage:
+  FinEleMethod --help
 ```
 
 ## Project decisions
