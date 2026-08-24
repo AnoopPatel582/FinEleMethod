@@ -54,6 +54,21 @@ const double &DenseMatrix::operator()(const size_type row, const size_type colum
     return values_[index(row, column)];
 }
 
+DenseMatrix &DenseMatrix::operator+=(const DenseMatrix &other)
+{
+    if (rows_ != other.rows_ || columns_ != other.columns_)
+    {
+        throw std::invalid_argument("DenseMatrix dimensions must match for addition.");
+    }
+
+    for (size_type index_value = 0; index_value < values_.size(); ++index_value)
+    {
+        values_[index_value] += other.values_[index_value];
+    }
+
+    return *this;
+}
+
 DenseMatrix::size_type DenseMatrix::index(const size_type row, const size_type column) const
 {
     if (row >= rows_ || column >= columns_)
@@ -62,5 +77,11 @@ DenseMatrix::size_type DenseMatrix::index(const size_type row, const size_type c
     }
 
     return row * columns_ + column;
+}
+
+DenseMatrix operator+(DenseMatrix left, const DenseMatrix &right)
+{
+    left += right;
+    return left;
 }
 } // namespace finelemethod::math

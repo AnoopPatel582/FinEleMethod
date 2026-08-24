@@ -69,4 +69,50 @@ TEST(DenseMatrix, RejectsOutOfRangeIndices)
     EXPECT_THROW(matrix(2, 0), std::out_of_range);
     EXPECT_THROW(matrix(0, 3), std::out_of_range);
 }
+
+TEST(DenseMatrix, AddsMatricesWithMatchingDimensions)
+{
+    DenseMatrix left(2, 2);
+    left(0, 0) = 1.0;
+    left(0, 1) = 2.0;
+    left(1, 0) = 3.0;
+    left(1, 1) = 4.0;
+
+    DenseMatrix right(2, 2);
+    right(0, 0) = 5.0;
+    right(0, 1) = 6.0;
+    right(1, 0) = 7.0;
+    right(1, 1) = 8.0;
+
+    const DenseMatrix result = left + right;
+
+    EXPECT_DOUBLE_EQ(result(0, 0), 6.0);
+    EXPECT_DOUBLE_EQ(result(0, 1), 8.0);
+    EXPECT_DOUBLE_EQ(result(1, 0), 10.0);
+    EXPECT_DOUBLE_EQ(result(1, 1), 12.0);
+    EXPECT_DOUBLE_EQ(left(0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(right(0, 0), 5.0);
+}
+
+TEST(DenseMatrix, AddsIntoExistingMatrix)
+{
+    DenseMatrix left(1, 2, 1.5);
+    const DenseMatrix right(1, 2, 2.0);
+
+    DenseMatrix &returned_matrix = (left += right);
+
+    EXPECT_EQ(&returned_matrix, &left);
+    EXPECT_DOUBLE_EQ(left(0, 0), 3.5);
+    EXPECT_DOUBLE_EQ(left(0, 1), 3.5);
+}
+
+TEST(DenseMatrix, RejectsAdditionWithMismatchedDimensions)
+{
+    const DenseMatrix two_by_two(2, 2);
+    const DenseMatrix two_by_three(2, 3);
+    const DenseMatrix three_by_two(3, 2);
+
+    EXPECT_THROW(static_cast<void>(two_by_two + two_by_three), std::invalid_argument);
+    EXPECT_THROW(static_cast<void>(two_by_two + three_by_two), std::invalid_argument);
+}
 } // namespace

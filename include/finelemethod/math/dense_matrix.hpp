@@ -19,6 +19,8 @@ class DenseMatrix
     double &operator()(size_type row, size_type column);
     const double &operator()(size_type row, size_type column) const;
 
+    DenseMatrix &operator+=(const DenseMatrix &other);
+
   private:
     [[nodiscard]] size_type index(size_type row, size_type column) const;
 
@@ -26,4 +28,6 @@ class DenseMatrix
     size_type columns_;
     std::vector<double> values_;
 };
+
+[[nodiscard]] DenseMatrix operator+(DenseMatrix left, const DenseMatrix &right);
 } // namespace finelemethod::math
