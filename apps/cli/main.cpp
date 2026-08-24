@@ -1,6 +1,7 @@
 #include "finelemethod/cli/command_line.hpp"
 
 #include <iostream>
+#include <span>
 #include <string_view>
 #include <vector>
 
@@ -14,6 +15,7 @@ int main(const int argument_count, char *argument_values[])
         arguments.emplace_back(argument_values[index]);
     }
 
-    const auto exit_code = finelemethod::cli::run(arguments, std::cout, std::cerr);
+    const std::span<const std::string_view> argument_view(arguments);
+    const auto exit_code = finelemethod::cli::run(argument_view, std::cout, std::cerr);
     return static_cast<int>(exit_code);
 }
