@@ -36,4 +36,25 @@ const double &DenseVector::operator[](const size_type index) const
 {
     return values_.at(index);
 }
+
+DenseVector &DenseVector::operator+=(const DenseVector &other)
+{
+    if (size() != other.size())
+    {
+        throw std::invalid_argument("DenseVector sizes must match for addition.");
+    }
+
+    for (size_type index = 0; index < values_.size(); ++index)
+    {
+        values_[index] += other.values_[index];
+    }
+
+    return *this;
+}
+
+DenseVector operator+(DenseVector left, const DenseVector &right)
+{
+    left += right;
+    return left;
+}
 } // namespace finelemethod::math

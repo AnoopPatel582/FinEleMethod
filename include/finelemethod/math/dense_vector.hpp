@@ -17,7 +17,11 @@ class DenseVector
     double &operator[](size_type index);
     const double &operator[](size_type index) const;
 
+    DenseVector &operator+=(const DenseVector &other);
+
   private:
     std::vector<double> values_;
 };
+
+[[nodiscard]] DenseVector operator+(DenseVector left, const DenseVector &right);
 } // namespace finelemethod::math

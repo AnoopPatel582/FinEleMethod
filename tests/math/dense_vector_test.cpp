@@ -50,4 +50,44 @@ TEST(DenseVector, RejectsOutOfRangeIndex)
 
     EXPECT_THROW(vector[2], std::out_of_range);
 }
+
+TEST(DenseVector, AddsVectorsWithMatchingSizes)
+{
+    DenseVector left(3);
+    left[0] = 1.0;
+    left[1] = -2.0;
+    left[2] = 3.5;
+
+    DenseVector right(3);
+    right[0] = 4.0;
+    right[1] = 2.5;
+    right[2] = -1.5;
+
+    const DenseVector result = left + right;
+
+    EXPECT_DOUBLE_EQ(result[0], 5.0);
+    EXPECT_DOUBLE_EQ(result[1], 0.5);
+    EXPECT_DOUBLE_EQ(result[2], 2.0);
+    EXPECT_DOUBLE_EQ(left[0], 1.0);
+}
+
+TEST(DenseVector, AddsIntoExistingVector)
+{
+    DenseVector left(2, 1.5);
+    const DenseVector right(2, 2.0);
+
+    DenseVector &result = (left += right);
+
+    EXPECT_EQ(&result, &left);
+    EXPECT_DOUBLE_EQ(left[0], 3.5);
+    EXPECT_DOUBLE_EQ(left[1], 3.5);
+}
+
+TEST(DenseVector, RejectsAdditionWithMismatchedSizes)
+{
+    const DenseVector left(2);
+    const DenseVector right(3);
+
+    EXPECT_THROW(static_cast<void>(left + right), std::invalid_argument);
+}
 } // namespace
