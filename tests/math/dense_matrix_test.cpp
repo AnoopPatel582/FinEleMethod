@@ -161,4 +161,43 @@ TEST(DenseMatrix, RejectsSubtractionWithMismatchedDimensions)
     EXPECT_THROW(static_cast<void>(two_by_two - two_by_three), std::invalid_argument);
     EXPECT_THROW(static_cast<void>(two_by_two - three_by_two), std::invalid_argument);
 }
+
+TEST(DenseMatrix, MultipliesByScalarWithoutChangingOriginal)
+{
+    DenseMatrix matrix(2, 2);
+    matrix(0, 0) = 1.0;
+    matrix(0, 1) = -2.0;
+    matrix(1, 0) = 3.5;
+    matrix(1, 1) = 4.0;
+
+    const DenseMatrix result = matrix * -2.0;
+
+    EXPECT_DOUBLE_EQ(result(0, 0), -2.0);
+    EXPECT_DOUBLE_EQ(result(0, 1), 4.0);
+    EXPECT_DOUBLE_EQ(result(1, 0), -7.0);
+    EXPECT_DOUBLE_EQ(result(1, 1), -8.0);
+    EXPECT_DOUBLE_EQ(matrix(0, 0), 1.0);
+}
+
+TEST(DenseMatrix, SupportsScalarOnLeft)
+{
+    const DenseMatrix matrix(1, 2, 2.5);
+
+    const DenseMatrix result = 3.0 * matrix;
+
+    EXPECT_DOUBLE_EQ(result(0, 0), 7.5);
+    EXPECT_DOUBLE_EQ(result(0, 1), 7.5);
+    EXPECT_DOUBLE_EQ(matrix(0, 0), 2.5);
+}
+
+TEST(DenseMatrix, MultipliesExistingMatrixByScalar)
+{
+    DenseMatrix matrix(1, 2, 3.0);
+
+    DenseMatrix &returned_matrix = (matrix *= 0.0);
+
+    EXPECT_EQ(&returned_matrix, &matrix);
+    EXPECT_DOUBLE_EQ(matrix(0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(matrix(0, 1), 0.0);
+}
 } // namespace

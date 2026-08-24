@@ -84,6 +84,16 @@ DenseMatrix &DenseMatrix::operator-=(const DenseMatrix &other)
     return *this;
 }
 
+DenseMatrix &DenseMatrix::operator*=(const double scalar) noexcept
+{
+    for (double &value : values_)
+    {
+        value *= scalar;
+    }
+
+    return *this;
+}
+
 DenseMatrix::size_type DenseMatrix::index(const size_type row, const size_type column) const
 {
     if (row >= rows_ || column >= columns_)
@@ -104,5 +114,17 @@ DenseMatrix operator-(DenseMatrix left, const DenseMatrix &right)
 {
     left -= right;
     return left;
+}
+
+DenseMatrix operator*(DenseMatrix matrix, const double scalar) noexcept
+{
+    matrix *= scalar;
+    return matrix;
+}
+
+DenseMatrix operator*(const double scalar, DenseMatrix matrix) noexcept
+{
+    matrix *= scalar;
+    return matrix;
 }
 } // namespace finelemethod::math
