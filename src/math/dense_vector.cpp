@@ -67,6 +67,16 @@ DenseVector &DenseVector::operator-=(const DenseVector &other)
     return *this;
 }
 
+DenseVector &DenseVector::operator*=(const double scalar) noexcept
+{
+    for (double &value : values_)
+    {
+        value *= scalar;
+    }
+
+    return *this;
+}
+
 DenseVector operator+(DenseVector left, const DenseVector &right)
 {
     left += right;
@@ -77,5 +87,17 @@ DenseVector operator-(DenseVector left, const DenseVector &right)
 {
     left -= right;
     return left;
+}
+
+DenseVector operator*(DenseVector vector, const double scalar) noexcept
+{
+    vector *= scalar;
+    return vector;
+}
+
+DenseVector operator*(const double scalar, DenseVector vector) noexcept
+{
+    vector *= scalar;
+    return vector;
 }
 } // namespace finelemethod::math

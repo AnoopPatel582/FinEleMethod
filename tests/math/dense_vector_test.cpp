@@ -130,4 +130,42 @@ TEST(DenseVector, RejectsSubtractionWithMismatchedSizes)
 
     EXPECT_THROW(static_cast<void>(left - right), std::invalid_argument);
 }
+
+TEST(DenseVector, MultipliesByScalarWithoutChangingOriginal)
+{
+    DenseVector vector(3);
+    vector[0] = 1.0;
+    vector[1] = -2.0;
+    vector[2] = 0.5;
+
+    const DenseVector result = vector * 3.0;
+
+    EXPECT_DOUBLE_EQ(result[0], 3.0);
+    EXPECT_DOUBLE_EQ(result[1], -6.0);
+    EXPECT_DOUBLE_EQ(result[2], 1.5);
+    EXPECT_DOUBLE_EQ(vector[0], 1.0);
+}
+
+TEST(DenseVector, SupportsScalarOnLeft)
+{
+    DenseVector vector(2);
+    vector[0] = 2.0;
+    vector[1] = -4.0;
+
+    const DenseVector result = 0.5 * vector;
+
+    EXPECT_DOUBLE_EQ(result[0], 1.0);
+    EXPECT_DOUBLE_EQ(result[1], -2.0);
+}
+
+TEST(DenseVector, MultipliesExistingVectorByScalar)
+{
+    DenseVector vector(2, 2.0);
+
+    DenseVector &result = (vector *= -1.5);
+
+    EXPECT_EQ(&result, &vector);
+    EXPECT_DOUBLE_EQ(vector[0], -3.0);
+    EXPECT_DOUBLE_EQ(vector[1], -3.0);
+}
 } // namespace

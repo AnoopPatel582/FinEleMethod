@@ -19,6 +19,7 @@ class DenseVector
 
     DenseVector &operator+=(const DenseVector &other);
     DenseVector &operator-=(const DenseVector &other);
+    DenseVector &operator*=(double scalar) noexcept;
 
   private:
     std::vector<double> values_;
@@ -26,4 +27,6 @@ class DenseVector
 
 [[nodiscard]] DenseVector operator+(DenseVector left, const DenseVector &right);
 [[nodiscard]] DenseVector operator-(DenseVector left, const DenseVector &right);
+[[nodiscard]] DenseVector operator*(DenseVector vector, double scalar) noexcept;
+[[nodiscard]] DenseVector operator*(double scalar, DenseVector vector) noexcept;
 } // namespace finelemethod::math
