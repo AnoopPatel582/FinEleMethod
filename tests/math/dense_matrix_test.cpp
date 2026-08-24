@@ -200,4 +200,62 @@ TEST(DenseMatrix, MultipliesExistingMatrixByScalar)
     EXPECT_DOUBLE_EQ(matrix(0, 0), 0.0);
     EXPECT_DOUBLE_EQ(matrix(0, 1), 0.0);
 }
+
+TEST(DenseMatrix, MultipliesRectangularMatrices)
+{
+    DenseMatrix left(2, 3);
+    left(0, 0) = 1.0;
+    left(0, 1) = 2.0;
+    left(0, 2) = 3.0;
+    left(1, 0) = 4.0;
+    left(1, 1) = 5.0;
+    left(1, 2) = 6.0;
+
+    DenseMatrix right(3, 2);
+    right(0, 0) = 7.0;
+    right(0, 1) = 8.0;
+    right(1, 0) = 9.0;
+    right(1, 1) = 10.0;
+    right(2, 0) = 11.0;
+    right(2, 1) = 12.0;
+
+    const DenseMatrix result = left * right;
+
+    EXPECT_EQ(result.rows(), 2);
+    EXPECT_EQ(result.columns(), 2);
+    EXPECT_DOUBLE_EQ(result(0, 0), 58.0);
+    EXPECT_DOUBLE_EQ(result(0, 1), 64.0);
+    EXPECT_DOUBLE_EQ(result(1, 0), 139.0);
+    EXPECT_DOUBLE_EQ(result(1, 1), 154.0);
+    EXPECT_DOUBLE_EQ(left(0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(right(0, 0), 7.0);
+}
+
+TEST(DenseMatrix, PreservesMatrixWhenMultipliedByIdentity)
+{
+    DenseMatrix matrix(2, 2);
+    matrix(0, 0) = 2.0;
+    matrix(0, 1) = -1.0;
+    matrix(1, 0) = 4.5;
+    matrix(1, 1) = 3.0;
+
+    DenseMatrix identity(2, 2);
+    identity(0, 0) = 1.0;
+    identity(1, 1) = 1.0;
+
+    const DenseMatrix result = matrix * identity;
+
+    EXPECT_DOUBLE_EQ(result(0, 0), 2.0);
+    EXPECT_DOUBLE_EQ(result(0, 1), -1.0);
+    EXPECT_DOUBLE_EQ(result(1, 0), 4.5);
+    EXPECT_DOUBLE_EQ(result(1, 1), 3.0);
+}
+
+TEST(DenseMatrix, RejectsMultiplicationWithMismatchedInnerDimensions)
+{
+    const DenseMatrix two_by_three(2, 3);
+    const DenseMatrix two_by_two(2, 2);
+
+    EXPECT_THROW(static_cast<void>(two_by_three * two_by_two), std::invalid_argument);
+}
 } // namespace

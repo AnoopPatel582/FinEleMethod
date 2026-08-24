@@ -35,4 +35,5 @@ class DenseMatrix
 [[nodiscard]] DenseMatrix operator-(DenseMatrix left, const DenseMatrix &right);
 [[nodiscard]] DenseMatrix operator*(DenseMatrix matrix, double scalar) noexcept;
 [[nodiscard]] DenseMatrix operator*(double scalar, DenseMatrix matrix) noexcept;
+[[nodiscard]] DenseMatrix operator*(const DenseMatrix &left, const DenseMatrix &right);
 } // namespace finelemethod::math

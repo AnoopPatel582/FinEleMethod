@@ -127,4 +127,28 @@ DenseMatrix operator*(const double scalar, DenseMatrix matrix) noexcept
     matrix *= scalar;
     return matrix;
 }
+
+DenseMatrix operator*(const DenseMatrix &left, const DenseMatrix &right)
+{
+    if (left.columns() != right.rows())
+    {
+        throw std::invalid_argument("DenseMatrix inner dimensions must match for multiplication.");
+    }
+
+    DenseMatrix result(left.rows(), right.columns());
+
+    for (DenseMatrix::size_type row = 0; row < left.rows(); ++row)
+    {
+        for (DenseMatrix::size_type inner = 0; inner < left.columns(); ++inner)
+        {
+            const double left_value = left(row, inner);
+            for (DenseMatrix::size_type column = 0; column < right.columns(); ++column)
+            {
+                result(row, column) += left_value * right(inner, column);
+            }
+        }
+    }
+
+    return result;
+}
 } // namespace finelemethod::math
