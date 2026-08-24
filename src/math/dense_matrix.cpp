@@ -1,5 +1,7 @@
 #include "finelemethod/math/dense_matrix.hpp"
 
+#include "finelemethod/math/dense_vector.hpp"
+
 #include <stdexcept>
 
 namespace finelemethod::math
@@ -146,6 +148,27 @@ DenseMatrix operator*(const DenseMatrix &left, const DenseMatrix &right)
             {
                 result(row, column) += left_value * right(inner, column);
             }
+        }
+    }
+
+    return result;
+}
+
+DenseVector operator*(const DenseMatrix &matrix, const DenseVector &vector)
+{
+    if (matrix.columns() != vector.size())
+    {
+        throw std::invalid_argument(
+            "DenseMatrix columns must match DenseVector size for multiplication.");
+    }
+
+    DenseVector result(matrix.rows());
+
+    for (DenseMatrix::size_type row = 0; row < matrix.rows(); ++row)
+    {
+        for (DenseMatrix::size_type column = 0; column < matrix.columns(); ++column)
+        {
+            result[row] += matrix(row, column) * vector[column];
         }
     }
 

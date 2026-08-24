@@ -5,6 +5,8 @@
 
 namespace finelemethod::math
 {
+class DenseVector;
+
 class DenseMatrix
 {
   public:
@@ -36,5 +38,6 @@ class DenseMatrix
 [[nodiscard]] DenseMatrix operator*(DenseMatrix matrix, double scalar) noexcept;
 [[nodiscard]] DenseMatrix operator*(double scalar, DenseMatrix matrix) noexcept;
 [[nodiscard]] DenseMatrix operator*(const DenseMatrix &left, const DenseMatrix &right);
+[[nodiscard]] DenseVector operator*(const DenseMatrix &matrix, const DenseVector &vector);
 [[nodiscard]] DenseMatrix transpose(const DenseMatrix &matrix);
 } // namespace finelemethod::math

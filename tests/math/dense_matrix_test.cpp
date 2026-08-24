@@ -1,4 +1,5 @@
 #include "finelemethod/math/dense_matrix.hpp"
+#include "finelemethod/math/dense_vector.hpp"
 
 #include <gtest/gtest.h>
 
@@ -8,6 +9,7 @@
 namespace
 {
 using finelemethod::math::DenseMatrix;
+using finelemethod::math::DenseVector;
 
 TEST(DenseMatrix, ReportsDimensionsAndInitializesToZero)
 {
@@ -257,6 +259,55 @@ TEST(DenseMatrix, RejectsMultiplicationWithMismatchedInnerDimensions)
     const DenseMatrix two_by_two(2, 2);
 
     EXPECT_THROW(static_cast<void>(two_by_three * two_by_two), std::invalid_argument);
+}
+
+TEST(DenseMatrix, MultipliesRectangularMatrixByVector)
+{
+    DenseMatrix matrix(2, 3);
+    matrix(0, 0) = 1.0;
+    matrix(0, 1) = 2.0;
+    matrix(0, 2) = 3.0;
+    matrix(1, 0) = 4.0;
+    matrix(1, 1) = 5.0;
+    matrix(1, 2) = 6.0;
+
+    DenseVector vector(3);
+    vector[0] = 2.0;
+    vector[1] = -1.0;
+    vector[2] = 0.5;
+
+    const DenseVector result = matrix * vector;
+
+    EXPECT_EQ(result.size(), 2);
+    EXPECT_DOUBLE_EQ(result[0], 1.5);
+    EXPECT_DOUBLE_EQ(result[1], 6.0);
+}
+
+TEST(DenseMatrix, IdentityMatrixPreservesVector)
+{
+    DenseMatrix identity(3, 3);
+    identity(0, 0) = 1.0;
+    identity(1, 1) = 1.0;
+    identity(2, 2) = 1.0;
+
+    DenseVector vector(3);
+    vector[0] = -2.0;
+    vector[1] = 4.5;
+    vector[2] = 1.0;
+
+    const DenseVector result = identity * vector;
+
+    EXPECT_DOUBLE_EQ(result[0], -2.0);
+    EXPECT_DOUBLE_EQ(result[1], 4.5);
+    EXPECT_DOUBLE_EQ(result[2], 1.0);
+}
+
+TEST(DenseMatrix, RejectsMatrixVectorMultiplicationWithMismatchedDimensions)
+{
+    const DenseMatrix matrix(2, 3);
+    const DenseVector vector(2);
+
+    EXPECT_THROW(static_cast<void>(matrix * vector), std::invalid_argument);
 }
 
 TEST(DenseMatrix, TransposesRectangularMatrix)
