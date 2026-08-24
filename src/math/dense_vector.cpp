@@ -52,9 +52,30 @@ DenseVector &DenseVector::operator+=(const DenseVector &other)
     return *this;
 }
 
+DenseVector &DenseVector::operator-=(const DenseVector &other)
+{
+    if (size() != other.size())
+    {
+        throw std::invalid_argument("DenseVector sizes must match for subtraction.");
+    }
+
+    for (size_type index = 0; index < values_.size(); ++index)
+    {
+        values_[index] -= other.values_[index];
+    }
+
+    return *this;
+}
+
 DenseVector operator+(DenseVector left, const DenseVector &right)
 {
     left += right;
+    return left;
+}
+
+DenseVector operator-(DenseVector left, const DenseVector &right)
+{
+    left -= right;
     return left;
 }
 } // namespace finelemethod::math

@@ -90,4 +90,44 @@ TEST(DenseVector, RejectsAdditionWithMismatchedSizes)
 
     EXPECT_THROW(static_cast<void>(left + right), std::invalid_argument);
 }
+
+TEST(DenseVector, SubtractsVectorsWithMatchingSizes)
+{
+    DenseVector left(3);
+    left[0] = 5.0;
+    left[1] = -2.0;
+    left[2] = 3.5;
+
+    DenseVector right(3);
+    right[0] = 1.0;
+    right[1] = 2.5;
+    right[2] = -1.5;
+
+    const DenseVector result = left - right;
+
+    EXPECT_DOUBLE_EQ(result[0], 4.0);
+    EXPECT_DOUBLE_EQ(result[1], -4.5);
+    EXPECT_DOUBLE_EQ(result[2], 5.0);
+    EXPECT_DOUBLE_EQ(left[0], 5.0);
+}
+
+TEST(DenseVector, SubtractsFromExistingVector)
+{
+    DenseVector left(2, 4.0);
+    const DenseVector right(2, 1.5);
+
+    DenseVector &result = (left -= right);
+
+    EXPECT_EQ(&result, &left);
+    EXPECT_DOUBLE_EQ(left[0], 2.5);
+    EXPECT_DOUBLE_EQ(left[1], 2.5);
+}
+
+TEST(DenseVector, RejectsSubtractionWithMismatchedSizes)
+{
+    const DenseVector left(2);
+    const DenseVector right(3);
+
+    EXPECT_THROW(static_cast<void>(left - right), std::invalid_argument);
+}
 } // namespace
