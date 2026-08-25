@@ -11,6 +11,7 @@ add_library(FinEleMethodCore STATIC
     src/math/dense_vector.cpp
     src/math/linear_solver.cpp
     src/model/dof_map.cpp
+    src/model/isotropic_elastic_material.cpp
     src/model/node.cpp
     src/model/node_collection.cpp
     src/model/point_load.cpp
