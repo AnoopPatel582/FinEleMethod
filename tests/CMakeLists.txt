@@ -1,6 +1,7 @@
 find_package(GTest CONFIG REQUIRED)
 
 add_executable(FinEleMethodTests
+    assembly/load_assembly_test.cpp
     cli/command_line_test.cpp
     core/application_test.cpp
     core/exit_code_test.cpp
@@ -10,6 +11,7 @@ add_executable(FinEleMethodTests
     model/dof_map_test.cpp
     model/node_test.cpp
     model/node_collection_test.cpp
+    model/point_load_test.cpp
     solver/boundary_conditions_test.cpp
     solver/dense_static_solver_test.cpp
     solver/reactions_test.cpp

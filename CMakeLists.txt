@@ -5,6 +5,7 @@ project(FinEleMethod LANGUAGES CXX)
 include(CTest)
 
 add_library(FinEleMethodCore STATIC
+    src/assembly/load_assembly.cpp
     src/core/application.cpp
     src/math/dense_matrix.cpp
     src/math/dense_vector.cpp
@@ -12,6 +13,7 @@ add_library(FinEleMethodCore STATIC
     src/model/dof_map.cpp
     src/model/node.cpp
     src/model/node_collection.cpp
+    src/model/point_load.cpp
     src/solver/boundary_conditions.cpp
     src/solver/dense_static_solver.cpp
     src/solver/reactions.cpp
