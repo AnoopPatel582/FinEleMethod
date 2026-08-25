@@ -10,6 +10,7 @@ add_library(FinEleMethodCore STATIC
     src/math/dense_vector.cpp
     src/math/linear_solver.cpp
     src/solver/boundary_conditions.cpp
+    src/solver/dense_static_solver.cpp
     src/solver/reactions.cpp
 )
 

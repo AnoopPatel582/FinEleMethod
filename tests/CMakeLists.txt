@@ -8,6 +8,7 @@ add_executable(FinEleMethodTests
     math/dense_vector_test.cpp
     math/linear_solver_test.cpp
     solver/boundary_conditions_test.cpp
+    solver/dense_static_solver_test.cpp
     solver/reactions_test.cpp
 )
 
