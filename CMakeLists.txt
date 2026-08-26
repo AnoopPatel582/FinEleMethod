@@ -8,6 +8,7 @@ add_library(FinEleMethodCore STATIC
     src/assembly/load_assembly.cpp
     src/core/application.cpp
     src/elements/q4_jacobian.cpp
+    src/elements/q4_physical_derivatives.cpp
     src/elements/q4_shape_functions.cpp
     src/math/dense_matrix.cpp
     src/math/dense_vector.cpp
