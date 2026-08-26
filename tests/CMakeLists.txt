@@ -5,6 +5,7 @@ add_executable(FinEleMethodTests
     cli/command_line_test.cpp
     core/application_test.cpp
     core/exit_code_test.cpp
+    elements/q4_jacobian_test.cpp
     elements/q4_shape_functions_test.cpp
     math/dense_matrix_test.cpp
     math/dense_vector_test.cpp
