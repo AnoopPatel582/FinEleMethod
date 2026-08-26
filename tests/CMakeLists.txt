@@ -8,6 +8,7 @@ add_executable(FinEleMethodTests
     math/dense_matrix_test.cpp
     math/dense_vector_test.cpp
     math/linear_solver_test.cpp
+    mechanics/constitutive_matrix_test.cpp
     model/dof_map_test.cpp
     model/isotropic_elastic_material_test.cpp
     model/material_collection_test.cpp
