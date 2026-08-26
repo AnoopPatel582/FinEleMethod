@@ -8,6 +8,7 @@ add_executable(FinEleMethodTests
     elements/q4_jacobian_test.cpp
     elements/q4_physical_derivatives_test.cpp
     elements/q4_shape_functions_test.cpp
+    elements/q4_strain_displacement_test.cpp
     math/dense_matrix_test.cpp
     math/dense_vector_test.cpp
     math/linear_solver_test.cpp

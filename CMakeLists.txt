@@ -10,6 +10,7 @@ add_library(FinEleMethodCore STATIC
     src/elements/q4_jacobian.cpp
     src/elements/q4_physical_derivatives.cpp
     src/elements/q4_shape_functions.cpp
+    src/elements/q4_strain_displacement.cpp
     src/math/dense_matrix.cpp
     src/math/dense_vector.cpp
     src/math/linear_solver.cpp
