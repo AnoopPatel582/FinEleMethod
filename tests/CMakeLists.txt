@@ -11,6 +11,7 @@ add_executable(FinEleMethodTests
     elements/q4_jacobian_test.cpp
     elements/q4_physical_derivatives_test.cpp
     elements/q4_plane_stress_model_stiffness_test.cpp
+    elements/q4_plane_stress_recovery_test.cpp
     elements/q4_plane_stress_stiffness_test.cpp
     elements/q4_shape_functions_test.cpp
     elements/q4_strain_displacement_test.cpp
