@@ -22,6 +22,7 @@ add_executable(FinEleMethodTests
     model/node_collection_test.cpp
     model/point_load_test.cpp
     model/q4_element_test.cpp
+    model/q4_element_collection_test.cpp
     solver/boundary_conditions_test.cpp
     solver/dense_static_solver_test.cpp
     solver/reactions_test.cpp

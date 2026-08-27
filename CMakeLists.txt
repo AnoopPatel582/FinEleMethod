@@ -24,6 +24,7 @@ add_library(FinEleMethodCore STATIC
     src/model/node_collection.cpp
     src/model/point_load.cpp
     src/model/q4_element.cpp
+    src/model/q4_element_collection.cpp
     src/solver/boundary_conditions.cpp
     src/solver/dense_static_solver.cpp
     src/solver/reactions.cpp
