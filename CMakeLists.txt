@@ -20,6 +20,7 @@ add_library(FinEleMethodCore STATIC
     src/math/dense_vector.cpp
     src/math/linear_solver.cpp
     src/mechanics/constitutive_matrix.cpp
+    src/mechanics/plane_stress_measures.cpp
     src/model/dof_map.cpp
     src/model/isotropic_elastic_material.cpp
     src/model/material_collection.cpp

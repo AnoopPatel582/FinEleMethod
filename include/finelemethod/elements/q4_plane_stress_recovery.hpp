@@ -16,6 +16,9 @@ struct Q4PlaneStressPointResult
     std::array<double, 3> strain;
     // Stress order: [sigma_x, sigma_y, tau_xy].
     std::array<double, 3> stress;
+    double von_mises;
+    // Descending order [sigma_1, sigma_2, sigma_3].
+    std::array<double, 3> principal_stresses;
 };
 
 using Q4PlaneStressGaussResults = std::array<Q4PlaneStressPointResult, 4>;

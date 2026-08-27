@@ -49,6 +49,10 @@ TEST(Q4PlaneStressRecovery, RecoversUniformUniaxialStateAtEveryGaussPoint)
         EXPECT_NEAR(results[point_index].stress[0], 10.0, tolerance);
         EXPECT_NEAR(results[point_index].stress[1], 0.0, tolerance);
         EXPECT_NEAR(results[point_index].stress[2], 0.0, tolerance);
+        EXPECT_NEAR(results[point_index].von_mises, 10.0, tolerance);
+        EXPECT_NEAR(results[point_index].principal_stresses[0], 10.0, tolerance);
+        EXPECT_NEAR(results[point_index].principal_stresses[1], 0.0, tolerance);
+        EXPECT_NEAR(results[point_index].principal_stresses[2], 0.0, tolerance);
     }
 }
 
