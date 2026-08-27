@@ -7,6 +7,7 @@ include(CTest)
 add_library(FinEleMethodCore STATIC
     src/assembly/load_assembly.cpp
     src/assembly/q4_dof_mapping.cpp
+    src/assembly/q4_stiffness_assembly.cpp
     src/core/application.cpp
     src/elements/q4_gauss_quadrature.cpp
     src/elements/q4_jacobian.cpp
