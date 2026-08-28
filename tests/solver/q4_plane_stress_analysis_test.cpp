@@ -70,5 +70,21 @@ TEST(Q4PlaneStressAnalysis, ReproducesUniformUniaxialTension)
                 tolerance);
     EXPECT_NEAR(result.reactions[dof_map.global_index(4, DisplacementComponent::x)], -5.0,
                 tolerance);
+
+    ASSERT_EQ(result.element_results.size(), 1U);
+    EXPECT_EQ(result.element_results[0].element_id, 1U);
+    for (const auto &point : result.element_results[0].gauss_points)
+    {
+        EXPECT_NEAR(point.strain[0], 0.01, tolerance);
+        EXPECT_NEAR(point.strain[1], -0.0025, tolerance);
+        EXPECT_NEAR(point.strain[2], 0.0, tolerance);
+        EXPECT_NEAR(point.stress[0], 10.0, tolerance);
+        EXPECT_NEAR(point.stress[1], 0.0, tolerance);
+        EXPECT_NEAR(point.stress[2], 0.0, tolerance);
+        EXPECT_NEAR(point.von_mises, 10.0, tolerance);
+        EXPECT_NEAR(point.principal_stresses[0], 10.0, tolerance);
+        EXPECT_NEAR(point.principal_stresses[1], 0.0, tolerance);
+        EXPECT_NEAR(point.principal_stresses[2], 0.0, tolerance);
+    }
 }
 } // namespace
