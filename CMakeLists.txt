@@ -20,6 +20,7 @@ add_library(FinEleMethodCore STATIC
     src/input/abaqus_element_parser.cpp
     src/input/abaqus_material_parser.cpp
     src/input/abaqus_node_parser.cpp
+    src/input/abaqus_q4_model_parser.cpp
     src/input/abaqus_solid_section_parser.cpp
     src/math/dense_matrix.cpp
     src/math/dense_vector.cpp

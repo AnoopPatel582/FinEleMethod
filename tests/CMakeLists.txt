@@ -18,6 +18,7 @@ add_executable(FinEleMethodTests
     input/abaqus_element_parser_test.cpp
     input/abaqus_material_parser_test.cpp
     input/abaqus_node_parser_test.cpp
+    input/abaqus_q4_model_parser_test.cpp
     input/abaqus_solid_section_parser_test.cpp
     math/dense_matrix_test.cpp
     math/dense_vector_test.cpp
