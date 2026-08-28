@@ -29,6 +29,7 @@ add_library(FinEleMethodCore STATIC
     src/model/point_load.cpp
     src/model/q4_element.cpp
     src/model/q4_element_collection.cpp
+    src/postprocessing/q4_plane_stress_results.cpp
     src/solver/boundary_conditions.cpp
     src/solver/dense_static_solver.cpp
     src/solver/q4_plane_stress_analysis.cpp

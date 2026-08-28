@@ -28,6 +28,7 @@ add_executable(FinEleMethodTests
     model/point_load_test.cpp
     model/q4_element_test.cpp
     model/q4_element_collection_test.cpp
+    postprocessing/q4_plane_stress_results_test.cpp
     solver/boundary_conditions_test.cpp
     solver/dense_static_solver_test.cpp
     solver/q4_plane_stress_analysis_test.cpp
