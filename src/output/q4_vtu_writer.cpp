@@ -1,18 +1,20 @@
 #include "finelemethod/output/q4_vtu_writer.hpp"
 
+#include <array>
 #include <cstddef>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
 #include <unordered_map>
 
 namespace finelemethod::output
 {
-std::string create_q4_displacement_vtu(const model::NodeCollection &nodes,
-                                       const model::Q4ElementCollection &elements,
-                                       const model::DofMap &dof_map,
-                                       const math::DenseVector &displacements)
+std::string create_q4_results_vtu(
+    const model::NodeCollection &nodes, const model::Q4ElementCollection &elements,
+    const model::DofMap &dof_map, const math::DenseVector &displacements,
+    const std::span<const postprocessing::Q4ElementPlaneStressResults> element_results)
 {
     if (nodes.empty())
     {
@@ -26,6 +28,19 @@ std::string create_q4_displacement_vtu(const model::NodeCollection &nodes,
     {
         throw std::invalid_argument(
             "Displacement vector size must match the number of degrees of freedom.");
+    }
+    if (!element_results.empty() && element_results.size() != elements.size())
+    {
+        throw std::invalid_argument("VTU element-result count must match the Q4 element count.");
+    }
+
+    for (std::size_t element_index = 0; element_index < element_results.size(); ++element_index)
+    {
+        if (element_results[element_index].element_id != elements.elements()[element_index].id())
+        {
+            throw std::invalid_argument(
+                "VTU element results must follow the Q4 element collection order.");
+        }
     }
 
     std::unordered_map<model::NodeId, std::size_t> point_indices;
@@ -41,8 +56,57 @@ std::string create_q4_displacement_vtu(const model::NodeCollection &nodes,
            << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
            << "  <UnstructuredGrid>\n"
            << "    <Piece NumberOfPoints=\"" << nodes.size() << "\" NumberOfCells=\""
-           << elements.size() << "\">\n"
-           << "      <PointData Vectors=\"Displacement\">\n"
+           << elements.size() << "\">\n";
+
+    if (!element_results.empty())
+    {
+        output << "      <CellData Scalars=\"VonMises\">\n";
+
+        const auto write_three_component_average =
+            [&output, &element_results](const std::string_view name, const auto member) {
+                output << "        <DataArray type=\"Float64\" Name=\"" << name
+                       << "\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+                for (const auto &element_result : element_results)
+                {
+                    std::array<double, 3> average{};
+                    for (const auto &point : element_result.gauss_points)
+                    {
+                        const auto &values = point.*member;
+                        for (std::size_t component = 0; component < average.size(); ++component)
+                        {
+                            average[component] += values[component] / 4.0;
+                        }
+                    }
+                    output << "          " << average[0] << ' ' << average[1] << ' ' << average[2]
+                           << '\n';
+                }
+                output << "        </DataArray>\n";
+            };
+
+        write_three_component_average("Strain",
+                                      &finelemethod::elements::Q4PlaneStressPointResult::strain);
+        write_three_component_average("Stress",
+                                      &finelemethod::elements::Q4PlaneStressPointResult::stress);
+
+        output << "        <DataArray type=\"Float64\" Name=\"VonMises\" format=\"ascii\">\n";
+        for (const auto &element_result : element_results)
+        {
+            double average = 0.0;
+            for (const auto &point : element_result.gauss_points)
+            {
+                average += point.von_mises / 4.0;
+            }
+            output << "          " << average << '\n';
+        }
+        output << "        </DataArray>\n";
+
+        write_three_component_average(
+            "PrincipalStress",
+            &finelemethod::elements::Q4PlaneStressPointResult::principal_stresses);
+        output << "      </CellData>\n";
+    }
+
+    output << "      <PointData Vectors=\"Displacement\">\n"
            << "        <DataArray type=\"Float64\" Name=\"Displacement\" NumberOfComponents=\"3\" "
               "format=\"ascii\">\n";
 
@@ -115,6 +179,14 @@ std::string create_q4_displacement_vtu(const model::NodeCollection &nodes,
     return output.str();
 }
 
+std::string create_q4_displacement_vtu(const model::NodeCollection &nodes,
+                                       const model::Q4ElementCollection &elements,
+                                       const model::DofMap &dof_map,
+                                       const math::DenseVector &displacements)
+{
+    return create_q4_results_vtu(nodes, elements, dof_map, displacements, {});
+}
+
 void write_q4_displacement_vtu(const std::filesystem::path &path,
                                const model::NodeCollection &nodes,
                                const model::Q4ElementCollection &elements,
@@ -127,6 +199,25 @@ void write_q4_displacement_vtu(const std::filesystem::path &path,
     }
 
     file << create_q4_displacement_vtu(nodes, elements, dof_map, displacements);
+    if (!file)
+    {
+        throw std::runtime_error("Unable to write VTU output file: " + path.string());
+    }
+}
+
+void write_q4_results_vtu(
+    const std::filesystem::path &path, const model::NodeCollection &nodes,
+    const model::Q4ElementCollection &elements, const model::DofMap &dof_map,
+    const math::DenseVector &displacements,
+    const std::span<const postprocessing::Q4ElementPlaneStressResults> element_results)
+{
+    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+    if (!file)
+    {
+        throw std::runtime_error("Unable to open VTU output file: " + path.string());
+    }
+
+    file << create_q4_results_vtu(nodes, elements, dof_map, displacements, element_results);
     if (!file)
     {
         throw std::runtime_error("Unable to write VTU output file: " + path.string());

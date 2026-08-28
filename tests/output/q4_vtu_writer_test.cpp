@@ -19,7 +19,9 @@ using finelemethod::model::Q4ElementCollection;
 using finelemethod::model::Q4NodeIds;
 using finelemethod::model::SpatialDimension;
 using finelemethod::output::create_q4_displacement_vtu;
+using finelemethod::output::create_q4_results_vtu;
 using finelemethod::output::write_q4_displacement_vtu;
+using finelemethod::postprocessing::Q4ElementPlaneStressResults;
 
 struct Q4VtuFixture
 {
@@ -35,6 +37,24 @@ struct Q4VtuFixture
         elements.add(Q4Element(1, Q4NodeIds{{10, 20, 30, 40}}, 1, 1.0));
     }
 };
+
+Q4ElementPlaneStressResults make_element_results(const finelemethod::model::ElementId element_id)
+{
+    using finelemethod::elements::Q4PlaneStressPointResult;
+    return Q4ElementPlaneStressResults{
+        element_id,
+        {{
+            Q4PlaneStressPointResult{
+                0.0, 0.0, {1.0, 2.0, 3.0}, {10.0, 20.0, 30.0}, 10.0, {30.0, 20.0, 10.0}},
+            Q4PlaneStressPointResult{
+                0.0, 0.0, {3.0, 4.0, 5.0}, {20.0, 30.0, 40.0}, 20.0, {40.0, 30.0, 20.0}},
+            Q4PlaneStressPointResult{
+                0.0, 0.0, {5.0, 6.0, 7.0}, {30.0, 40.0, 50.0}, 30.0, {50.0, 40.0, 30.0}},
+            Q4PlaneStressPointResult{
+                0.0, 0.0, {7.0, 8.0, 9.0}, {40.0, 50.0, 60.0}, 40.0, {60.0, 50.0, 40.0}},
+        }},
+    };
+}
 
 TEST(Q4VtuWriter, CreatesMeshConnectivityAndNodalDisplacements)
 {
@@ -75,6 +95,47 @@ TEST(Q4VtuWriter, WritesGeneratedContentToFile)
               create_q4_displacement_vtu(fixture.nodes, fixture.elements, dof_map, displacements));
     file.close();
     std::filesystem::remove(path);
+}
+
+TEST(Q4VtuWriter, AveragesGaussPointResultsIntoCellData)
+{
+    const Q4VtuFixture fixture;
+    const DofMap dof_map(fixture.nodes, SpatialDimension::two_dimensional);
+    const DenseVector displacements(dof_map.size());
+    const std::array element_results{make_element_results(1)};
+
+    const std::string vtu = create_q4_results_vtu(fixture.nodes, fixture.elements, dof_map,
+                                                  displacements, element_results);
+
+    EXPECT_NE(vtu.find("<CellData Scalars=\"VonMises\">"), std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"Strain\" NumberOfComponents=\"3\" format=\"ascii\">\n"
+                       "          4.00000000000000000e+00 5.00000000000000000e+00 "
+                       "6.00000000000000000e+00"),
+              std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"Stress\" NumberOfComponents=\"3\" format=\"ascii\">\n"
+                       "          2.50000000000000000e+01 3.50000000000000000e+01 "
+                       "4.50000000000000000e+01"),
+              std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"VonMises\" format=\"ascii\">\n"
+                       "          2.50000000000000000e+01"),
+              std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"PrincipalStress\" NumberOfComponents=\"3\" "
+                       "format=\"ascii\">\n"
+                       "          4.50000000000000000e+01 3.50000000000000000e+01 "
+                       "2.50000000000000000e+01"),
+              std::string::npos);
+}
+
+TEST(Q4VtuWriter, RejectsElementResultsInDifferentOrder)
+{
+    const Q4VtuFixture fixture;
+    const DofMap dof_map(fixture.nodes, SpatialDimension::two_dimensional);
+    const DenseVector displacements(dof_map.size());
+    const std::array element_results{make_element_results(99)};
+
+    EXPECT_THROW(static_cast<void>(create_q4_results_vtu(fixture.nodes, fixture.elements, dof_map,
+                                                         displacements, element_results)),
+                 std::invalid_argument);
 }
 
 TEST(Q4VtuWriter, RejectsMismatchedDisplacementVector)
