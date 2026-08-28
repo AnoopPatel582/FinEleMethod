@@ -11,9 +11,12 @@
 
 namespace finelemethod::output
 {
-std::string create_q4_results_vtu(
+namespace
+{
+std::string create_q4_vtu_content(
     const model::NodeCollection &nodes, const model::Q4ElementCollection &elements,
     const model::DofMap &dof_map, const math::DenseVector &displacements,
+    const math::DenseVector *const reactions,
     const std::span<const postprocessing::Q4ElementPlaneStressResults> element_results)
 {
     if (nodes.empty())
@@ -28,6 +31,11 @@ std::string create_q4_results_vtu(
     {
         throw std::invalid_argument(
             "Displacement vector size must match the number of degrees of freedom.");
+    }
+    if (reactions != nullptr && reactions->size() != dof_map.size())
+    {
+        throw std::invalid_argument(
+            "Reaction vector size must match the number of degrees of freedom.");
     }
     if (!element_results.empty() && element_results.size() != elements.size())
     {
@@ -119,6 +127,21 @@ std::string create_q4_results_vtu(
                << " 0.00000000000000000e+00\n";
     }
 
+    if (reactions != nullptr)
+    {
+        output << "        </DataArray>\n"
+               << "        <DataArray type=\"Float64\" Name=\"ReactionForce\" "
+                  "NumberOfComponents=\"3\" format=\"ascii\">\n";
+        for (const model::Node &node : nodes.nodes())
+        {
+            output << "          "
+                   << (*reactions)[dof_map.global_index(node.id(), model::DisplacementComponent::x)]
+                   << ' '
+                   << (*reactions)[dof_map.global_index(node.id(), model::DisplacementComponent::y)]
+                   << " 0.00000000000000000e+00\n";
+        }
+    }
+
     output << "        </DataArray>\n"
            << "      </PointData>\n"
            << "      <Points>\n"
@@ -178,6 +201,25 @@ std::string create_q4_results_vtu(
 
     return output.str();
 }
+} // namespace
+
+std::string create_q4_results_vtu(
+    const model::NodeCollection &nodes, const model::Q4ElementCollection &elements,
+    const model::DofMap &dof_map, const math::DenseVector &displacements,
+    const std::span<const postprocessing::Q4ElementPlaneStressResults> element_results)
+{
+    return create_q4_vtu_content(nodes, elements, dof_map, displacements, nullptr, element_results);
+}
+
+std::string create_q4_results_vtu(
+    const model::NodeCollection &nodes, const model::Q4ElementCollection &elements,
+    const model::DofMap &dof_map, const math::DenseVector &displacements,
+    const math::DenseVector &reactions,
+    const std::span<const postprocessing::Q4ElementPlaneStressResults> element_results)
+{
+    return create_q4_vtu_content(nodes, elements, dof_map, displacements, &reactions,
+                                 element_results);
+}
 
 std::string create_q4_displacement_vtu(const model::NodeCollection &nodes,
                                        const model::Q4ElementCollection &elements,
@@ -218,6 +260,26 @@ void write_q4_results_vtu(
     }
 
     file << create_q4_results_vtu(nodes, elements, dof_map, displacements, element_results);
+    if (!file)
+    {
+        throw std::runtime_error("Unable to write VTU output file: " + path.string());
+    }
+}
+
+void write_q4_results_vtu(
+    const std::filesystem::path &path, const model::NodeCollection &nodes,
+    const model::Q4ElementCollection &elements, const model::DofMap &dof_map,
+    const math::DenseVector &displacements, const math::DenseVector &reactions,
+    const std::span<const postprocessing::Q4ElementPlaneStressResults> element_results)
+{
+    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+    if (!file)
+    {
+        throw std::runtime_error("Unable to open VTU output file: " + path.string());
+    }
+
+    file << create_q4_results_vtu(nodes, elements, dof_map, displacements, reactions,
+                                  element_results);
     if (!file)
     {
         throw std::runtime_error("Unable to write VTU output file: " + path.string());

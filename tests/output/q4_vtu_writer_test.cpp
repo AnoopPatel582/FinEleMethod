@@ -147,4 +147,18 @@ TEST(Q4VtuWriter, RejectsMismatchedDisplacementVector)
                      fixture.nodes, fixture.elements, dof_map, DenseVector(dof_map.size() - 1))),
                  std::invalid_argument);
 }
+
+TEST(Q4VtuWriter, RejectsMismatchedReactionVector)
+{
+    const Q4VtuFixture fixture;
+    const DofMap dof_map(fixture.nodes, SpatialDimension::two_dimensional);
+    const DenseVector displacements(dof_map.size());
+    const DenseVector reactions(dof_map.size() - 1);
+    const std::array element_results{make_element_results(1)};
+
+    EXPECT_THROW(
+        static_cast<void>(create_q4_results_vtu(fixture.nodes, fixture.elements, dof_map,
+                                                displacements, reactions, element_results)),
+        std::invalid_argument);
+}
 } // namespace

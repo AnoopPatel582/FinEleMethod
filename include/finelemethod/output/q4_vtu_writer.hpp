@@ -25,6 +25,12 @@ namespace finelemethod::output
     const model::DofMap &dof_map, const math::DenseVector &displacements,
     std::span<const postprocessing::Q4ElementPlaneStressResults> element_results);
 
+[[nodiscard]] std::string create_q4_results_vtu(
+    const model::NodeCollection &nodes, const model::Q4ElementCollection &elements,
+    const model::DofMap &dof_map, const math::DenseVector &displacements,
+    const math::DenseVector &reactions,
+    std::span<const postprocessing::Q4ElementPlaneStressResults> element_results);
+
 void write_q4_displacement_vtu(const std::filesystem::path &path,
                                const model::NodeCollection &nodes,
                                const model::Q4ElementCollection &elements,
@@ -35,5 +41,11 @@ void write_q4_results_vtu(
     const std::filesystem::path &path, const model::NodeCollection &nodes,
     const model::Q4ElementCollection &elements, const model::DofMap &dof_map,
     const math::DenseVector &displacements,
+    std::span<const postprocessing::Q4ElementPlaneStressResults> element_results);
+
+void write_q4_results_vtu(
+    const std::filesystem::path &path, const model::NodeCollection &nodes,
+    const model::Q4ElementCollection &elements, const model::DofMap &dof_map,
+    const math::DenseVector &displacements, const math::DenseVector &reactions,
     std::span<const postprocessing::Q4ElementPlaneStressResults> element_results);
 } // namespace finelemethod::output

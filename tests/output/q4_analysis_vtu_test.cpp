@@ -42,13 +42,20 @@ TEST(Q4AnalysisVtu, ConvertsCompleteAnalysisResultUsingResultWriter)
     };
     analysis_result.displacements[2] = 0.01;
     analysis_result.displacements[4] = 0.01;
+    analysis_result.reactions[0] = -5.0;
+    analysis_result.reactions[6] = -5.0;
 
     const std::string direct = create_q4_analysis_vtu(nodes, elements, dof_map, analysis_result);
-    const std::string expected = create_q4_results_vtu(
-        nodes, elements, dof_map, analysis_result.displacements, analysis_result.element_results);
+    const std::string expected =
+        create_q4_results_vtu(nodes, elements, dof_map, analysis_result.displacements,
+                              analysis_result.reactions, analysis_result.element_results);
 
     EXPECT_EQ(direct, expected);
     EXPECT_NE(direct.find("Name=\"Displacement\""), std::string::npos);
+    EXPECT_NE(direct.find("Name=\"ReactionForce\" NumberOfComponents=\"3\""), std::string::npos);
+    EXPECT_NE(direct.find("-5.00000000000000000e+00 0.00000000000000000e+00 "
+                          "0.00000000000000000e+00"),
+              std::string::npos);
     EXPECT_NE(direct.find("Name=\"VonMises\""), std::string::npos);
 }
 } // namespace
