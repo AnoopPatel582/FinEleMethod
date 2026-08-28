@@ -16,6 +16,7 @@ add_library(FinEleMethodCore STATIC
     src/elements/q4_plane_stress_recovery.cpp
     src/elements/q4_shape_functions.cpp
     src/elements/q4_strain_displacement.cpp
+    src/examples/q4_tension_example.cpp
     src/math/dense_matrix.cpp
     src/math/dense_vector.cpp
     src/math/linear_solver.cpp
