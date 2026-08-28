@@ -3,8 +3,10 @@
 #include "finelemethod/model/material_collection.hpp"
 #include "finelemethod/model/node_collection.hpp"
 #include "finelemethod/model/q4_element_collection.hpp"
+#include "finelemethod/solver/boundary_conditions.hpp"
 
 #include <string_view>
+#include <vector>
 
 namespace finelemethod::input
 {
@@ -13,6 +15,7 @@ struct AbaqusQ4Model
     model::NodeCollection nodes;
     model::MaterialCollection materials;
     model::Q4ElementCollection elements;
+    std::vector<solver::PrescribedDisplacement> prescribed_displacements;
 };
 
 // Parses and connects the supported ABAQUS plane-stress model data. Material

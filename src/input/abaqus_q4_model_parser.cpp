@@ -1,10 +1,12 @@
 #include "finelemethod/input/abaqus_q4_model_parser.hpp"
 
+#include "finelemethod/input/abaqus_boundary_parser.hpp"
 #include "finelemethod/input/abaqus_element_parser.hpp"
 #include "finelemethod/input/abaqus_material_parser.hpp"
 #include "finelemethod/input/abaqus_node_parser.hpp"
 #include "finelemethod/input/abaqus_parse_error.hpp"
 #include "finelemethod/input/abaqus_solid_section_parser.hpp"
+#include "finelemethod/model/dof_map.hpp"
 #include "finelemethod/model/isotropic_elastic_material.hpp"
 #include "finelemethod/model/q4_element.hpp"
 
@@ -89,6 +91,21 @@ AbaqusQ4Model parse_abaqus_q4_model(const std::string_view input_text)
             material_ids_by_name.at(uppercase_copy(solid_section.material_name));
         model.elements.add(
             model::Q4Element(element.id, element.node_ids, material_id, solid_section.thickness));
+    }
+
+    const model::DofMap dof_map(model.nodes, model::SpatialDimension::two_dimensional);
+    const auto parsed_displacements = parse_abaqus_nodal_displacements(input_text);
+    model.prescribed_displacements.reserve(parsed_displacements.size());
+    for (const AbaqusNodalDisplacement &displacement : parsed_displacements)
+    {
+        if (!model.nodes.contains(displacement.node_id))
+        {
+            throw AbaqusParseError("ABAQUS boundary condition references unknown node " +
+                                   std::to_string(displacement.node_id) + ".");
+        }
+        model.prescribed_displacements.push_back(solver::PrescribedDisplacement{
+            dof_map.global_index(displacement.node_id, displacement.component),
+            displacement.value});
     }
 
     return model;

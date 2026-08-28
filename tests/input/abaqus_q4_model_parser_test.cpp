@@ -33,9 +33,13 @@ constexpr std::string_view valid_model = R"(*Node
 0.01
 *Solid Section, elset=RIGHT, material=ALUMINUM
 0.02
+*Boundary
+1, 1, 2
+4, 1
+6, 2, 2, -0.1
 )";
 
-TEST(AbaqusQ4ModelParser, ConnectsNodesMaterialsSectionsAndElements)
+TEST(AbaqusQ4ModelParser, ConnectsNodesMaterialsSectionsElementsAndBoundaries)
 {
     const auto model = parse_abaqus_q4_model(valid_model);
 
@@ -50,6 +54,35 @@ TEST(AbaqusQ4ModelParser, ConnectsNodesMaterialsSectionsAndElements)
     EXPECT_DOUBLE_EQ(model.elements.at(10).thickness(), 0.01);
     EXPECT_EQ(model.elements.at(20).material_id(), 2U);
     EXPECT_DOUBLE_EQ(model.elements.at(20).thickness(), 0.02);
+
+    ASSERT_EQ(model.prescribed_displacements.size(), 4U);
+    EXPECT_EQ(model.prescribed_displacements[0].degree_of_freedom, 0U);
+    EXPECT_DOUBLE_EQ(model.prescribed_displacements[0].value, 0.0);
+    EXPECT_EQ(model.prescribed_displacements[1].degree_of_freedom, 1U);
+    EXPECT_EQ(model.prescribed_displacements[2].degree_of_freedom, 6U);
+    EXPECT_EQ(model.prescribed_displacements[3].degree_of_freedom, 11U);
+    EXPECT_DOUBLE_EQ(model.prescribed_displacements[3].value, -0.1);
+}
+
+TEST(AbaqusQ4ModelParser, RejectsBoundaryThatReferencesUnknownNode)
+{
+    constexpr std::string_view input = R"(*Node
+1, 0.0, 0.0
+2, 1.0, 0.0
+3, 1.0, 1.0
+4, 0.0, 1.0
+*Material, name=Steel
+*Elastic
+200000.0, 0.3
+*Element, type=CPS4, elset=plate
+1, 1, 2, 3, 4
+*Solid Section, elset=plate, material=Steel
+1.0
+*Boundary
+99, 1, 2
+)";
+
+    EXPECT_THROW(static_cast<void>(parse_abaqus_q4_model(input)), AbaqusParseError);
 }
 
 TEST(AbaqusQ4ModelParser, RejectsElementThatReferencesUnknownNode)
