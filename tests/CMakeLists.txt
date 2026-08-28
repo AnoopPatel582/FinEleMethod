@@ -16,6 +16,7 @@ add_executable(FinEleMethodTests
     elements/q4_shape_functions_test.cpp
     elements/q4_strain_displacement_test.cpp
     input/abaqus_boundary_parser_test.cpp
+    input/abaqus_cload_parser_test.cpp
     input/abaqus_element_parser_test.cpp
     input/abaqus_material_parser_test.cpp
     input/abaqus_node_parser_test.cpp
