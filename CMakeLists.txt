@@ -17,6 +17,7 @@ add_library(FinEleMethodCore STATIC
     src/elements/q4_shape_functions.cpp
     src/elements/q4_strain_displacement.cpp
     src/examples/q4_tension_example.cpp
+    src/input/abaqus_boundary_parser.cpp
     src/input/abaqus_element_parser.cpp
     src/input/abaqus_material_parser.cpp
     src/input/abaqus_node_parser.cpp
