@@ -60,3 +60,10 @@ endif()
 
 include(GoogleTest)
 gtest_discover_tests(FinEleMethodTests)
+
+add_test(
+    NAME CommandLineExample.Q4TensionInputRuns
+    COMMAND FinEleMethod
+        --input ${PROJECT_SOURCE_DIR}/examples/abaqus/q4_tension.inp
+        --output ${PROJECT_BINARY_DIR}/q4_tension_example.vtu
+)

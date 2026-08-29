@@ -5,14 +5,19 @@ C++20. Development begins with a tested command-line solver engine; a Windows
 engineering GUI will be added after the corresponding solver capabilities are
 validated.
 
-The project is under active development and does not perform finite element
-analysis yet.
+The project is under active development. Its command-line engine can currently
+solve supported ABAQUS Q4 plane-stress models and write ParaView results.
 
 ## Current capabilities
 
 - C++20 command-line executable built with MSVC and CMake.
 - Reproducible dependencies managed with a vcpkg manifest.
 - Automated tests using GoogleTest and CTest.
+- ABAQUS `.inp` parsing for nodes, CPS4 elements, isotropic materials, solid
+  sections, nodal displacement constraints, and concentrated nodal loads.
+- Dense linear-static Q4 plane-stress solution with displacement, reaction,
+  strain, stress, von Mises, and principal-stress recovery.
+- ASCII `.vtu` output for ParaView.
 
 ## Prerequisites
 
@@ -59,14 +64,22 @@ ctest --preset windows-msvc-debug
 .\out\build\windows-msvc\Debug\FinEleMethod.exe --help
 ```
 
-The current executable prints its available command-line interface. Analysis
-execution will be added in a later feature.
+Run the supplied Q4 uniaxial-tension verification model from the repository
+root:
 
-```text
-FinEleMethod command-line solver
-Usage:
-  FinEleMethod --help
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethod.exe `
+  --input .\examples\abaqus\q4_tension.inp `
+  --output .\out\q4_tension.vtu
 ```
+
+Open `out\q4_tension.vtu` in ParaView. The analytical solution has a right-edge
+X displacement of `0.01`, X reactions of `-5.0` at nodes 1 and 4, and uniform
+X stress and von Mises stress of `10.0`.
+
+The ABAQUS reader currently accepts direct node IDs in `*BOUNDARY` and
+`*CLOAD`. Named node sets and other element or analysis types will be added in
+later increments.
 
 ## Project decisions
 
