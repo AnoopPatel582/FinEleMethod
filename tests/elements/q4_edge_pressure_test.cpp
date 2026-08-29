@@ -9,8 +9,8 @@
 namespace
 {
 using finelemethod::elements::q4_uniform_edge_pressure_load;
-using finelemethod::elements::Q4Edge;
 using finelemethod::elements::Q4NodeCoordinates;
+using finelemethod::model::Q4Edge;
 
 TEST(Q4EdgePressure, DistributesUniformPressureEquallyToEdgeNodes)
 {

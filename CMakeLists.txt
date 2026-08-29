@@ -7,6 +7,7 @@ include(CTest)
 add_library(FinEleMethodCore STATIC
     src/assembly/load_assembly.cpp
     src/assembly/q4_dof_mapping.cpp
+    src/assembly/q4_pressure_assembly.cpp
     src/assembly/q4_stiffness_assembly.cpp
     src/core/application.cpp
     src/elements/q4_edge_pressure.cpp
@@ -38,6 +39,7 @@ add_library(FinEleMethodCore STATIC
     src/model/node.cpp
     src/model/node_collection.cpp
     src/model/point_load.cpp
+    src/model/q4_edge_pressure_load.cpp
     src/model/q4_element.cpp
     src/model/q4_element_collection.cpp
     src/output/q4_analysis_vtu.cpp

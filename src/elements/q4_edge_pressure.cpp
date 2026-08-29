@@ -7,7 +7,7 @@
 namespace finelemethod::elements
 {
 math::DenseVector q4_uniform_edge_pressure_load(const Q4NodeCoordinates &coordinates,
-                                                const Q4Edge edge, const double pressure,
+                                                const model::Q4Edge edge, const double pressure,
                                                 const double thickness)
 {
     if (!std::isfinite(pressure))

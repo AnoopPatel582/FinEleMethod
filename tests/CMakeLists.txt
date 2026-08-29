@@ -3,6 +3,7 @@ find_package(GTest CONFIG REQUIRED)
 add_executable(FinEleMethodTests
     assembly/load_assembly_test.cpp
     assembly/q4_dof_mapping_test.cpp
+    assembly/q4_pressure_assembly_test.cpp
     assembly/q4_stiffness_assembly_test.cpp
     cli/command_line_test.cpp
     core/application_test.cpp
@@ -36,6 +37,7 @@ add_executable(FinEleMethodTests
     model/node_test.cpp
     model/node_collection_test.cpp
     model/point_load_test.cpp
+    model/q4_edge_pressure_load_test.cpp
     model/q4_element_test.cpp
     model/q4_element_collection_test.cpp
     output/q4_analysis_vtu_test.cpp
