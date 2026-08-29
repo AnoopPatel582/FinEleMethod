@@ -37,9 +37,13 @@ constexpr std::string_view valid_model = R"(*Node
 1, 1, 2
 4, 1
 6, 2, 2, -0.1
+*Cload
+5, 1, 10.0
+6, 2, -4.0
+5, 1, 2.5
 )";
 
-TEST(AbaqusQ4ModelParser, ConnectsNodesMaterialsSectionsElementsAndBoundaries)
+TEST(AbaqusQ4ModelParser, ConnectsAllSupportedQ4ModelData)
 {
     const auto model = parse_abaqus_q4_model(valid_model);
 
@@ -62,6 +66,16 @@ TEST(AbaqusQ4ModelParser, ConnectsNodesMaterialsSectionsElementsAndBoundaries)
     EXPECT_EQ(model.prescribed_displacements[2].degree_of_freedom, 6U);
     EXPECT_EQ(model.prescribed_displacements[3].degree_of_freedom, 11U);
     EXPECT_DOUBLE_EQ(model.prescribed_displacements[3].value, -0.1);
+
+    ASSERT_EQ(model.point_loads.size(), 3U);
+    EXPECT_EQ(model.point_loads[0].node_id(), 5U);
+    EXPECT_EQ(model.point_loads[0].component(), finelemethod::model::DisplacementComponent::x);
+    EXPECT_DOUBLE_EQ(model.point_loads[0].magnitude(), 10.0);
+    EXPECT_EQ(model.point_loads[1].node_id(), 6U);
+    EXPECT_EQ(model.point_loads[1].component(), finelemethod::model::DisplacementComponent::y);
+    EXPECT_DOUBLE_EQ(model.point_loads[1].magnitude(), -4.0);
+    EXPECT_EQ(model.point_loads[2].node_id(), 5U);
+    EXPECT_DOUBLE_EQ(model.point_loads[2].magnitude(), 2.5);
 }
 
 TEST(AbaqusQ4ModelParser, RejectsBoundaryThatReferencesUnknownNode)
@@ -80,6 +94,29 @@ TEST(AbaqusQ4ModelParser, RejectsBoundaryThatReferencesUnknownNode)
 1.0
 *Boundary
 99, 1, 2
+)";
+
+    EXPECT_THROW(static_cast<void>(parse_abaqus_q4_model(input)), AbaqusParseError);
+}
+
+TEST(AbaqusQ4ModelParser, RejectsPointLoadThatReferencesUnknownNode)
+{
+    constexpr std::string_view input = R"(*Node
+1, 0.0, 0.0
+2, 1.0, 0.0
+3, 1.0, 1.0
+4, 0.0, 1.0
+*Material, name=Steel
+*Elastic
+200000.0, 0.3
+*Element, type=CPS4, elset=plate
+1, 1, 2, 3, 4
+*Solid Section, elset=plate, material=Steel
+1.0
+*Boundary
+1, 1, 2
+*Cload
+99, 1, 10.0
 )";
 
     EXPECT_THROW(static_cast<void>(parse_abaqus_q4_model(input)), AbaqusParseError);

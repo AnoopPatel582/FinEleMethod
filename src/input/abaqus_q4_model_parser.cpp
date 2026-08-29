@@ -1,6 +1,7 @@
 #include "finelemethod/input/abaqus_q4_model_parser.hpp"
 
 #include "finelemethod/input/abaqus_boundary_parser.hpp"
+#include "finelemethod/input/abaqus_cload_parser.hpp"
 #include "finelemethod/input/abaqus_element_parser.hpp"
 #include "finelemethod/input/abaqus_material_parser.hpp"
 #include "finelemethod/input/abaqus_node_parser.hpp"
@@ -106,6 +107,16 @@ AbaqusQ4Model parse_abaqus_q4_model(const std::string_view input_text)
         model.prescribed_displacements.push_back(solver::PrescribedDisplacement{
             dof_map.global_index(displacement.node_id, displacement.component),
             displacement.value});
+    }
+
+    model.point_loads = parse_abaqus_point_loads(input_text);
+    for (const model::PointLoad &point_load : model.point_loads)
+    {
+        if (!model.nodes.contains(point_load.node_id()))
+        {
+            throw AbaqusParseError("ABAQUS concentrated load references unknown node " +
+                                   std::to_string(point_load.node_id()) + ".");
+        }
     }
 
     return model;
