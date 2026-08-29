@@ -5,16 +5,20 @@
 #include "finelemethod/input/abaqus_element_parser.hpp"
 #include "finelemethod/input/abaqus_material_parser.hpp"
 #include "finelemethod/input/abaqus_node_parser.hpp"
+#include "finelemethod/input/abaqus_node_set_parser.hpp"
 #include "finelemethod/input/abaqus_parse_error.hpp"
 #include "finelemethod/input/abaqus_solid_section_parser.hpp"
 #include "finelemethod/model/dof_map.hpp"
 #include "finelemethod/model/isotropic_elastic_material.hpp"
 #include "finelemethod/model/q4_element.hpp"
 
+#include <algorithm>
 #include <cctype>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
+#include <variant>
 
 namespace finelemethod::input
 {
@@ -94,19 +98,60 @@ AbaqusQ4Model parse_abaqus_q4_model(const std::string_view input_text)
             model::Q4Element(element.id, element.node_ids, material_id, solid_section.thickness));
     }
 
-    const model::DofMap dof_map(model.nodes, model::SpatialDimension::two_dimensional);
     const auto parsed_displacements = parse_abaqus_nodal_displacements(input_text);
-    model.prescribed_displacements.reserve(parsed_displacements.size());
-    for (const AbaqusNodalDisplacement &displacement : parsed_displacements)
+    const bool uses_node_sets =
+        std::any_of(parsed_displacements.begin(), parsed_displacements.end(),
+                    [](const AbaqusNodalDisplacement &displacement) {
+                        return std::holds_alternative<std::string>(displacement.target);
+                    });
+    std::unordered_map<std::string, const AbaqusNodeSet *> node_sets_by_name;
+    if (uses_node_sets)
     {
-        if (!model.nodes.contains(displacement.node_id))
+        model.node_sets = parse_abaqus_node_sets(input_text);
+        for (const AbaqusNodeSet &node_set : model.node_sets)
+        {
+            node_sets_by_name.emplace(uppercase_copy(node_set.name), &node_set);
+        }
+    }
+
+    const model::DofMap dof_map(model.nodes, model::SpatialDimension::two_dimensional);
+    std::unordered_set<std::size_t> constrained_dofs;
+    const auto add_displacement = [&](const model::NodeId node_id,
+                                      const model::DisplacementComponent component,
+                                      const double value) {
+        if (!model.nodes.contains(node_id))
         {
             throw AbaqusParseError("ABAQUS boundary condition references unknown node " +
-                                   std::to_string(displacement.node_id) + ".");
+                                   std::to_string(node_id) + ".");
         }
-        model.prescribed_displacements.push_back(solver::PrescribedDisplacement{
-            dof_map.global_index(displacement.node_id, displacement.component),
-            displacement.value});
+        const std::size_t global_dof = dof_map.global_index(node_id, component);
+        if (!constrained_dofs.insert(global_dof).second)
+        {
+            throw AbaqusParseError("ABAQUS boundary conditions constrain the same node degree of "
+                                   "freedom more than once.");
+        }
+        model.prescribed_displacements.push_back(solver::PrescribedDisplacement{global_dof, value});
+    };
+
+    for (const AbaqusNodalDisplacement &displacement : parsed_displacements)
+    {
+        if (const auto *node_id = std::get_if<model::NodeId>(&displacement.target))
+        {
+            add_displacement(*node_id, displacement.component, displacement.value);
+            continue;
+        }
+
+        const std::string &set_name = std::get<std::string>(displacement.target);
+        const auto node_set = node_sets_by_name.find(uppercase_copy(set_name));
+        if (node_set == node_sets_by_name.end())
+        {
+            throw AbaqusParseError("ABAQUS boundary condition references unknown node set '" +
+                                   set_name + "'.");
+        }
+        for (const model::NodeId node_id : node_set->second->node_ids)
+        {
+            add_displacement(node_id, displacement.component, displacement.value);
+        }
     }
 
     model.point_loads = parse_abaqus_point_loads(input_text);

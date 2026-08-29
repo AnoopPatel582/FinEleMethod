@@ -4,14 +4,18 @@
 #include "finelemethod/model/dof_map.hpp"
 #include "finelemethod/model/node.hpp"
 
+#include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 
 namespace finelemethod::input
 {
+using AbaqusBoundaryTarget = std::variant<model::NodeId, std::string>;
+
 struct AbaqusNodalDisplacement
 {
-    model::NodeId node_id;
+    AbaqusBoundaryTarget target;
     model::DisplacementComponent component;
     double value;
 };

@@ -2,7 +2,9 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
 #include <string_view>
+#include <variant>
 
 namespace
 {
@@ -22,22 +24,28 @@ TEST(AbaqusBoundaryParser, ParsesSingleDofsRangesAndValues)
     const auto displacements = parse_abaqus_nodal_displacements(input);
 
     ASSERT_EQ(displacements.size(), 4U);
-    EXPECT_EQ(displacements[0].node_id, 1U);
+    EXPECT_EQ(std::get<finelemethod::model::NodeId>(displacements[0].target), 1U);
     EXPECT_EQ(displacements[0].component, DisplacementComponent::x);
     EXPECT_DOUBLE_EQ(displacements[0].value, 0.0);
-    EXPECT_EQ(displacements[1].node_id, 2U);
+    EXPECT_EQ(std::get<finelemethod::model::NodeId>(displacements[1].target), 2U);
     EXPECT_EQ(displacements[1].component, DisplacementComponent::y);
     EXPECT_DOUBLE_EQ(displacements[1].value, -0.125);
-    EXPECT_EQ(displacements[2].node_id, 4U);
+    EXPECT_EQ(std::get<finelemethod::model::NodeId>(displacements[2].target), 4U);
     EXPECT_EQ(displacements[2].component, DisplacementComponent::x);
     EXPECT_EQ(displacements[3].component, DisplacementComponent::y);
 }
 
-TEST(AbaqusBoundaryParser, RejectsNodeSetNamesUntilNodeSetsAreSupported)
+TEST(AbaqusBoundaryParser, ParsesNodeSetTarget)
 {
     constexpr std::string_view input = "*Boundary\nfixed, 1, 2\n";
 
-    EXPECT_THROW(static_cast<void>(parse_abaqus_nodal_displacements(input)), AbaqusParseError);
+    const auto displacements = parse_abaqus_nodal_displacements(input);
+
+    ASSERT_EQ(displacements.size(), 2U);
+    EXPECT_EQ(std::get<std::string>(displacements[0].target), "fixed");
+    EXPECT_EQ(displacements[0].component, DisplacementComponent::x);
+    EXPECT_EQ(std::get<std::string>(displacements[1].target), "fixed");
+    EXPECT_EQ(displacements[1].component, DisplacementComponent::y);
 }
 
 TEST(AbaqusBoundaryParser, RejectsUnsupportedTwoDimensionalDof)

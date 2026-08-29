@@ -1,5 +1,6 @@
 #pragma once
 
+#include "finelemethod/input/abaqus_node_set_parser.hpp"
 #include "finelemethod/model/material_collection.hpp"
 #include "finelemethod/model/node_collection.hpp"
 #include "finelemethod/model/point_load.hpp"
@@ -16,6 +17,7 @@ struct AbaqusQ4Model
     model::NodeCollection nodes;
     model::MaterialCollection materials;
     model::Q4ElementCollection elements;
+    std::vector<AbaqusNodeSet> node_sets;
     std::vector<model::PointLoad> point_loads;
     std::vector<solver::PrescribedDisplacement> prescribed_displacements;
 };
