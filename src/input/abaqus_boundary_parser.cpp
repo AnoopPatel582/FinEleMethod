@@ -2,7 +2,6 @@
 
 #include "abaqus_parser_utilities.hpp"
 
-#include <charconv>
 #include <cmath>
 #include <cstddef>
 #include <string>
@@ -25,25 +24,6 @@ model::DisplacementComponent displacement_component(const std::size_t abaqus_dof
     }
     throw AbaqusParseError("Unsupported two-dimensional boundary degree of freedom on line " +
                            std::to_string(line_number) + ".");
-}
-
-AbaqusBoundaryTarget parse_boundary_target(const std::string_view field,
-                                           const std::size_t line_number)
-{
-    model::NodeId node_id{};
-    const char *const begin = field.data();
-    const char *const end = begin + field.size();
-    const auto [position, error] = std::from_chars(begin, end, node_id);
-    if (!field.empty() && error == std::errc{} && position == end)
-    {
-        return node_id;
-    }
-    if (field.empty())
-    {
-        throw AbaqusParseError("Boundary target is empty on line " + std::to_string(line_number) +
-                               ".");
-    }
-    return std::string(field);
 }
 
 void validate_boundary_keyword(const std::string_view line, const std::size_t line_number)
@@ -119,7 +99,8 @@ std::vector<AbaqusNodalDisplacement> parse_abaqus_nodal_displacements(
                                        std::to_string(line_number) + ".");
             }
 
-            const AbaqusBoundaryTarget target = parse_boundary_target(fields[0], line_number);
+            const AbaqusNodeTarget target =
+                detail::parse_node_target(fields[0], line_number, "Boundary target");
             const std::size_t first_dof =
                 detail::parse_number<std::size_t>(fields[1], line_number, "first boundary DOF");
             const std::size_t last_dof =

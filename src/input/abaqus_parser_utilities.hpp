@@ -1,5 +1,6 @@
 #pragma once
 
+#include "finelemethod/input/abaqus_node_target.hpp"
 #include "finelemethod/input/abaqus_parse_error.hpp"
 
 #include <cctype>
@@ -60,6 +61,26 @@ inline std::vector<std::string_view> split_fields(const std::string_view line)
         field_start = comma + 1;
     }
     return fields;
+}
+
+inline AbaqusNodeTarget parse_node_target(const std::string_view field,
+                                          const std::size_t line_number,
+                                          const std::string_view description)
+{
+    model::NodeId node_id{};
+    const char *const begin = field.data();
+    const char *const end = begin + field.size();
+    const auto [position, error] = std::from_chars(begin, end, node_id);
+    if (!field.empty() && error == std::errc{} && position == end)
+    {
+        return node_id;
+    }
+    if (field.empty())
+    {
+        throw AbaqusParseError(std::string(description) + " is empty on line " +
+                               std::to_string(line_number) + ".");
+    }
+    return std::string(field);
 }
 
 template <typename Number>

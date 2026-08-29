@@ -17,9 +17,10 @@
 1
 *Nset, nset=FixedX
 4
+*Nset, nset=LoadedX
+2, 3
 *Boundary
 FixedXY, 1, 2, 0.0
 FixedX, 1, 1, 0.0
 *Cload
-2, 1, 5.0
-3, 1, 5.0
+LoadedX, 1, 5.0

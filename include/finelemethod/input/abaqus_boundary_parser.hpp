@@ -1,21 +1,18 @@
 #pragma once
 
+#include "finelemethod/input/abaqus_node_target.hpp"
 #include "finelemethod/input/abaqus_parse_error.hpp"
 #include "finelemethod/model/dof_map.hpp"
 #include "finelemethod/model/node.hpp"
 
-#include <string>
 #include <string_view>
-#include <variant>
 #include <vector>
 
 namespace finelemethod::input
 {
-using AbaqusBoundaryTarget = std::variant<model::NodeId, std::string>;
-
 struct AbaqusNodalDisplacement
 {
-    AbaqusBoundaryTarget target;
+    AbaqusNodeTarget target;
     model::DisplacementComponent component;
     double value;
 };

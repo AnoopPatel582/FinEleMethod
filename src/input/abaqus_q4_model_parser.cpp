@@ -99,10 +99,15 @@ AbaqusQ4Model parse_abaqus_q4_model(const std::string_view input_text)
     }
 
     const auto parsed_displacements = parse_abaqus_nodal_displacements(input_text);
+    const auto parsed_loads = parse_abaqus_concentrated_loads(input_text);
     const bool uses_node_sets =
         std::any_of(parsed_displacements.begin(), parsed_displacements.end(),
                     [](const AbaqusNodalDisplacement &displacement) {
                         return std::holds_alternative<std::string>(displacement.target);
+                    }) ||
+        std::any_of(parsed_loads.begin(), parsed_loads.end(),
+                    [](const AbaqusConcentratedLoad &load) {
+                        return std::holds_alternative<std::string>(load.target);
                     });
     std::unordered_map<std::string, const AbaqusNodeSet *> node_sets_by_name;
     if (uses_node_sets)
@@ -154,13 +159,35 @@ AbaqusQ4Model parse_abaqus_q4_model(const std::string_view input_text)
         }
     }
 
-    model.point_loads = parse_abaqus_point_loads(input_text);
-    for (const model::PointLoad &point_load : model.point_loads)
-    {
-        if (!model.nodes.contains(point_load.node_id()))
+    const auto add_point_load = [&](const model::NodeId node_id,
+                                    const model::DisplacementComponent component,
+                                    const double magnitude) {
+        if (!model.nodes.contains(node_id))
         {
             throw AbaqusParseError("ABAQUS concentrated load references unknown node " +
-                                   std::to_string(point_load.node_id()) + ".");
+                                   std::to_string(node_id) + ".");
+        }
+        model.point_loads.emplace_back(node_id, component, magnitude);
+    };
+
+    for (const AbaqusConcentratedLoad &load : parsed_loads)
+    {
+        if (const auto *node_id = std::get_if<model::NodeId>(&load.target))
+        {
+            add_point_load(*node_id, load.component, load.magnitude);
+            continue;
+        }
+
+        const std::string &set_name = std::get<std::string>(load.target);
+        const auto node_set = node_sets_by_name.find(uppercase_copy(set_name));
+        if (node_set == node_sets_by_name.end())
+        {
+            throw AbaqusParseError("ABAQUS concentrated load references unknown node set '" +
+                                   set_name + "'.");
+        }
+        for (const model::NodeId node_id : node_set->second->node_ids)
+        {
+            add_point_load(node_id, load.component, load.magnitude);
         }
     }
 

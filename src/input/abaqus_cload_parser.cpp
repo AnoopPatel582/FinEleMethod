@@ -27,9 +27,10 @@ model::DisplacementComponent load_component(const std::size_t abaqus_dof,
 }
 } // namespace
 
-std::vector<model::PointLoad> parse_abaqus_point_loads(const std::string_view input_text)
+std::vector<AbaqusConcentratedLoad> parse_abaqus_concentrated_loads(
+    const std::string_view input_text)
 {
-    std::vector<model::PointLoad> point_loads;
+    std::vector<AbaqusConcentratedLoad> concentrated_loads;
     bool in_cload_section = false;
     bool found_cload_section = false;
     std::size_t line_number = 0;
@@ -70,8 +71,8 @@ std::vector<model::PointLoad> parse_abaqus_point_loads(const std::string_view in
                     std::to_string(line_number) + ".");
             }
 
-            const model::NodeId node_id =
-                detail::parse_number<model::NodeId>(fields[0], line_number, "load node ID");
+            const AbaqusNodeTarget target =
+                detail::parse_node_target(fields[0], line_number, "Concentrated-load target");
             const std::size_t abaqus_dof =
                 detail::parse_number<std::size_t>(fields[1], line_number, "concentrated-load DOF");
             const double magnitude =
@@ -82,7 +83,8 @@ std::vector<model::PointLoad> parse_abaqus_point_loads(const std::string_view in
                                        std::to_string(line_number) + ".");
             }
 
-            point_loads.emplace_back(node_id, load_component(abaqus_dof, line_number), magnitude);
+            concentrated_loads.push_back(
+                AbaqusConcentratedLoad{target, load_component(abaqus_dof, line_number), magnitude});
         }
 
         if (line_end == std::string_view::npos)
@@ -96,10 +98,10 @@ std::vector<model::PointLoad> parse_abaqus_point_loads(const std::string_view in
     {
         throw AbaqusParseError("ABAQUS input does not contain a *CLOAD section.");
     }
-    if (point_loads.empty())
+    if (concentrated_loads.empty())
     {
         throw AbaqusParseError("ABAQUS *CLOAD section does not contain point-load data.");
     }
-    return point_loads;
+    return concentrated_loads;
 }
 } // namespace finelemethod::input

@@ -78,8 +78,8 @@ X displacement of `0.01`, X reactions of `-5.0` at nodes 1 and 4, and uniform
 X stress and von Mises stress of `10.0`.
 
 The ABAQUS reader accepts direct node IDs and explicit-list `*NSET` names in
-`*BOUNDARY`. `*CLOAD` currently requires direct node IDs. Generated node sets
-and other element or analysis types will be added in later increments.
+both `*BOUNDARY` and `*CLOAD`. Generated node sets and other element or analysis
+types will be added in later increments.
 
 ## Project decisions
 
