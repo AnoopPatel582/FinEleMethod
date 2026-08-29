@@ -10,6 +10,29 @@
 #include <string>
 #include <string_view>
 
+namespace
+{
+constexpr std::string_view valid_abaqus_input = R"(*Node
+1, 0.0, 0.0
+2, 1.0, 0.0
+3, 1.0, 1.0
+4, 0.0, 1.0
+*Material, name=TestMaterial
+*Elastic
+1000.0, 0.25
+*Element, type=CPS4, elset=plate
+1, 1, 2, 3, 4
+*Solid Section, elset=plate, material=TestMaterial
+1.0
+*Boundary
+1, 1, 2
+4, 1
+*Cload
+2, 1, 5.0
+3, 1, 5.0
+)";
+}
+
 TEST(CommandLine, HelpWritesUsageAndSucceeds)
 {
     constexpr std::array<std::string_view, 1> arguments{"--help"};
@@ -92,4 +115,55 @@ TEST(CommandLine, Q4TensionExampleReportsResultWritingFailure)
     EXPECT_EQ(exit_code, finelemethod::ExitCode::ResultWritingError);
     EXPECT_TRUE(output.str().empty());
     EXPECT_NE(error.str().find("Result-writing error"), std::string::npos);
+}
+
+TEST(CommandLine, AbaqusInputWritesSolvedParaViewResult)
+{
+    const auto directory = std::filesystem::temp_directory_path();
+    const auto input_path = directory / "finelemethod_cli_input_test.inp";
+    const auto output_path = directory / "finelemethod_cli_input_test.vtu";
+    {
+        std::ofstream input_file(input_path, std::ios::binary);
+        input_file << valid_abaqus_input;
+    }
+    std::filesystem::remove(output_path);
+    const std::string input_text = input_path.string();
+    const std::string output_text = output_path.string();
+    const std::array<std::string_view, 4> arguments{"--input", input_text, "--output", output_text};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::Success);
+    EXPECT_TRUE(error.str().empty());
+    EXPECT_NE(output.str().find("Completed ABAQUS Q4 plane-stress analysis"), std::string::npos);
+    std::ifstream result_file(output_path, std::ios::binary);
+    const std::string vtu{std::istreambuf_iterator<char>(result_file),
+                          std::istreambuf_iterator<char>()};
+    EXPECT_NE(vtu.find("Name=\"Displacement\""), std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"VonMises\""), std::string::npos);
+    result_file.close();
+    std::filesystem::remove(input_path);
+    std::filesystem::remove(output_path);
+}
+
+TEST(CommandLine, AbaqusInputReportsMissingInputFile)
+{
+    const auto input_path =
+        std::filesystem::temp_directory_path() / "finelemethod_missing_cli_input.inp";
+    const auto output_path =
+        std::filesystem::temp_directory_path() / "finelemethod_missing_cli_input.vtu";
+    std::filesystem::remove(input_path);
+    const std::string input_text = input_path.string();
+    const std::string output_text = output_path.string();
+    const std::array<std::string_view, 4> arguments{"--input", input_text, "--output", output_text};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::InputParsingError);
+    EXPECT_TRUE(output.str().empty());
+    EXPECT_NE(error.str().find("Input-file error"), std::string::npos);
 }

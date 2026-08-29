@@ -20,6 +20,7 @@ add_library(FinEleMethodCore STATIC
     src/input/abaqus_boundary_parser.cpp
     src/input/abaqus_cload_parser.cpp
     src/input/abaqus_element_parser.cpp
+    src/input/abaqus_input_file.cpp
     src/input/abaqus_material_parser.cpp
     src/input/abaqus_node_parser.cpp
     src/input/abaqus_q4_model_parser.cpp
