@@ -77,9 +77,9 @@ Open `out\q4_tension.vtu` in ParaView. The analytical solution has a right-edge
 X displacement of `0.01`, X reactions of `-5.0` at nodes 1 and 4, and uniform
 X stress and von Mises stress of `10.0`.
 
-The ABAQUS reader accepts direct node IDs and explicit-list `*NSET` names in
-both `*BOUNDARY` and `*CLOAD`. Generated node sets and other element or analysis
-types will be added in later increments.
+The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
+`*NSET` names in both `*BOUNDARY` and `*CLOAD`. Other element and analysis types
+will be added in later increments.
 
 ## Project decisions
 

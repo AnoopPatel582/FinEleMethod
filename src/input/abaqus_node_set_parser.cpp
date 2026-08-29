@@ -14,6 +14,12 @@ namespace finelemethod::input
 {
 namespace
 {
+struct NodeSetKeyword
+{
+    std::string name;
+    bool generate;
+};
+
 std::string uppercase_copy(const std::string_view text)
 {
     std::string uppercase(text);
@@ -24,16 +30,17 @@ std::string uppercase_copy(const std::string_view text)
     return uppercase;
 }
 
-std::string require_node_set_name(const std::string_view line, const std::size_t line_number)
+NodeSetKeyword parse_node_set_keyword(const std::string_view line, const std::size_t line_number)
 {
     std::optional<std::string> node_set_name;
+    bool generate = false;
     const auto fields = detail::split_fields(line);
     for (std::size_t field_index = 1; field_index < fields.size(); ++field_index)
     {
         if (detail::equals_case_insensitive(fields[field_index], "GENERATE"))
         {
-            throw AbaqusParseError("ABAQUS *NSET, GENERATE is not supported on line " +
-                                   std::to_string(line_number) + ".");
+            generate = true;
+            continue;
         }
 
         const std::size_t equals = fields[field_index].find('=');
@@ -54,7 +61,7 @@ std::string require_node_set_name(const std::string_view line, const std::size_t
     }
     if (node_set_name.has_value())
     {
-        return std::move(*node_set_name);
+        return NodeSetKeyword{std::move(*node_set_name), generate};
     }
     throw AbaqusParseError("ABAQUS *NSET keyword requires NSET on line " +
                            std::to_string(line_number) + ".");
@@ -68,6 +75,7 @@ std::vector<AbaqusNodeSet> parse_abaqus_node_sets(const std::string_view input_t
     std::unordered_map<std::string, std::size_t> set_indices_by_name;
     std::size_t current_set_index = 0;
     bool in_node_set_section = false;
+    bool generate_node_ids = false;
     bool found_node_set_section = false;
     std::size_t line_number = 0;
     std::size_t line_start = 0;
@@ -98,14 +106,15 @@ std::vector<AbaqusNodeSet> parse_abaqus_node_sets(const std::string_view input_t
             if (in_node_set_section)
             {
                 found_node_set_section = true;
-                std::string set_name = require_node_set_name(line, line_number);
-                const std::string lookup_name = uppercase_copy(set_name);
+                NodeSetKeyword node_set_keyword = parse_node_set_keyword(line, line_number);
+                generate_node_ids = node_set_keyword.generate;
+                const std::string lookup_name = uppercase_copy(node_set_keyword.name);
                 const auto existing_set = set_indices_by_name.find(lookup_name);
                 if (existing_set == set_indices_by_name.end())
                 {
                     current_set_index = node_sets.size();
                     set_indices_by_name.emplace(lookup_name, current_set_index);
-                    node_sets.push_back(AbaqusNodeSet{std::move(set_name), {}});
+                    node_sets.push_back(AbaqusNodeSet{std::move(node_set_keyword.name), {}});
                     node_ids_by_set.emplace_back();
                 }
                 else
@@ -117,10 +126,48 @@ std::vector<AbaqusNodeSet> parse_abaqus_node_sets(const std::string_view input_t
         else if (in_node_set_section && !line.empty())
         {
             const auto fields = detail::split_fields(line);
-            for (const std::string_view field : fields)
+            std::vector<model::NodeId> node_ids;
+            if (generate_node_ids)
             {
-                const model::NodeId node_id =
-                    detail::parse_number<model::NodeId>(field, line_number, "node-set node ID");
+                if (fields.size() < 2 || fields.size() > 3)
+                {
+                    throw AbaqusParseError("ABAQUS generated node set requires first node, last "
+                                           "node, and optional increment on line " +
+                                           std::to_string(line_number) + ".");
+                }
+                const model::NodeId first = detail::parse_number<model::NodeId>(
+                    fields[0], line_number, "generated node-set first node ID");
+                const model::NodeId last = detail::parse_number<model::NodeId>(
+                    fields[1], line_number, "generated node-set last node ID");
+                const model::NodeId increment =
+                    fields.size() == 3 ? detail::parse_number<model::NodeId>(
+                                             fields[2], line_number, "generated node-set increment")
+                                       : 1;
+                if (first > last || increment == 0 || (last - first) % increment != 0)
+                {
+                    throw AbaqusParseError("Invalid ABAQUS generated node-set range on line " +
+                                           std::to_string(line_number) + ".");
+                }
+                for (model::NodeId node_id = first;; node_id += increment)
+                {
+                    node_ids.push_back(node_id);
+                    if (node_id == last)
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                for (const std::string_view field : fields)
+                {
+                    node_ids.push_back(detail::parse_number<model::NodeId>(field, line_number,
+                                                                           "node-set node ID"));
+                }
+            }
+
+            for (const model::NodeId node_id : node_ids)
+            {
                 if (!node_ids_by_set[current_set_index].insert(node_id).second)
                 {
                     throw AbaqusParseError("Duplicate node ID in ABAQUS node set on line " +

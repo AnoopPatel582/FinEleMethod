@@ -43,11 +43,34 @@ TEST(AbaqusNodeSetParser, RequiresNodeSetName)
     EXPECT_THROW(static_cast<void>(parse_abaqus_node_sets(input)), AbaqusParseError);
 }
 
-TEST(AbaqusNodeSetParser, RejectsGenerateUntilRangeExpansionIsSupported)
+TEST(AbaqusNodeSetParser, ExpandsGeneratedRangesWithExplicitAndDefaultIncrements)
 {
-    constexpr std::string_view input = "*Nset, nset=fixed, generate\n1, 9, 2\n";
+    constexpr std::string_view input = R"(*Nset, nset=odd, generate
+1, 9, 2
+*Nset, nset=consecutive, GENERATE
+20, 23
+)";
 
-    EXPECT_THROW(static_cast<void>(parse_abaqus_node_sets(input)), AbaqusParseError);
+    const auto node_sets = parse_abaqus_node_sets(input);
+
+    ASSERT_EQ(node_sets.size(), 2U);
+    EXPECT_EQ(node_sets[0].node_ids, (std::vector<finelemethod::model::NodeId>{1, 3, 5, 7, 9}));
+    EXPECT_EQ(node_sets[1].node_ids, (std::vector<finelemethod::model::NodeId>{20, 21, 22, 23}));
+}
+
+TEST(AbaqusNodeSetParser, RejectsInvalidGeneratedRanges)
+{
+    EXPECT_THROW(
+        static_cast<void>(parse_abaqus_node_sets("*Nset, nset=fixed, generate\n9, 1, 2\n")),
+        AbaqusParseError);
+    EXPECT_THROW(
+        static_cast<void>(parse_abaqus_node_sets("*Nset, nset=fixed, generate\n1, 9, 0\n")),
+        AbaqusParseError);
+    EXPECT_THROW(
+        static_cast<void>(parse_abaqus_node_sets("*Nset, nset=fixed, generate\n1, 10, 2\n")),
+        AbaqusParseError);
+    EXPECT_THROW(static_cast<void>(parse_abaqus_node_sets("*Nset, nset=fixed, generate\n1\n")),
+                 AbaqusParseError);
 }
 
 TEST(AbaqusNodeSetParser, RequiresNodeSetData)

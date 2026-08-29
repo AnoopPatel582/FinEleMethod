@@ -17,7 +17,7 @@
 1
 *Nset, nset=FixedX
 4
-*Nset, nset=LoadedX
+*Nset, nset=LoadedX, generate
 2, 3
 *Boundary
 FixedXY, 1, 2, 0.0
