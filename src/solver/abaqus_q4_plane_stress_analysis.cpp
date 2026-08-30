@@ -1,5 +1,6 @@
 #include "finelemethod/solver/abaqus_q4_plane_stress_analysis.hpp"
 
+#include "finelemethod/input/abaqus_parse_error.hpp"
 #include "finelemethod/input/abaqus_q4_model_parser.hpp"
 #include "finelemethod/model/dof_map.hpp"
 #include "finelemethod/solver/q4_plane_stress_analysis.hpp"
@@ -11,6 +12,10 @@ namespace finelemethod::solver
 AbaqusQ4PlaneStressSolution analyze_abaqus_q4_plane_stress(const std::string_view input_text)
 {
     input::AbaqusQ4Model input_model = input::parse_abaqus_q4_model(input_text);
+    if (input_model.analysis_type != input::Q4AnalysisType::plane_stress)
+    {
+        throw input::AbaqusParseError("Q4 plane-stress analysis requires ABAQUS CPS4 elements.");
+    }
     const model::DofMap dof_map(input_model.nodes, model::SpatialDimension::two_dimensional);
 
     auto result = solve_q4_plane_stress_model(

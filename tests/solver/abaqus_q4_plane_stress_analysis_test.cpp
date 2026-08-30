@@ -1,11 +1,14 @@
 #include "finelemethod/solver/abaqus_q4_plane_stress_analysis.hpp"
 
+#include "finelemethod/input/abaqus_parse_error.hpp"
+
 #include <gtest/gtest.h>
 
 #include <string_view>
 
 namespace
 {
+using finelemethod::input::AbaqusParseError;
 using finelemethod::solver::solve_abaqus_q4_plane_stress;
 
 TEST(AbaqusQ4PlaneStressAnalysis, SolvesUniformUniaxialTensionFromInputText)
@@ -54,5 +57,27 @@ plate, P2, -10.0
         EXPECT_NEAR(point.stress[1], 0.0, tolerance);
         EXPECT_NEAR(point.von_mises, 10.0, tolerance);
     }
+}
+
+TEST(AbaqusQ4PlaneStressAnalysis, RejectsCpe4PlaneStrainModel)
+{
+    constexpr std::string_view input = R"(*Node
+1, 0.0, 0.0
+2, 1.0, 0.0
+3, 1.0, 1.0
+4, 0.0, 1.0
+*Material, name=TestMaterial
+*Elastic
+1000.0, 0.25
+*Element, type=CPE4, elset=plate
+1, 1, 2, 3, 4
+*Solid Section, elset=plate, material=TestMaterial
+1.0
+*Boundary
+1, 1, 2
+4, 1
+)";
+
+    EXPECT_THROW(static_cast<void>(solve_abaqus_q4_plane_stress(input)), AbaqusParseError);
 }
 } // namespace

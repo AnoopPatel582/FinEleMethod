@@ -8,6 +8,7 @@ namespace
 {
 using finelemethod::input::AbaqusParseError;
 using finelemethod::input::parse_abaqus_q4_elements;
+using finelemethod::input::Q4AnalysisType;
 using finelemethod::model::Q4NodeIds;
 
 TEST(AbaqusElementParser, ParsesCps4ConnectivityAndElementSets)
@@ -26,10 +27,23 @@ TEST(AbaqusElementParser, ParsesCps4ConnectivityAndElementSets)
     ASSERT_EQ(elements.size(), 2U);
     EXPECT_EQ(elements[0].id, 20U);
     EXPECT_EQ(elements[0].node_ids, (Q4NodeIds{{1, 2, 5, 4}}));
+    EXPECT_EQ(elements[0].analysis_type, Q4AnalysisType::plane_stress);
     EXPECT_EQ(elements[0].element_set, "left");
     EXPECT_EQ(elements[1].id, 10U);
     EXPECT_EQ(elements[1].node_ids, (Q4NodeIds{{2, 3, 6, 5}}));
     EXPECT_EQ(elements[1].element_set, "right");
+}
+
+TEST(AbaqusElementParser, ParsesCpe4AsPlaneStrain)
+{
+    constexpr std::string_view input = "*Element, type=CPE4, elset=soil\n1, 10, 20, 30, 40\n";
+
+    const auto elements = parse_abaqus_q4_elements(input);
+
+    ASSERT_EQ(elements.size(), 1U);
+    EXPECT_EQ(elements[0].analysis_type, Q4AnalysisType::plane_strain);
+    EXPECT_EQ(elements[0].node_ids, (Q4NodeIds{{10, 20, 30, 40}}));
+    EXPECT_EQ(elements[0].element_set, "soil");
 }
 
 TEST(AbaqusElementParser, RejectsMalformedCps4ConnectivityWithLineNumber)

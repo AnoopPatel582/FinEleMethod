@@ -69,9 +69,15 @@ AbaqusQ4Model parse_abaqus_q4_model(const std::string_view input_text)
     }
 
     const auto parsed_elements = parse_abaqus_q4_elements(input_text);
+    model.analysis_type = parsed_elements.front().analysis_type;
     std::unordered_map<std::string, std::vector<model::ElementId>> element_ids_by_set;
     for (const AbaqusQ4Element &element : parsed_elements)
     {
+        if (element.analysis_type != model.analysis_type)
+        {
+            throw AbaqusParseError(
+                "ABAQUS Q4 model cannot mix CPS4 plane-stress and CPE4 plane-strain elements.");
+        }
         if (element.element_set.empty())
         {
             throw AbaqusParseError("ABAQUS Q4 element " + std::to_string(element.id) +

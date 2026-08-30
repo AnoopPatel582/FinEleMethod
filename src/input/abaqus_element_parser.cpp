@@ -3,6 +3,7 @@
 #include "abaqus_parser_utilities.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <unordered_set>
 
@@ -12,7 +13,7 @@ namespace
 {
 struct ElementSection
 {
-    bool is_q4 = false;
+    std::optional<Q4AnalysisType> analysis_type;
     std::string element_set;
 };
 
@@ -33,7 +34,14 @@ ElementSection parse_element_keyword(const std::string_view line, const std::siz
         if (detail::equals_case_insensitive(name, "TYPE"))
         {
             found_type = true;
-            section.is_q4 = detail::equals_case_insensitive(value, "CPS4");
+            if (detail::equals_case_insensitive(value, "CPS4"))
+            {
+                section.analysis_type = Q4AnalysisType::plane_stress;
+            }
+            else if (detail::equals_case_insensitive(value, "CPE4"))
+            {
+                section.analysis_type = Q4AnalysisType::plane_strain;
+            }
         }
         else if (detail::equals_case_insensitive(name, "ELSET"))
         {
@@ -87,10 +95,10 @@ std::vector<AbaqusQ4Element> parse_abaqus_q4_elements(const std::string_view inp
             {
                 found_element_section = true;
                 section = parse_element_keyword(line, line_number);
-                found_q4_section = found_q4_section || section.is_q4;
+                found_q4_section = found_q4_section || section.analysis_type.has_value();
             }
         }
-        else if (in_element_section && section.is_q4 && !line.empty())
+        else if (in_element_section && section.analysis_type.has_value() && !line.empty())
         {
             const auto fields = detail::split_fields(line);
             if (fields.size() != 5)
@@ -112,7 +120,8 @@ std::vector<AbaqusQ4Element> parse_abaqus_q4_elements(const std::string_view inp
                 node_ids[node_index] = detail::parse_number<model::NodeId>(
                     fields[node_index + 1], line_number, "element node ID");
             }
-            elements.push_back(AbaqusQ4Element{id, node_ids, section.element_set});
+            elements.push_back(
+                AbaqusQ4Element{id, node_ids, *section.analysis_type, section.element_set});
         }
 
         if (line_end == std::string_view::npos)
@@ -128,11 +137,12 @@ std::vector<AbaqusQ4Element> parse_abaqus_q4_elements(const std::string_view inp
     }
     if (!found_q4_section)
     {
-        throw AbaqusParseError("ABAQUS input does not contain supported *ELEMENT, TYPE=CPS4 data.");
+        throw AbaqusParseError(
+            "ABAQUS input does not contain supported *ELEMENT, TYPE=CPS4 or TYPE=CPE4 data.");
     }
     if (elements.empty())
     {
-        throw AbaqusParseError("ABAQUS CPS4 element section does not contain any elements.");
+        throw AbaqusParseError("ABAQUS Q4 element section does not contain any elements.");
     }
     return elements;
 }

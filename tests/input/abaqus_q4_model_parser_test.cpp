@@ -11,6 +11,7 @@ namespace
 {
 using finelemethod::input::AbaqusParseError;
 using finelemethod::input::parse_abaqus_q4_model;
+using finelemethod::input::Q4AnalysisType;
 using finelemethod::model::Q4NodeIds;
 
 constexpr std::string_view valid_model = R"(*Node
@@ -79,6 +80,7 @@ TEST(AbaqusQ4ModelParser, ConnectsAllSupportedQ4ModelData)
 {
     const auto model = parse_abaqus_q4_model(valid_model);
 
+    EXPECT_EQ(model.analysis_type, Q4AnalysisType::plane_stress);
     EXPECT_EQ(model.nodes.size(), 6U);
     ASSERT_EQ(model.materials.size(), 2U);
     EXPECT_DOUBLE_EQ(model.materials.at(1).youngs_modulus(), 200000.0);
@@ -124,6 +126,32 @@ TEST(AbaqusQ4ModelParser, ConnectsAllSupportedQ4ModelData)
     EXPECT_EQ(model.pressure_loads[2].element_id(), 20U);
     EXPECT_EQ(model.pressure_loads[2].edge(), finelemethod::model::Q4Edge::three);
     EXPECT_DOUBLE_EQ(model.pressure_loads[2].pressure(), -1.0);
+}
+
+TEST(AbaqusQ4ModelParser, SelectsPlaneStrainFromCpe4Elements)
+{
+    std::string input(valid_model);
+    std::size_t position = 0;
+    while ((position = input.find("CPS4", position)) != std::string::npos)
+    {
+        input.replace(position, 4, "CPE4");
+        position += 4;
+    }
+
+    const auto model = parse_abaqus_q4_model(input);
+
+    EXPECT_EQ(model.analysis_type, Q4AnalysisType::plane_strain);
+    EXPECT_EQ(model.elements.size(), 2U);
+}
+
+TEST(AbaqusQ4ModelParser, RejectsMixedPlaneStressAndPlaneStrainElements)
+{
+    std::string input(valid_model);
+    const std::size_t second_type = input.find("CPS4", input.find("CPS4") + 1);
+    ASSERT_NE(second_type, std::string::npos);
+    input.replace(second_type, 4, "CPE4");
+
+    EXPECT_THROW(static_cast<void>(parse_abaqus_q4_model(input)), AbaqusParseError);
 }
 
 TEST(AbaqusQ4ModelParser, AcceptsModelWithoutLoadSections)
