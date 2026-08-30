@@ -74,6 +74,10 @@ General-purpose infrastructure libraries may be used where already approved.
 - Apply displacement boundary conditions using direct elimination.
 - Implement Gaussian elimination with partial pivoting as the first solver.
 - Add a sparse Conjugate Gradient solver later.
+- Use the 3D engineering-strain order
+  `[epsilon_x, epsilon_y, epsilon_z, gamma_xy, gamma_yz, gamma_zx]` and the
+  corresponding stress order `[sigma_x, sigma_y, sigma_z, tau_xy, tau_yz,
+  tau_zx]` throughout the H8 formulation and result pipeline.
 
 ## 7. Required validation problems
 
