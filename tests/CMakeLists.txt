@@ -13,6 +13,7 @@ add_executable(FinEleMethodTests
     elements/h8_jacobian_test.cpp
     elements/h8_physical_derivatives_test.cpp
     elements/h8_shape_functions_test.cpp
+    elements/h8_stiffness_test.cpp
     elements/h8_strain_displacement_test.cpp
     elements/q4_edge_pressure_test.cpp
     elements/q4_gauss_quadrature_test.cpp
