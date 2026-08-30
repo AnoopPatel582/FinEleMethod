@@ -5,6 +5,7 @@
 #include "finelemethod/mechanics/constitutive_matrix.hpp"
 
 #include <cmath>
+#include <cstddef>
 #include <stdexcept>
 
 namespace finelemethod::elements
@@ -30,5 +31,21 @@ math::DenseMatrix q4_plane_strain_stiffness_matrix(const Q4NodeCoordinates &coor
                      strain_displacement.matrix * integration_scale;
     }
     return stiffness;
+}
+
+math::DenseMatrix q4_plane_strain_stiffness_matrix(const model::Q4Element &element,
+                                                   const model::NodeCollection &nodes,
+                                                   const model::MaterialCollection &materials)
+{
+    Q4NodeCoordinates coordinates{};
+
+    for (std::size_t node_index = 0; node_index < element.node_ids().size(); ++node_index)
+    {
+        const model::Node &node = nodes.at(element.node_ids()[node_index]);
+        coordinates[node_index] = {node.x(), node.y()};
+    }
+
+    const model::IsotropicElasticMaterial &material = materials.at(element.material_id());
+    return q4_plane_strain_stiffness_matrix(coordinates, material, element.thickness());
 }
 } // namespace finelemethod::elements
