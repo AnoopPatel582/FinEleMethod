@@ -13,6 +13,8 @@ using finelemethod::model::MaterialCollection;
 using finelemethod::model::Node;
 using finelemethod::model::NodeCollection;
 using finelemethod::model::PointLoad;
+using finelemethod::model::Q4Edge;
+using finelemethod::model::Q4EdgePressureLoad;
 using finelemethod::model::Q4Element;
 using finelemethod::model::Q4ElementCollection;
 using finelemethod::model::Q4NodeIds;
@@ -36,17 +38,18 @@ TEST(Q4PlaneStressAnalysis, ReproducesUniformUniaxialTension)
     elements.add(Q4Element(1, Q4NodeIds{{1, 2, 3, 4}}, 1, 1.0));
 
     const std::array point_loads{
-        PointLoad(2, DisplacementComponent::x, 5.0),
-        PointLoad(3, DisplacementComponent::x, 5.0),
+        PointLoad(2, DisplacementComponent::x, 2.5),
+        PointLoad(3, DisplacementComponent::x, 2.5),
     };
+    const std::array pressure_loads{Q4EdgePressureLoad(1, Q4Edge::two, -5.0)};
     const std::array prescribed_displacements{
         PrescribedDisplacement{dof_map.global_index(1, DisplacementComponent::x), 0.0},
         PrescribedDisplacement{dof_map.global_index(1, DisplacementComponent::y), 0.0},
         PrescribedDisplacement{dof_map.global_index(4, DisplacementComponent::x), 0.0},
     };
 
-    const auto result = solve_q4_plane_stress_model(elements, nodes, materials, dof_map,
-                                                    point_loads, prescribed_displacements);
+    const auto result = solve_q4_plane_stress_model(
+        elements, nodes, materials, dof_map, point_loads, pressure_loads, prescribed_displacements);
 
     constexpr double tolerance = 1.0e-12;
     EXPECT_NEAR(result.displacements[dof_map.global_index(1, DisplacementComponent::x)], 0.0,

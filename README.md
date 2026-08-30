@@ -78,8 +78,9 @@ X displacement of `0.01`, X reactions of `-5.0` at nodes 1 and 4, and uniform
 X stress and von Mises stress of `10.0`.
 
 The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
-`*NSET` names in both `*BOUNDARY` and `*CLOAD`. Other element and analysis types
-will be added in later increments.
+`*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use
+`*DLOAD` with `P1` through `P4` and direct element IDs or element-set names.
+Other element and analysis types will be added in later increments.
 
 ## Project decisions
 

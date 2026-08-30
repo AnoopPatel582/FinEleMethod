@@ -6,6 +6,7 @@
 #include "finelemethod/model/node.hpp"
 #include "finelemethod/model/node_collection.hpp"
 #include "finelemethod/model/point_load.hpp"
+#include "finelemethod/model/q4_edge_pressure_load.hpp"
 #include "finelemethod/model/q4_element.hpp"
 #include "finelemethod/model/q4_element_collection.hpp"
 #include "finelemethod/output/q4_analysis_vtu.hpp"
@@ -44,8 +45,9 @@ void write_q4_tension_example(const std::filesystem::path &output_path)
                                        0.0},
     };
 
-    const auto result = solver::solve_q4_plane_stress_model(elements, nodes, materials, dof_map,
-                                                            point_loads, prescribed_displacements);
+    const std::array<model::Q4EdgePressureLoad, 0> pressure_loads{};
+    const auto result = solver::solve_q4_plane_stress_model(
+        elements, nodes, materials, dof_map, point_loads, pressure_loads, prescribed_displacements);
     output::write_q4_analysis_vtu(output_path, nodes, elements, dof_map, result);
 }
 } // namespace finelemethod::examples

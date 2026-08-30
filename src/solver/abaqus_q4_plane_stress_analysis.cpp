@@ -15,7 +15,7 @@ AbaqusQ4PlaneStressSolution analyze_abaqus_q4_plane_stress(const std::string_vie
 
     auto result = solve_q4_plane_stress_model(
         input_model.elements, input_model.nodes, input_model.materials, dof_map,
-        input_model.point_loads, input_model.prescribed_displacements);
+        input_model.point_loads, input_model.pressure_loads, input_model.prescribed_displacements);
     return AbaqusQ4PlaneStressSolution{std::move(input_model), std::move(result)};
 }
 
