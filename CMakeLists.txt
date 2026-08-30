@@ -65,6 +65,7 @@ add_library(FinEleMethodCore STATIC
     src/solver/abaqus_q4_plane_stress_analysis.cpp
     src/solver/boundary_conditions.cpp
     src/solver/dense_static_solver.cpp
+    src/solver/h8_analysis.cpp
     src/solver/q4_plane_strain_analysis.cpp
     src/solver/q4_plane_stress_analysis.cpp
     src/solver/reactions.cpp
