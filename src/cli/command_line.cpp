@@ -6,13 +6,14 @@
 #include "finelemethod/input/abaqus_parse_error.hpp"
 #include "finelemethod/model/dof_map.hpp"
 #include "finelemethod/output/q4_analysis_vtu.hpp"
-#include "finelemethod/solver/abaqus_q4_plane_stress_analysis.hpp"
+#include "finelemethod/solver/abaqus_q4_analysis.hpp"
 
 #include <filesystem>
 #include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <variant>
 
 namespace finelemethod::cli
 {
@@ -27,7 +28,7 @@ void write_help(std::ostream &stream)
            << "  FinEleMethod --example q4-tension --output <file.vtu>\n\n"
            << "Options:\n"
            << "  -h, --help  Show this help message.\n"
-           << "  --input <model.inp>   Read and solve an ABAQUS Q4 plane-stress model.\n"
+           << "  --input <model.inp>   Read and solve an ABAQUS Q4 CPS4 or CPE4 model.\n"
            << "  --example q4-tension  Run the built-in Q4 uniaxial-tension example.\n"
            << "  --output <file.vtu>   Write analysis results to an ASCII VTU file.\n";
 }
@@ -64,10 +65,10 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
             return ExitCode::InputParsingError;
         }
 
-        std::optional<solver::AbaqusQ4PlaneStressSolution> solution;
+        std::optional<solver::AbaqusQ4Solution> solution;
         try
         {
-            solution.emplace(solver::analyze_abaqus_q4_plane_stress(input_text));
+            solution.emplace(solver::analyze_abaqus_q4(input_text));
         }
         catch (const input::AbaqusParseError &exception)
         {
@@ -94,9 +95,17 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
         {
             const model::DofMap dof_map(solution->model.nodes,
                                         model::SpatialDimension::two_dimensional);
-            output::write_q4_analysis_vtu(output_path, solution->model.nodes,
-                                          solution->model.elements, dof_map, solution->result);
-            output << "Completed ABAQUS Q4 plane-stress analysis.\n"
+            std::visit(
+                [&](const auto &result) {
+                    output::write_q4_analysis_vtu(output_path, solution->model.nodes,
+                                                  solution->model.elements, dof_map, result);
+                },
+                solution->result);
+            const std::string_view formulation =
+                solution->model.analysis_type == input::Q4AnalysisType::plane_stress
+                    ? "plane-stress"
+                    : "plane-strain";
+            output << "Completed ABAQUS Q4 " << formulation << " analysis.\n"
                    << "Input model: " << input_path.string() << '\n'
                    << "VTU result: " << output_path.string() << '\n';
             return ExitCode::Success;

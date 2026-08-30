@@ -148,6 +148,41 @@ TEST(CommandLine, AbaqusInputWritesSolvedParaViewResult)
     std::filesystem::remove(output_path);
 }
 
+TEST(CommandLine, AbaqusCpe4InputAutomaticallyWritesPlaneStrainResult)
+{
+    const auto directory = std::filesystem::temp_directory_path();
+    const auto input_path = directory / "finelemethod_cli_cpe4_input_test.inp";
+    const auto output_path = directory / "finelemethod_cli_cpe4_input_test.vtu";
+    std::string plane_strain_input(valid_abaqus_input);
+    plane_strain_input.replace(plane_strain_input.find("CPS4"), 4, "CPE4");
+    {
+        std::ofstream input_file(input_path, std::ios::binary);
+        input_file << plane_strain_input;
+    }
+    std::filesystem::remove(output_path);
+    const std::string input_text = input_path.string();
+    const std::string output_text = output_path.string();
+    const std::array<std::string_view, 4> arguments{"--input", input_text, "--output", output_text};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::Success);
+    EXPECT_TRUE(error.str().empty());
+    EXPECT_NE(output.str().find("Completed ABAQUS Q4 plane-strain analysis"), std::string::npos);
+    std::ifstream result_file(output_path, std::ios::binary);
+    const std::string vtu{std::istreambuf_iterator<char>(result_file),
+                          std::istreambuf_iterator<char>()};
+    EXPECT_NE(vtu.find("Name=\"Displacement\""), std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"Strain\" NumberOfComponents=\"4\""), std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"Stress\" NumberOfComponents=\"4\""), std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"VonMises\""), std::string::npos);
+    result_file.close();
+    std::filesystem::remove(input_path);
+    std::filesystem::remove(output_path);
+}
+
 TEST(CommandLine, AbaqusInputReportsMissingInputFile)
 {
     const auto input_path =
