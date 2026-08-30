@@ -14,4 +14,10 @@ namespace finelemethod::mechanics
 // epsilon_z constrained to zero, and returns [sigma_x, sigma_y, tau_xy].
 [[nodiscard]] math::DenseMatrix plane_strain_constitutive_matrix(
     const model::IsotropicElasticMaterial &material);
+
+// Uses the engineering strain order
+// [epsilon_x, epsilon_y, epsilon_z, gamma_xy, gamma_yz, gamma_zx] and returns
+// [sigma_x, sigma_y, sigma_z, tau_xy, tau_yz, tau_zx].
+[[nodiscard]] math::DenseMatrix solid_isotropic_constitutive_matrix(
+    const model::IsotropicElasticMaterial &material);
 } // namespace finelemethod::mechanics
