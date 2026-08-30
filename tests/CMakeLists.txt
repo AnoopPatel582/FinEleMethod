@@ -15,6 +15,7 @@ add_executable(FinEleMethodTests
     elements/h8_jacobian_test.cpp
     elements/h8_model_stiffness_test.cpp
     elements/h8_physical_derivatives_test.cpp
+    elements/h8_recovery_test.cpp
     elements/h8_shape_functions_test.cpp
     elements/h8_stiffness_test.cpp
     elements/h8_strain_displacement_test.cpp

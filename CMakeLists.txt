@@ -15,6 +15,7 @@ add_library(FinEleMethodCore STATIC
     src/elements/h8_gauss_quadrature.cpp
     src/elements/h8_jacobian.cpp
     src/elements/h8_physical_derivatives.cpp
+    src/elements/h8_recovery.cpp
     src/elements/h8_shape_functions.cpp
     src/elements/h8_stiffness.cpp
     src/elements/h8_strain_displacement.cpp
