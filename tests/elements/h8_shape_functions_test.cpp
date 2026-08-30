@@ -9,6 +9,7 @@
 
 namespace
 {
+using finelemethod::elements::h8_shape_function_natural_derivatives;
 using finelemethod::elements::h8_shape_functions;
 
 constexpr std::array<std::array<double, 3>, 8> natural_nodes{{
@@ -89,5 +90,66 @@ TEST(H8ShapeFunctions, RejectNonfiniteNaturalCoordinates)
     EXPECT_THROW(static_cast<void>(h8_shape_functions(0.0, not_a_number, 0.0)),
                  std::invalid_argument);
     EXPECT_THROW(static_cast<void>(h8_shape_functions(0.0, 0.0, infinity)), std::invalid_argument);
+}
+
+TEST(H8ShapeFunctionNaturalDerivatives, HaveExpectedValuesAtElementCenter)
+{
+    const auto derivatives = h8_shape_function_natural_derivatives(0.0, 0.0, 0.0);
+
+    ASSERT_EQ(derivatives.rows(), 3U);
+    ASSERT_EQ(derivatives.columns(), 8U);
+    for (std::size_t node = 0; node < natural_nodes.size(); ++node)
+    {
+        EXPECT_DOUBLE_EQ(derivatives(0, node), 0.125 * natural_nodes[node][0]);
+        EXPECT_DOUBLE_EQ(derivatives(1, node), 0.125 * natural_nodes[node][1]);
+        EXPECT_DOUBLE_EQ(derivatives(2, node), 0.125 * natural_nodes[node][2]);
+    }
+}
+
+TEST(H8ShapeFunctionNaturalDerivatives, SumToZero)
+{
+    const auto derivatives = h8_shape_function_natural_derivatives(0.2, -0.4, 0.6);
+
+    for (std::size_t coordinate = 0; coordinate < derivatives.rows(); ++coordinate)
+    {
+        double sum = 0.0;
+        for (std::size_t node = 0; node < derivatives.columns(); ++node)
+        {
+            sum += derivatives(coordinate, node);
+        }
+        EXPECT_NEAR(sum, 0.0, 1.0e-15);
+    }
+}
+
+TEST(H8ShapeFunctionNaturalDerivatives, ReproduceNaturalCoordinateGradients)
+{
+    const auto derivatives = h8_shape_function_natural_derivatives(0.2, -0.4, 0.6);
+
+    for (std::size_t derivative_coordinate = 0; derivative_coordinate < 3; ++derivative_coordinate)
+    {
+        for (std::size_t nodal_coordinate = 0; nodal_coordinate < 3; ++nodal_coordinate)
+        {
+            double gradient = 0.0;
+            for (std::size_t node = 0; node < natural_nodes.size(); ++node)
+            {
+                gradient += derivatives(derivative_coordinate, node) *
+                            natural_nodes[node][nodal_coordinate];
+            }
+            EXPECT_NEAR(gradient, derivative_coordinate == nodal_coordinate ? 1.0 : 0.0, 1.0e-15);
+        }
+    }
+}
+
+TEST(H8ShapeFunctionNaturalDerivatives, RejectNonfiniteNaturalCoordinates)
+{
+    const double infinity = std::numeric_limits<double>::infinity();
+    const double not_a_number = std::numeric_limits<double>::quiet_NaN();
+
+    EXPECT_THROW(static_cast<void>(h8_shape_function_natural_derivatives(infinity, 0.0, 0.0)),
+                 std::invalid_argument);
+    EXPECT_THROW(static_cast<void>(h8_shape_function_natural_derivatives(0.0, not_a_number, 0.0)),
+                 std::invalid_argument);
+    EXPECT_THROW(static_cast<void>(h8_shape_function_natural_derivatives(0.0, 0.0, infinity)),
+                 std::invalid_argument);
 }
 } // namespace
