@@ -3,6 +3,7 @@
 #include "finelemethod/assembly/load_assembly.hpp"
 #include "finelemethod/assembly/q4_pressure_assembly.hpp"
 #include "finelemethod/assembly/q4_stiffness_assembly.hpp"
+#include "finelemethod/postprocessing/q4_plane_strain_results.hpp"
 
 #include <utility>
 
@@ -23,10 +24,13 @@ Q4PlaneStrainAnalysisResult solve_q4_plane_strain_model(
 
     auto static_result =
         solve_dense_static_system(stiffness_matrix, load_vector, prescribed_displacements);
+    auto element_results = postprocessing::recover_q4_plane_strain_model_results(
+        elements, nodes, materials, dof_map, static_result.displacements);
 
     return Q4PlaneStrainAnalysisResult{
         std::move(static_result.displacements),
         std::move(static_result.reactions),
+        std::move(element_results),
     };
 }
 } // namespace finelemethod::solver

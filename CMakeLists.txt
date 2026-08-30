@@ -48,6 +48,7 @@ add_library(FinEleMethodCore STATIC
     src/model/q4_element_collection.cpp
     src/output/q4_analysis_vtu.cpp
     src/output/q4_vtu_writer.cpp
+    src/postprocessing/q4_plane_strain_results.cpp
     src/postprocessing/q4_plane_stress_results.cpp
     src/solver/abaqus_q4_plane_stress_analysis.cpp
     src/solver/boundary_conditions.cpp
