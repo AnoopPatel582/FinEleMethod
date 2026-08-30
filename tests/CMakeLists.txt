@@ -50,6 +50,7 @@ add_executable(FinEleMethodTests
     solver/abaqus_q4_plane_stress_analysis_test.cpp
     solver/boundary_conditions_test.cpp
     solver/dense_static_solver_test.cpp
+    solver/q4_plane_strain_analysis_test.cpp
     solver/q4_plane_stress_analysis_test.cpp
     solver/reactions_test.cpp
 )
