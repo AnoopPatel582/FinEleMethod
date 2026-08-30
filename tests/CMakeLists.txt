@@ -60,6 +60,7 @@ add_executable(FinEleMethodTests
     model/q4_element_collection_test.cpp
     output/q4_analysis_vtu_test.cpp
     output/q4_vtu_writer_test.cpp
+    postprocessing/h8_results_test.cpp
     postprocessing/q4_plane_strain_results_test.cpp
     postprocessing/q4_plane_stress_results_test.cpp
     solver/abaqus_q4_analysis_test.cpp

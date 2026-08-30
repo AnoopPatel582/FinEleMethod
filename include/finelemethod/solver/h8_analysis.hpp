@@ -5,10 +5,12 @@
 #include "finelemethod/model/material_collection.hpp"
 #include "finelemethod/model/node_collection.hpp"
 #include "finelemethod/model/point_load.hpp"
+#include "finelemethod/postprocessing/h8_results.hpp"
 #include "finelemethod/solver/boundary_conditions.hpp"
 #include "finelemethod/solver/dense_static_solver.hpp"
 
 #include <span>
+#include <vector>
 
 namespace finelemethod::solver
 {
@@ -16,6 +18,7 @@ struct H8AnalysisResult
 {
     math::DenseVector displacements;
     math::DenseVector reactions;
+    std::vector<postprocessing::H8ElementResults> element_results;
 };
 
 // Runs a dense linear-static H8 analysis with nodal point loads.

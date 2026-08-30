@@ -2,6 +2,7 @@
 
 #include "finelemethod/assembly/h8_stiffness_assembly.hpp"
 #include "finelemethod/assembly/load_assembly.hpp"
+#include "finelemethod/postprocessing/h8_results.hpp"
 
 #include <utility>
 
@@ -19,10 +20,13 @@ H8AnalysisResult solve_h8_model(
         assembly::assemble_point_load_vector(dof_map, point_loads);
     auto static_result =
         solve_dense_static_system(stiffness_matrix, load_vector, prescribed_displacements);
+    auto element_results = postprocessing::recover_h8_model_results(
+        elements, nodes, materials, dof_map, static_result.displacements);
 
     return H8AnalysisResult{
         std::move(static_result.displacements),
         std::move(static_result.reactions),
+        std::move(element_results),
     };
 }
 } // namespace finelemethod::solver
