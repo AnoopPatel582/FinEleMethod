@@ -6,17 +6,19 @@ engineering GUI will be added after the corresponding solver capabilities are
 validated.
 
 The project is under active development. Its command-line engine can currently
-solve supported ABAQUS Q4 plane-stress models and write ParaView results.
+solve supported ABAQUS Q4 plane-stress and plane-strain models and write
+ParaView results.
 
 ## Current capabilities
 
 - C++20 command-line executable built with MSVC and CMake.
 - Reproducible dependencies managed with a vcpkg manifest.
 - Automated tests using GoogleTest and CTest.
-- ABAQUS `.inp` parsing for nodes, CPS4 elements, isotropic materials, solid
+- ABAQUS `.inp` parsing for nodes, CPS4 and CPE4 elements, isotropic materials, solid
   sections, nodal displacement constraints, and concentrated nodal loads.
-- Dense linear-static Q4 plane-stress solution with displacement, reaction,
-  strain, stress, von Mises, and principal-stress recovery.
+- Dense linear-static Q4 plane-stress and plane-strain solutions with
+  displacement, reaction, strain, stress, von Mises, and principal-stress
+  recovery.
 - ASCII `.vtu` output for ParaView.
 
 ## Prerequisites
@@ -76,6 +78,18 @@ root:
 Open `out\q4_tension.vtu` in ParaView. The analytical solution has a right-edge
 X displacement of `0.01`, X reactions of `-5.0` at nodes 1 and 4, and uniform
 X stress and von Mises stress of `10.0`.
+
+Run the supplied Q4 plane-strain verification model:
+
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethod.exe `
+  --input .\examples\abaqus\q4_plane_strain_tension.inp `
+  --output .\out\q4_plane_strain_tension.vtu
+```
+
+Its analytical solution has a right-edge X displacement of `0.009375`, a
+top-edge Y displacement of `-0.003125`, uniform X stress of `10.0`, and
+constrained out-of-plane stress of `2.5`.
 
 The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
 `*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use

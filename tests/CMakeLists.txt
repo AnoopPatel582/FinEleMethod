@@ -81,3 +81,10 @@ add_test(
         --input ${PROJECT_SOURCE_DIR}/examples/abaqus/q4_tension.inp
         --output ${PROJECT_BINARY_DIR}/q4_tension_example.vtu
 )
+
+add_test(
+    NAME CommandLineExample.Q4PlaneStrainTensionInputRuns
+    COMMAND FinEleMethod
+        --input ${PROJECT_SOURCE_DIR}/examples/abaqus/q4_plane_strain_tension.inp
+        --output ${PROJECT_BINARY_DIR}/q4_plane_strain_tension_example.vtu
+)

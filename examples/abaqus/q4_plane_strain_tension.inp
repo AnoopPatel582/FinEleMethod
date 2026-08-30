@@ -1,0 +1,28 @@
+*Heading
+** FinEleMethod Q4 plane-strain uniaxial-loading verification model
+** Consistent units: length, force, stress
+*Node
+1, 0.0, 0.0
+2, 1.0, 0.0
+3, 1.0, 1.0
+4, 0.0, 1.0
+*Material, name=TestMaterial
+*Elastic
+1000.0, 0.25
+*Element, type=CPE4, elset=Plate
+1, 1, 2, 3, 4
+*Solid Section, elset=Plate, material=TestMaterial
+1.0
+*Nset, nset=FixedXY
+1
+*Nset, nset=FixedX
+4
+*Nset, nset=LoadedX, generate
+2, 3
+*Boundary
+FixedXY, 1, 2, 0.0
+FixedX, 1, 1, 0.0
+*Cload
+LoadedX, 1, 2.5
+*Dload
+Plate, P2, -5.0
