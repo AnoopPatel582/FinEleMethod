@@ -7,17 +7,20 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <type_traits>
 #include <unordered_map>
 
 namespace finelemethod::output
 {
 namespace
 {
-std::string create_q4_vtu_content(
-    const model::NodeCollection &nodes, const model::Q4ElementCollection &elements,
-    const model::DofMap &dof_map, const math::DenseVector &displacements,
-    const math::DenseVector *const reactions,
-    const std::span<const postprocessing::Q4ElementPlaneStressResults> element_results)
+template <typename ElementResult>
+std::string create_q4_vtu_content(const model::NodeCollection &nodes,
+                                  const model::Q4ElementCollection &elements,
+                                  const model::DofMap &dof_map,
+                                  const math::DenseVector &displacements,
+                                  const math::DenseVector *const reactions,
+                                  const std::span<const ElementResult> element_results)
 {
     if (nodes.empty())
     {
@@ -70,31 +73,48 @@ std::string create_q4_vtu_content(
     {
         output << "      <CellData Scalars=\"VonMises\">\n";
 
-        const auto write_three_component_average =
-            [&output, &element_results](const std::string_view name, const auto member) {
-                output << "        <DataArray type=\"Float64\" Name=\"" << name
-                       << "\" NumberOfComponents=\"3\" format=\"ascii\">\n";
-                for (const auto &element_result : element_results)
+        const auto write_component_average = [&output, &element_results](
+                                                 const std::string_view name, const auto member) {
+            using ValueArray =
+                std::remove_cvref_t<decltype(element_results.front().gauss_points.front().*member)>;
+            constexpr std::size_t component_count = std::tuple_size_v<ValueArray>;
+            output << "        <DataArray type=\"Float64\" Name=\"" << name
+                   << "\" NumberOfComponents=\"" << component_count << "\" format=\"ascii\">\n";
+            for (const auto &element_result : element_results)
+            {
+                std::array<double, component_count> average{};
+                for (const auto &point : element_result.gauss_points)
                 {
-                    std::array<double, 3> average{};
-                    for (const auto &point : element_result.gauss_points)
+                    const auto &values = point.*member;
+                    for (std::size_t component = 0; component < average.size(); ++component)
                     {
-                        const auto &values = point.*member;
-                        for (std::size_t component = 0; component < average.size(); ++component)
-                        {
-                            average[component] += values[component] / 4.0;
-                        }
+                        average[component] += values[component] / 4.0;
                     }
-                    output << "          " << average[0] << ' ' << average[1] << ' ' << average[2]
-                           << '\n';
                 }
-                output << "        </DataArray>\n";
-            };
+                output << "          ";
+                for (std::size_t component = 0; component < average.size(); ++component)
+                {
+                    if (component != 0)
+                    {
+                        output << ' ';
+                    }
+                    output << average[component];
+                }
+                output << '\n';
+            }
+            output << "        </DataArray>\n";
+        };
 
-        write_three_component_average("Strain",
-                                      &finelemethod::elements::Q4PlaneStressPointResult::strain);
-        write_three_component_average("Stress",
-                                      &finelemethod::elements::Q4PlaneStressPointResult::stress);
+        if constexpr (std::is_same_v<ElementResult, postprocessing::Q4ElementPlaneStressResults>)
+        {
+            write_component_average("Strain", &elements::Q4PlaneStressPointResult::strain);
+            write_component_average("Stress", &elements::Q4PlaneStressPointResult::stress);
+        }
+        else
+        {
+            write_component_average("Strain", &elements::Q4PlaneStrainPointResult::strain);
+            write_component_average("Stress", &elements::Q4PlaneStrainPointResult::stress);
+        }
 
         output << "        <DataArray type=\"Float64\" Name=\"VonMises\" format=\"ascii\">\n";
         for (const auto &element_result : element_results)
@@ -108,9 +128,16 @@ std::string create_q4_vtu_content(
         }
         output << "        </DataArray>\n";
 
-        write_three_component_average(
-            "PrincipalStress",
-            &finelemethod::elements::Q4PlaneStressPointResult::principal_stresses);
+        if constexpr (std::is_same_v<ElementResult, postprocessing::Q4ElementPlaneStressResults>)
+        {
+            write_component_average("PrincipalStress",
+                                    &elements::Q4PlaneStressPointResult::principal_stresses);
+        }
+        else
+        {
+            write_component_average("PrincipalStress",
+                                    &elements::Q4PlaneStrainPointResult::principal_stresses);
+        }
         output << "      </CellData>\n";
     }
 
@@ -214,8 +241,26 @@ std::string create_q4_results_vtu(
 std::string create_q4_results_vtu(
     const model::NodeCollection &nodes, const model::Q4ElementCollection &elements,
     const model::DofMap &dof_map, const math::DenseVector &displacements,
+    const std::span<const postprocessing::Q4ElementPlaneStrainResults> element_results)
+{
+    return create_q4_vtu_content(nodes, elements, dof_map, displacements, nullptr, element_results);
+}
+
+std::string create_q4_results_vtu(
+    const model::NodeCollection &nodes, const model::Q4ElementCollection &elements,
+    const model::DofMap &dof_map, const math::DenseVector &displacements,
     const math::DenseVector &reactions,
     const std::span<const postprocessing::Q4ElementPlaneStressResults> element_results)
+{
+    return create_q4_vtu_content(nodes, elements, dof_map, displacements, &reactions,
+                                 element_results);
+}
+
+std::string create_q4_results_vtu(
+    const model::NodeCollection &nodes, const model::Q4ElementCollection &elements,
+    const model::DofMap &dof_map, const math::DenseVector &displacements,
+    const math::DenseVector &reactions,
+    const std::span<const postprocessing::Q4ElementPlaneStrainResults> element_results)
 {
     return create_q4_vtu_content(nodes, elements, dof_map, displacements, &reactions,
                                  element_results);
@@ -226,7 +271,8 @@ std::string create_q4_displacement_vtu(const model::NodeCollection &nodes,
                                        const model::DofMap &dof_map,
                                        const math::DenseVector &displacements)
 {
-    return create_q4_results_vtu(nodes, elements, dof_map, displacements, {});
+    return create_q4_results_vtu(nodes, elements, dof_map, displacements,
+                                 std::span<const postprocessing::Q4ElementPlaneStressResults>{});
 }
 
 void write_q4_displacement_vtu(const std::filesystem::path &path,
@@ -269,8 +315,47 @@ void write_q4_results_vtu(
 void write_q4_results_vtu(
     const std::filesystem::path &path, const model::NodeCollection &nodes,
     const model::Q4ElementCollection &elements, const model::DofMap &dof_map,
+    const math::DenseVector &displacements,
+    const std::span<const postprocessing::Q4ElementPlaneStrainResults> element_results)
+{
+    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+    if (!file)
+    {
+        throw std::runtime_error("Unable to open VTU output file: " + path.string());
+    }
+
+    file << create_q4_results_vtu(nodes, elements, dof_map, displacements, element_results);
+    if (!file)
+    {
+        throw std::runtime_error("Unable to write VTU output file: " + path.string());
+    }
+}
+
+void write_q4_results_vtu(
+    const std::filesystem::path &path, const model::NodeCollection &nodes,
+    const model::Q4ElementCollection &elements, const model::DofMap &dof_map,
     const math::DenseVector &displacements, const math::DenseVector &reactions,
     const std::span<const postprocessing::Q4ElementPlaneStressResults> element_results)
+{
+    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+    if (!file)
+    {
+        throw std::runtime_error("Unable to open VTU output file: " + path.string());
+    }
+
+    file << create_q4_results_vtu(nodes, elements, dof_map, displacements, reactions,
+                                  element_results);
+    if (!file)
+    {
+        throw std::runtime_error("Unable to write VTU output file: " + path.string());
+    }
+}
+
+void write_q4_results_vtu(
+    const std::filesystem::path &path, const model::NodeCollection &nodes,
+    const model::Q4ElementCollection &elements, const model::DofMap &dof_map,
+    const math::DenseVector &displacements, const math::DenseVector &reactions,
+    const std::span<const postprocessing::Q4ElementPlaneStrainResults> element_results)
 {
     std::ofstream file(path, std::ios::binary | std::ios::trunc);
     if (!file)
