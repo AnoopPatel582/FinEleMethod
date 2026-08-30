@@ -126,6 +126,31 @@ TEST(AbaqusQ4ModelParser, ConnectsAllSupportedQ4ModelData)
     EXPECT_DOUBLE_EQ(model.pressure_loads[2].pressure(), -1.0);
 }
 
+TEST(AbaqusQ4ModelParser, AcceptsModelWithoutLoadSections)
+{
+    constexpr std::string_view input = R"(*Node
+1, 0.0, 0.0
+2, 1.0, 0.0
+3, 1.0, 1.0
+4, 0.0, 1.0
+*Material, name=Steel
+*Elastic
+200000.0, 0.3
+*Element, type=CPS4, elset=plate
+1, 1, 2, 3, 4
+*Solid Section, elset=plate, material=Steel
+1.0
+*Boundary
+1, 1, 2
+4, 1
+)";
+
+    const auto model = parse_abaqus_q4_model(input);
+
+    EXPECT_TRUE(model.point_loads.empty());
+    EXPECT_TRUE(model.pressure_loads.empty());
+}
+
 TEST(AbaqusQ4ModelParser, RejectsBoundaryThatReferencesUnknownNode)
 {
     constexpr std::string_view input = R"(*Node

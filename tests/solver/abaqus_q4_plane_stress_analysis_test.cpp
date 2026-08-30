@@ -25,11 +25,8 @@ TEST(AbaqusQ4PlaneStressAnalysis, SolvesUniformUniaxialTensionFromInputText)
 *Boundary
 1, 1, 2
 4, 1
-*Cload
-2, 1, 2.5
-3, 1, 2.5
 *Dload
-plate, P2, -5.0
+plate, P2, -10.0
 )";
 
     const auto result = solve_abaqus_q4_plane_stress(input);

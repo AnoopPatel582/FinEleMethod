@@ -104,7 +104,11 @@ AbaqusQ4Model parse_abaqus_q4_model(const std::string_view input_text)
     }
 
     const auto parsed_displacements = parse_abaqus_nodal_displacements(input_text);
-    const auto parsed_loads = parse_abaqus_concentrated_loads(input_text);
+    std::vector<AbaqusConcentratedLoad> parsed_loads;
+    if (detail::contains_keyword(input_text, "CLOAD"))
+    {
+        parsed_loads = parse_abaqus_concentrated_loads(input_text);
+    }
     const bool uses_node_sets =
         std::any_of(parsed_displacements.begin(), parsed_displacements.end(),
                     [](const AbaqusNodalDisplacement &displacement) {
