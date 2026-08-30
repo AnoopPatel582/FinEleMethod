@@ -10,6 +10,7 @@ add_library(FinEleMethodCore STATIC
     src/assembly/q4_pressure_assembly.cpp
     src/assembly/q4_stiffness_assembly.cpp
     src/core/application.cpp
+    src/elements/h8_shape_functions.cpp
     src/elements/q4_edge_pressure.cpp
     src/elements/q4_gauss_quadrature.cpp
     src/elements/q4_jacobian.cpp
