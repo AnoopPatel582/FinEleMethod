@@ -4,6 +4,7 @@ add_executable(FinEleMethodTests
     assembly/load_assembly_test.cpp
     assembly/q4_dof_mapping_test.cpp
     assembly/q4_pressure_assembly_test.cpp
+    assembly/q4_plane_strain_stiffness_assembly_test.cpp
     assembly/q4_stiffness_assembly_test.cpp
     cli/command_line_test.cpp
     core/application_test.cpp
