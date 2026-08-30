@@ -4,6 +4,7 @@
 #include "finelemethod/model/material_collection.hpp"
 #include "finelemethod/model/node_collection.hpp"
 #include "finelemethod/model/point_load.hpp"
+#include "finelemethod/model/q4_edge_pressure_load.hpp"
 #include "finelemethod/model/q4_element_collection.hpp"
 #include "finelemethod/solver/boundary_conditions.hpp"
 
@@ -19,6 +20,7 @@ struct AbaqusQ4Model
     model::Q4ElementCollection elements;
     std::vector<AbaqusNodeSet> node_sets;
     std::vector<model::PointLoad> point_loads;
+    std::vector<model::Q4EdgePressureLoad> pressure_loads;
     std::vector<solver::PrescribedDisplacement> prescribed_displacements;
 };
 

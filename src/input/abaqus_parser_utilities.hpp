@@ -63,6 +63,35 @@ inline std::vector<std::string_view> split_fields(const std::string_view line)
     return fields;
 }
 
+inline bool contains_keyword(const std::string_view input_text, const std::string_view keyword_name)
+{
+    std::size_t line_start = 0;
+    while (line_start <= input_text.size())
+    {
+        const std::size_t line_end = input_text.find('\n', line_start);
+        const std::string_view line =
+            trim(line_end == std::string_view::npos
+                     ? input_text.substr(line_start)
+                     : input_text.substr(line_start, line_end - line_start));
+        if (line.starts_with('*') && !line.starts_with("**"))
+        {
+            const std::size_t comma = line.find(',');
+            const std::string_view keyword =
+                trim(line.substr(1, comma == std::string_view::npos ? line.size() - 1 : comma - 1));
+            if (equals_case_insensitive(keyword, keyword_name))
+            {
+                return true;
+            }
+        }
+        if (line_end == std::string_view::npos)
+        {
+            break;
+        }
+        line_start = line_end + 1;
+    }
+    return false;
+}
+
 inline AbaqusNodeTarget parse_node_target(const std::string_view field,
                                           const std::size_t line_number,
                                           const std::string_view description)

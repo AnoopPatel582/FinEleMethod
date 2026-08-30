@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
 #include <string_view>
 
 namespace
@@ -45,7 +46,34 @@ fixed, 1, 2
 loaded, 1, 10.0
 6, 2, -4.0
 LOADED, 1, 2.5
+*Dload
+10, P1, 3.0
+RIGHT, p2, 4.0
+right, P3, -1.0
 )";
+
+std::string model_with_pressure_target(const std::string_view target)
+{
+    return std::string(R"(*Node
+1, 0.0, 0.0
+2, 1.0, 0.0
+3, 1.0, 1.0
+4, 0.0, 1.0
+*Material, name=Steel
+*Elastic
+200000.0, 0.3
+*Element, type=CPS4, elset=plate
+1, 1, 2, 3, 4
+*Solid Section, elset=plate, material=Steel
+1.0
+*Boundary
+1, 1, 2
+*Cload
+2, 1, 1.0
+*Dload
+)") + std::string(target) +
+           ", P2, 5.0\n";
+}
 
 TEST(AbaqusQ4ModelParser, ConnectsAllSupportedQ4ModelData)
 {
@@ -85,6 +113,17 @@ TEST(AbaqusQ4ModelParser, ConnectsAllSupportedQ4ModelData)
     EXPECT_DOUBLE_EQ(model.point_loads[1].magnitude(), -4.0);
     EXPECT_EQ(model.point_loads[2].node_id(), 5U);
     EXPECT_DOUBLE_EQ(model.point_loads[2].magnitude(), 2.5);
+
+    ASSERT_EQ(model.pressure_loads.size(), 3U);
+    EXPECT_EQ(model.pressure_loads[0].element_id(), 10U);
+    EXPECT_EQ(model.pressure_loads[0].edge(), finelemethod::model::Q4Edge::one);
+    EXPECT_DOUBLE_EQ(model.pressure_loads[0].pressure(), 3.0);
+    EXPECT_EQ(model.pressure_loads[1].element_id(), 20U);
+    EXPECT_EQ(model.pressure_loads[1].edge(), finelemethod::model::Q4Edge::two);
+    EXPECT_DOUBLE_EQ(model.pressure_loads[1].pressure(), 4.0);
+    EXPECT_EQ(model.pressure_loads[2].element_id(), 20U);
+    EXPECT_EQ(model.pressure_loads[2].edge(), finelemethod::model::Q4Edge::three);
+    EXPECT_DOUBLE_EQ(model.pressure_loads[2].pressure(), -1.0);
 }
 
 TEST(AbaqusQ4ModelParser, RejectsBoundaryThatReferencesUnknownNode)
@@ -201,6 +240,18 @@ missing, 1, 10.0
 )";
 
     EXPECT_THROW(static_cast<void>(parse_abaqus_q4_model(input)), AbaqusParseError);
+}
+
+TEST(AbaqusQ4ModelParser, RejectsPressureThatReferencesUnknownElement)
+{
+    EXPECT_THROW(static_cast<void>(parse_abaqus_q4_model(model_with_pressure_target("99"))),
+                 AbaqusParseError);
+}
+
+TEST(AbaqusQ4ModelParser, RejectsPressureThatReferencesUnknownElementSet)
+{
+    EXPECT_THROW(static_cast<void>(parse_abaqus_q4_model(model_with_pressure_target("missing"))),
+                 AbaqusParseError);
 }
 
 TEST(AbaqusQ4ModelParser, RejectsElementThatReferencesUnknownNode)
