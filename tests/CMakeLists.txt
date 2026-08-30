@@ -9,6 +9,7 @@ add_executable(FinEleMethodTests
     cli/command_line_test.cpp
     core/application_test.cpp
     core/exit_code_test.cpp
+    elements/h8_gauss_quadrature_test.cpp
     elements/h8_jacobian_test.cpp
     elements/h8_physical_derivatives_test.cpp
     elements/h8_shape_functions_test.cpp
