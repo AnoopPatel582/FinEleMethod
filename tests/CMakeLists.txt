@@ -44,6 +44,8 @@ add_executable(FinEleMethodTests
     mechanics/plane_strain_measures_test.cpp
     mechanics/plane_stress_measures_test.cpp
     model/dof_map_test.cpp
+    model/h8_element_test.cpp
+    model/h8_element_collection_test.cpp
     model/isotropic_elastic_material_test.cpp
     model/material_collection_test.cpp
     model/node_test.cpp

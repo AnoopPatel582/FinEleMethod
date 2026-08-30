@@ -44,6 +44,8 @@ add_library(FinEleMethodCore STATIC
     src/mechanics/plane_strain_measures.cpp
     src/mechanics/plane_stress_measures.cpp
     src/model/dof_map.cpp
+    src/model/h8_element.cpp
+    src/model/h8_element_collection.cpp
     src/model/isotropic_elastic_material.cpp
     src/model/material_collection.cpp
     src/model/node.cpp

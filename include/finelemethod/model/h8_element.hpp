@@ -8,23 +8,21 @@
 
 namespace finelemethod::model
 {
-using Q4NodeIds = std::array<NodeId, 4>;
+using H8NodeIds = std::array<NodeId, 8>;
 
-class Q4Element
+class H8Element
 {
   public:
-    Q4Element(ElementId id, Q4NodeIds node_ids, MaterialId material_id, double thickness);
+    H8Element(ElementId id, H8NodeIds node_ids, MaterialId material_id);
 
     [[nodiscard]] ElementId id() const noexcept;
-    // Node IDs are stored in the Q4 counter-clockwise connectivity order.
-    [[nodiscard]] const Q4NodeIds &node_ids() const noexcept;
+    // Node IDs follow the standard H8 natural connectivity order.
+    [[nodiscard]] const H8NodeIds &node_ids() const noexcept;
     [[nodiscard]] MaterialId material_id() const noexcept;
-    [[nodiscard]] double thickness() const noexcept;
 
   private:
     ElementId id_;
-    Q4NodeIds node_ids_;
+    H8NodeIds node_ids_;
     MaterialId material_id_;
-    double thickness_;
 };
 } // namespace finelemethod::model
