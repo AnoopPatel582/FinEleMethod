@@ -14,6 +14,7 @@ add_library(FinEleMethodCore STATIC
     src/elements/q4_gauss_quadrature.cpp
     src/elements/q4_jacobian.cpp
     src/elements/q4_physical_derivatives.cpp
+    src/elements/q4_plane_strain_recovery.cpp
     src/elements/q4_plane_strain_stiffness.cpp
     src/elements/q4_plane_stress_stiffness.cpp
     src/elements/q4_plane_stress_recovery.cpp
@@ -34,6 +35,7 @@ add_library(FinEleMethodCore STATIC
     src/math/dense_vector.cpp
     src/math/linear_solver.cpp
     src/mechanics/constitutive_matrix.cpp
+    src/mechanics/plane_strain_measures.cpp
     src/mechanics/plane_stress_measures.cpp
     src/model/dof_map.cpp
     src/model/isotropic_elastic_material.cpp

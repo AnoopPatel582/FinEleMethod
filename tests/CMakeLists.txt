@@ -14,6 +14,7 @@ add_executable(FinEleMethodTests
     elements/q4_jacobian_test.cpp
     elements/q4_physical_derivatives_test.cpp
     elements/q4_plane_strain_model_stiffness_test.cpp
+    elements/q4_plane_strain_recovery_test.cpp
     elements/q4_plane_strain_stiffness_test.cpp
     elements/q4_plane_stress_model_stiffness_test.cpp
     elements/q4_plane_stress_recovery_test.cpp
@@ -34,6 +35,7 @@ add_executable(FinEleMethodTests
     math/dense_vector_test.cpp
     math/linear_solver_test.cpp
     mechanics/constitutive_matrix_test.cpp
+    mechanics/plane_strain_measures_test.cpp
     mechanics/plane_stress_measures_test.cpp
     model/dof_map_test.cpp
     model/isotropic_elastic_material_test.cpp
