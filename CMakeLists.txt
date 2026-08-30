@@ -5,6 +5,7 @@ project(FinEleMethod LANGUAGES CXX)
 include(CTest)
 
 add_library(FinEleMethodCore STATIC
+    src/assembly/h8_dof_mapping.cpp
     src/assembly/load_assembly.cpp
     src/assembly/q4_dof_mapping.cpp
     src/assembly/q4_pressure_assembly.cpp

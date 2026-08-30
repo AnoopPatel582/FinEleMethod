@@ -1,6 +1,7 @@
 find_package(GTest CONFIG REQUIRED)
 
 add_executable(FinEleMethodTests
+    assembly/h8_dof_mapping_test.cpp
     assembly/load_assembly_test.cpp
     assembly/q4_dof_mapping_test.cpp
     assembly/q4_pressure_assembly_test.cpp
