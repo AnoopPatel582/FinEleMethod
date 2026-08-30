@@ -11,6 +11,7 @@ add_executable(FinEleMethodTests
     core/exit_code_test.cpp
     elements/h8_gauss_quadrature_test.cpp
     elements/h8_jacobian_test.cpp
+    elements/h8_model_stiffness_test.cpp
     elements/h8_physical_derivatives_test.cpp
     elements/h8_shape_functions_test.cpp
     elements/h8_stiffness_test.cpp

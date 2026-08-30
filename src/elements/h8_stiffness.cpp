@@ -4,6 +4,8 @@
 #include "finelemethod/elements/h8_strain_displacement.hpp"
 #include "finelemethod/mechanics/constitutive_matrix.hpp"
 
+#include <cstddef>
+
 namespace finelemethod::elements
 {
 math::DenseMatrix h8_stiffness_matrix(const H8NodeCoordinates &coordinates,
@@ -23,5 +25,20 @@ math::DenseMatrix h8_stiffness_matrix(const H8NodeCoordinates &coordinates,
     }
 
     return stiffness;
+}
+
+math::DenseMatrix h8_stiffness_matrix(const model::H8Element &element,
+                                      const model::NodeCollection &nodes,
+                                      const model::MaterialCollection &materials)
+{
+    H8NodeCoordinates coordinates{};
+
+    for (std::size_t node_index = 0; node_index < element.node_ids().size(); ++node_index)
+    {
+        const model::Node &node = nodes.at(element.node_ids()[node_index]);
+        coordinates[node_index] = {node.x(), node.y(), node.z()};
+    }
+
+    return h8_stiffness_matrix(coordinates, materials.at(element.material_id()));
 }
 } // namespace finelemethod::elements
