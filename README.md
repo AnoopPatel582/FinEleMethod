@@ -171,6 +171,9 @@ architecture, solver workflow, numerical data flow, and future GUI boundary.
 The [Q4 formulation](docs/formulations/Q4.md) documents the implemented plane-
 stress and plane-strain mathematics. The [H8 formulation](docs/formulations/H8.md)
 documents the implemented three-dimensional solid mechanics.
+The [global-system formulation](docs/formulations/SYSTEM_SOLUTION.md) explains
+COO assembly, displacement elimination, CSR storage, Conjugate Gradient, and
+reaction recovery.
 
 New users can follow the complete Windows setup and first-analysis workflow in
 the [Beginner's Guide](docs/BEGINNERS_GUIDE.md).

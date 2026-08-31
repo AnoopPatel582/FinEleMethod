@@ -129,7 +129,9 @@ and output concepts. Their element formulation and result-recovery code remains
 separate so each formulation can be tested independently.
 
 The mathematical details are documented in the [Q4 formulation](formulations/Q4.md)
-and [H8 formulation](formulations/H8.md).
+and [H8 formulation](formulations/H8.md). Their shared assembly, constraint,
+iterative solution, and reaction-recovery process is documented in
+[Global System and Sparse Solution](formulations/SYSTEM_SOLUTION.md).
 
 ## Error boundary
 
