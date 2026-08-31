@@ -24,4 +24,10 @@ namespace finelemethod::assembly
 [[nodiscard]] math::DenseMatrix assemble_q4_plane_strain_stiffness(
     const model::Q4ElementCollection &element_collection, const model::NodeCollection &nodes,
     const model::MaterialCollection &materials, const model::DofMap &dof_map);
+
+// Appends Q4 plane-strain element matrices into a global COO matrix. Shared
+// degree-of-freedom contributions remain duplicated until CSR conversion.
+[[nodiscard]] math::CooMatrix assemble_q4_plane_strain_stiffness_coo(
+    const model::Q4ElementCollection &element_collection, const model::NodeCollection &nodes,
+    const model::MaterialCollection &materials, const model::DofMap &dof_map);
 } // namespace finelemethod::assembly

@@ -97,4 +97,14 @@ math::CooMatrix assemble_q4_plane_stress_stiffness_coo(
             return elements::q4_plane_stress_stiffness_matrix(element, nodes, materials);
         });
 }
+
+math::CooMatrix assemble_q4_plane_strain_stiffness_coo(
+    const model::Q4ElementCollection &element_collection, const model::NodeCollection &nodes,
+    const model::MaterialCollection &materials, const model::DofMap &dof_map)
+{
+    return assemble_q4_stiffness_coo(
+        element_collection, dof_map, [&](const model::Q4Element &element) {
+            return elements::q4_plane_strain_stiffness_matrix(element, nodes, materials);
+        });
+}
 } // namespace finelemethod::assembly
