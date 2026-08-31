@@ -1,6 +1,8 @@
 #include "finelemethod/solver/boundary_conditions.hpp"
 
+#include <cmath>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace finelemethod::solver
@@ -93,5 +95,66 @@ void apply_prescribed_displacements(
                                                 prescribed_displacement.degree_of_freedom,
                                                 prescribed_displacement.value);
     }
+}
+
+SparseConstrainedSystem apply_prescribed_displacements(
+    const math::CooMatrix &stiffness_matrix, const math::DenseVector &load_vector,
+    const std::span<const PrescribedDisplacement> prescribed_displacements)
+{
+    if (stiffness_matrix.rows() != stiffness_matrix.columns())
+    {
+        throw std::invalid_argument("Prescribed displacement requires a square stiffness matrix.");
+    }
+    if (stiffness_matrix.rows() != load_vector.size())
+    {
+        throw std::invalid_argument("Stiffness matrix row count must match load-vector size.");
+    }
+
+    std::vector<bool> constrained(load_vector.size(), false);
+    std::vector<double> prescribed_values(load_vector.size(), 0.0);
+    for (const PrescribedDisplacement &prescribed_displacement : prescribed_displacements)
+    {
+        validate_degree_of_freedom(load_vector, prescribed_displacement.degree_of_freedom);
+        if (!std::isfinite(prescribed_displacement.value))
+        {
+            throw std::invalid_argument("Prescribed displacement value must be finite.");
+        }
+        if (constrained[prescribed_displacement.degree_of_freedom])
+        {
+            throw std::invalid_argument(
+                "Each prescribed displacement degree of freedom must be unique.");
+        }
+        constrained[prescribed_displacement.degree_of_freedom] = true;
+        prescribed_values[prescribed_displacement.degree_of_freedom] =
+            prescribed_displacement.value;
+    }
+
+    math::CooMatrix constrained_stiffness(stiffness_matrix.rows(), stiffness_matrix.columns());
+    math::DenseVector constrained_load = load_vector;
+    for (const math::CooEntry &entry : stiffness_matrix.entries())
+    {
+        if (!constrained[entry.row] && constrained[entry.column])
+        {
+            constrained_load[entry.row] -= entry.value * prescribed_values[entry.column];
+            if (!std::isfinite(constrained_load[entry.row]))
+            {
+                throw std::overflow_error(
+                    "Prescribed displacement produced a nonfinite sparse load value.");
+            }
+        }
+        else if (!constrained[entry.row] && !constrained[entry.column])
+        {
+            constrained_stiffness.add(entry.row, entry.column, entry.value);
+        }
+    }
+
+    for (const PrescribedDisplacement &prescribed_displacement : prescribed_displacements)
+    {
+        constrained_stiffness.add(prescribed_displacement.degree_of_freedom,
+                                  prescribed_displacement.degree_of_freedom, 1.0);
+        constrained_load[prescribed_displacement.degree_of_freedom] = prescribed_displacement.value;
+    }
+
+    return SparseConstrainedSystem{std::move(constrained_stiffness), std::move(constrained_load)};
 }
 } // namespace finelemethod::solver
