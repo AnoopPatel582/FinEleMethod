@@ -67,6 +67,7 @@ add_executable(FinEleMethodTests
     postprocessing/q4_plane_strain_results_test.cpp
     postprocessing/q4_plane_stress_results_test.cpp
     solver/abaqus_q4_analysis_test.cpp
+    solver/abaqus_h8_analysis_test.cpp
     solver/abaqus_q4_plane_strain_analysis_test.cpp
     solver/abaqus_q4_plane_stress_analysis_test.cpp
     solver/boundary_conditions_test.cpp
