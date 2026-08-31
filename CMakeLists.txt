@@ -13,6 +13,7 @@ add_library(FinEleMethodCore STATIC
     src/assembly/q4_stiffness_assembly.cpp
     src/core/application.cpp
     src/elements/h8_gauss_quadrature.cpp
+    src/elements/h8_face_pressure.cpp
     src/elements/h8_jacobian.cpp
     src/elements/h8_physical_derivatives.cpp
     src/elements/h8_recovery.cpp
@@ -52,6 +53,7 @@ add_library(FinEleMethodCore STATIC
     src/model/dof_map.cpp
     src/model/h8_element.cpp
     src/model/h8_element_collection.cpp
+    src/model/h8_face_pressure_load.cpp
     src/model/isotropic_elastic_material.cpp
     src/model/material_collection.cpp
     src/model/node.cpp

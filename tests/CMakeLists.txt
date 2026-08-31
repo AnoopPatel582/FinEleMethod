@@ -12,6 +12,7 @@ add_executable(FinEleMethodTests
     core/application_test.cpp
     core/exit_code_test.cpp
     elements/h8_gauss_quadrature_test.cpp
+    elements/h8_face_pressure_test.cpp
     elements/h8_jacobian_test.cpp
     elements/h8_model_stiffness_test.cpp
     elements/h8_physical_derivatives_test.cpp
@@ -52,6 +53,7 @@ add_executable(FinEleMethodTests
     model/dof_map_test.cpp
     model/h8_element_test.cpp
     model/h8_element_collection_test.cpp
+    model/h8_face_pressure_load_test.cpp
     model/isotropic_elastic_material_test.cpp
     model/material_collection_test.cpp
     model/node_test.cpp
