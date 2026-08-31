@@ -168,6 +168,8 @@ protocol.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the implemented component
 architecture, solver workflow, numerical data flow, and future GUI boundary.
+The [Q4 formulation](docs/formulations/Q4.md) documents the implemented plane-
+stress and plane-strain mathematics.
 
 ## Licence status
 

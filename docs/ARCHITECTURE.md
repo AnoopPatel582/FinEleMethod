@@ -128,6 +128,9 @@ All three paths share the sparse assembly, constraint, linear-solution, reaction
 and output concepts. Their element formulation and result-recovery code remains
 separate so each formulation can be tested independently.
 
+The mathematical details of the two-dimensional element are documented in the
+[Q4 formulation](formulations/Q4.md).
+
 ## Error boundary
 
 The command-line layer translates failures into the stable exit codes recorded
