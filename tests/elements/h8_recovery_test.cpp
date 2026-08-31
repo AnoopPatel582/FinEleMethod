@@ -60,6 +60,10 @@ TEST(H8Recovery, RecoversUniformUniaxialCompressionAtEveryGaussPoint)
         EXPECT_NEAR(results[point_index].stress[3], 0.0, tolerance);
         EXPECT_NEAR(results[point_index].stress[4], 0.0, tolerance);
         EXPECT_NEAR(results[point_index].stress[5], 0.0, tolerance);
+        EXPECT_NEAR(results[point_index].von_mises, 10.0, tolerance);
+        EXPECT_NEAR(results[point_index].principal_stresses[0], 0.0, tolerance);
+        EXPECT_NEAR(results[point_index].principal_stresses[1], 0.0, tolerance);
+        EXPECT_NEAR(results[point_index].principal_stresses[2], -10.0, tolerance);
     }
 }
 

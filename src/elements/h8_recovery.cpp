@@ -3,6 +3,7 @@
 #include "finelemethod/elements/h8_gauss_quadrature.hpp"
 #include "finelemethod/elements/h8_strain_displacement.hpp"
 #include "finelemethod/mechanics/constitutive_matrix.hpp"
+#include "finelemethod/mechanics/solid_stress_measures.hpp"
 
 #include <cstddef>
 #include <stdexcept>
@@ -29,6 +30,10 @@ H8GaussResults recover_h8_gauss_results(const H8NodeCoordinates &coordinates,
             h8_strain_displacement_matrix(coordinates, point.xi, point.eta, point.zeta);
         const math::DenseVector strain_vector = strain_displacement.matrix * local_displacements;
         const math::DenseVector stress_vector = constitutive * strain_vector;
+        const mechanics::SolidStressMeasures stress_measures =
+            mechanics::calculate_solid_stress_measures(stress_vector[0], stress_vector[1],
+                                                       stress_vector[2], stress_vector[3],
+                                                       stress_vector[4], stress_vector[5]);
 
         results[point_index] = H8PointResult{
             point.xi,
@@ -38,6 +43,8 @@ H8GaussResults recover_h8_gauss_results(const H8NodeCoordinates &coordinates,
              strain_vector[4], strain_vector[5]},
             {stress_vector[0], stress_vector[1], stress_vector[2], stress_vector[3],
              stress_vector[4], stress_vector[5]},
+            stress_measures.von_mises,
+            stress_measures.principal_stresses,
         };
     }
 

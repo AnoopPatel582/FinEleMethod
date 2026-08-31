@@ -47,6 +47,7 @@ add_executable(FinEleMethodTests
     mechanics/constitutive_matrix_test.cpp
     mechanics/plane_strain_measures_test.cpp
     mechanics/plane_stress_measures_test.cpp
+    mechanics/solid_stress_measures_test.cpp
     model/dof_map_test.cpp
     model/h8_element_test.cpp
     model/h8_element_collection_test.cpp

@@ -19,6 +19,9 @@ struct H8PointResult
     // Stress order:
     // [sigma_x, sigma_y, sigma_z, tau_xy, tau_yz, tau_zx].
     std::array<double, 6> stress;
+    double von_mises;
+    // Descending order [sigma_1, sigma_2, sigma_3].
+    std::array<double, 3> principal_stresses;
 };
 
 using H8GaussResults = std::array<H8PointResult, 8>;
