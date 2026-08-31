@@ -1,10 +1,26 @@
 #include "finelemethod/assembly/h8_stiffness_assembly.hpp"
 
+#include "finelemethod/assembly/coo_assembly.hpp"
 #include "finelemethod/assembly/h8_dof_mapping.hpp"
 #include "finelemethod/elements/h8_stiffness.hpp"
 
 #include <cstddef>
 #include <stdexcept>
+
+namespace
+{
+void validate_h8_stiffness_assembly(const finelemethod::model::DofMap &dof_map)
+{
+    if (dof_map.spatial_dimension() != finelemethod::model::SpatialDimension::three_dimensional)
+    {
+        throw std::invalid_argument("H8 stiffness assembly requires a three-dimensional DOF map.");
+    }
+    if (dof_map.size() == 0)
+    {
+        throw std::invalid_argument("Cannot assemble stiffness without degrees of freedom.");
+    }
+}
+} // namespace
 
 namespace finelemethod::assembly
 {
@@ -13,14 +29,7 @@ math::DenseMatrix assemble_h8_stiffness(const model::H8ElementCollection &elemen
                                         const model::MaterialCollection &materials,
                                         const model::DofMap &dof_map)
 {
-    if (dof_map.spatial_dimension() != model::SpatialDimension::three_dimensional)
-    {
-        throw std::invalid_argument("H8 stiffness assembly requires a three-dimensional DOF map.");
-    }
-    if (dof_map.size() == 0)
-    {
-        throw std::invalid_argument("Cannot assemble stiffness without degrees of freedom.");
-    }
+    validate_h8_stiffness_assembly(dof_map);
 
     math::DenseMatrix global_stiffness(dof_map.size(), dof_map.size());
     for (const model::H8Element &element : element_collection.elements())
@@ -37,6 +46,25 @@ math::DenseMatrix assemble_h8_stiffness(const model::H8ElementCollection &elemen
                     element_stiffness(local_row, local_column);
             }
         }
+    }
+
+    return global_stiffness;
+}
+
+math::CooMatrix assemble_h8_stiffness_coo(const model::H8ElementCollection &element_collection,
+                                          const model::NodeCollection &nodes,
+                                          const model::MaterialCollection &materials,
+                                          const model::DofMap &dof_map)
+{
+    validate_h8_stiffness_assembly(dof_map);
+
+    math::CooMatrix global_stiffness(dof_map.size(), dof_map.size());
+    for (const model::H8Element &element : element_collection.elements())
+    {
+        const math::DenseMatrix element_stiffness =
+            elements::h8_stiffness_matrix(element, nodes, materials);
+        const H8GlobalDofIndices global_indices = h8_global_dof_indices(element, dof_map);
+        add_element_matrix_to_coo(global_stiffness, element_stiffness, global_indices);
     }
 
     return global_stiffness;
