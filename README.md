@@ -6,17 +6,18 @@ engineering GUI will be added after the corresponding solver capabilities are
 validated.
 
 The project is under active development. Its command-line engine can currently
-solve supported ABAQUS Q4 plane-stress and plane-strain models and write
-ParaView results.
+solve supported ABAQUS Q4 plane-stress, Q4 plane-strain, and H8 three-dimensional
+models and write ParaView results.
 
 ## Current capabilities
 
 - C++20 command-line executable built with MSVC and CMake.
 - Reproducible dependencies managed with a vcpkg manifest.
 - Automated tests using GoogleTest and CTest.
-- ABAQUS `.inp` parsing for nodes, CPS4 and CPE4 elements, isotropic materials, solid
-  sections, nodal displacement constraints, and concentrated nodal loads.
-- Dense linear-static Q4 plane-stress and plane-strain solutions with
+- ABAQUS `.inp` parsing for nodes, CPS4, CPE4, and C3D8 elements, isotropic
+  materials, solid sections, nodal displacement constraints, and concentrated
+  nodal loads.
+- Dense linear-static Q4 plane-stress, Q4 plane-strain, and H8 solutions with
   displacement, reaction, strain, stress, von Mises, and principal-stress
   recovery.
 - ASCII `.vtu` output for ParaView.
@@ -91,10 +92,23 @@ Its analytical solution has a right-edge X displacement of `0.009375`, a
 top-edge Y displacement of `-0.003125`, uniform X stress of `10.0`, and
 constrained out-of-plane stress of `2.5`.
 
+Run the supplied H8 three-dimensional block-compression verification model:
+
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethod.exe `
+  --input .\examples\abaqus\h8_compression.inp `
+  --output .\out\h8_compression.vtu
+```
+
+Its analytical solution has a top-face Z displacement of `-0.01`, transverse
+X and Y strains of `0.0025`, uniform Z stress of `-10.0`, von Mises stress of
+`10.0`, and a total bottom-face Z reaction of `10.0`.
+
 The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
 `*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use
 `*DLOAD` with `P1` through `P4` and direct element IDs or element-set names.
-Other element and analysis types will be added in later increments.
+H8 input currently supports nodal point loads; H8 face-pressure loading and
+other element types will be added in later increments.
 
 ## Project decisions
 
