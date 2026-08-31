@@ -9,6 +9,7 @@ add_executable(FinEleMethodTests
     assembly/q4_pressure_assembly_test.cpp
     assembly/q4_plane_strain_stiffness_assembly_test.cpp
     assembly/q4_stiffness_assembly_test.cpp
+    benchmarks/q4_cantilever_benchmark_test.cpp
     cli/command_line_test.cpp
     core/application_test.cpp
     core/exit_code_test.cpp
@@ -87,6 +88,10 @@ target_link_libraries(FinEleMethodTests
         FinEleMethod::Core
         FinEleMethod::Cli
         GTest::gtest_main
+)
+
+target_compile_definitions(FinEleMethodTests
+    PRIVATE FINELEMETHOD_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
 )
 
 if(MSVC)
