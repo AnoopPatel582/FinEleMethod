@@ -7,6 +7,7 @@
 #include "finelemethod/input/abaqus_input_file.hpp"
 #include "finelemethod/input/abaqus_parse_error.hpp"
 #include "finelemethod/model/dof_map.hpp"
+#include "finelemethod/output/analysis_progress.hpp"
 #include "finelemethod/output/analysis_summary.hpp"
 #include "finelemethod/output/h8_analysis_vtu.hpp"
 #include "finelemethod/output/q4_analysis_vtu.hpp"
@@ -30,7 +31,7 @@ void write_help(std::ostream &stream)
            << "Usage:\n"
            << "  FinEleMethod --help\n"
            << "  FinEleMethod --input <model.inp> --output <result.vtu> "
-              "[--summary <summary.json>]\n"
+              "[--summary <summary.json>] [--json-progress]\n"
            << "  FinEleMethod --example q4-tension --output <file.vtu>\n"
            << "  FinEleMethod --example h8-compression --output <file.vtu>\n\n"
            << "Options:\n"
@@ -39,7 +40,8 @@ void write_help(std::ostream &stream)
            << "  --example q4-tension  Run the built-in Q4 uniaxial-tension example.\n"
            << "  --example h8-compression  Run the built-in H8 block-compression example.\n"
            << "  --output <file.vtu>   Write analysis results to an ASCII VTU file.\n";
-    stream << "  --summary <file.json>  Write a versioned analysis summary.\n";
+    stream << "  --summary <file.json>  Write a versioned analysis summary.\n"
+           << "  --json-progress       Write versioned JSON Lines progress to stdout.\n";
 }
 } // namespace
 
@@ -59,16 +61,32 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
         return ExitCode::Success;
     }
 
-    const bool is_input_analysis = (arguments.size() == 4 || arguments.size() == 6) &&
-                                   arguments[0] == "--input" && arguments[2] == "--output" &&
-                                   (arguments.size() == 4 || arguments[4] == "--summary");
+    const bool has_summary = arguments.size() >= 6 && arguments[4] == "--summary";
+    const bool has_json_progress = (arguments.size() == 5 && arguments[4] == "--json-progress") ||
+                                   (arguments.size() == 7 && arguments[6] == "--json-progress");
+    const bool is_input_analysis =
+        arguments.size() >= 4 && arguments.size() <= 7 && arguments[0] == "--input" &&
+        arguments[2] == "--output" &&
+        ((arguments.size() == 4) || (arguments.size() == 5 && has_json_progress) ||
+         (arguments.size() == 6 && has_summary) ||
+         (arguments.size() == 7 && has_summary && has_json_progress));
     if (is_input_analysis)
     {
         const std::filesystem::path input_path{std::string(arguments[1])};
         const std::filesystem::path output_path{std::string(arguments[3])};
         const std::optional<std::filesystem::path> summary_path =
-            arguments.size() == 6 ? std::optional<std::filesystem::path>{std::string(arguments[5])}
-                                  : std::nullopt;
+            has_summary ? std::optional<std::filesystem::path>{std::string(arguments[5])}
+                        : std::nullopt;
+        const auto write_progress = [&](const output::AnalysisState state,
+                                        const std::string_view message) {
+            if (has_json_progress)
+            {
+                output::write_analysis_progress_json_line(
+                    output, output::AnalysisProgressEvent{state, std::string(message)});
+            }
+        };
+
+        write_progress(output::AnalysisState::preparing, "Reading input model.");
         std::string input_text;
         try
         {
@@ -76,12 +94,14 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
         }
         catch (const std::exception &exception)
         {
+            write_progress(output::AnalysisState::failed, exception.what());
             error << "Input-file error: " << exception.what() << '\n';
             return ExitCode::InputParsingError;
         }
 
         try
         {
+            write_progress(output::AnalysisState::executing, "Solving finite element model.");
             const input::AbaqusElementFamily family =
                 input::detect_abaqus_element_family(input_text);
             if (family == input::AbaqusElementFamily::h8)
@@ -91,6 +111,8 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                                             model::SpatialDimension::three_dimensional);
                 try
                 {
+                    write_progress(output::AnalysisState::writing_results,
+                                   "Writing analysis results.");
                     output::write_h8_analysis_vtu(output_path, solution.model.nodes,
                                                   solution.model.elements, dof_map,
                                                   solution.result);
@@ -111,15 +133,20 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                 }
                 catch (const std::exception &exception)
                 {
+                    write_progress(output::AnalysisState::failed, exception.what());
                     error << "Result-writing error: " << exception.what() << '\n';
                     return ExitCode::ResultWritingError;
                 }
-                output << "Completed ABAQUS H8 analysis.\n"
-                       << "Input model: " << input_path.string() << '\n'
-                       << "VTU result: " << output_path.string() << '\n';
-                if (summary_path)
+                write_progress(output::AnalysisState::completed, "Analysis completed.");
+                if (!has_json_progress)
                 {
-                    output << "Analysis summary: " << summary_path->string() << '\n';
+                    output << "Completed ABAQUS H8 analysis.\n"
+                           << "Input model: " << input_path.string() << '\n'
+                           << "VTU result: " << output_path.string() << '\n';
+                    if (summary_path)
+                    {
+                        output << "Analysis summary: " << summary_path->string() << '\n';
+                    }
                 }
                 return ExitCode::Success;
             }
@@ -129,6 +156,7 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                                         model::SpatialDimension::two_dimensional);
             try
             {
+                write_progress(output::AnalysisState::writing_results, "Writing analysis results.");
                 std::visit(
                     [&](const auto &result) {
                         output::write_q4_analysis_vtu(output_path, solution.model.nodes,
@@ -159,6 +187,7 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
             }
             catch (const std::exception &exception)
             {
+                write_progress(output::AnalysisState::failed, exception.what());
                 error << "Result-writing error: " << exception.what() << '\n';
                 return ExitCode::ResultWritingError;
             }
@@ -166,32 +195,40 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                 solution.model.analysis_type == input::Q4AnalysisType::plane_stress
                     ? "plane-stress"
                     : "plane-strain";
-            output << "Completed ABAQUS Q4 " << formulation << " analysis.\n"
-                   << "Input model: " << input_path.string() << '\n'
-                   << "VTU result: " << output_path.string() << '\n';
-            if (summary_path)
+            write_progress(output::AnalysisState::completed, "Analysis completed.");
+            if (!has_json_progress)
             {
-                output << "Analysis summary: " << summary_path->string() << '\n';
+                output << "Completed ABAQUS Q4 " << formulation << " analysis.\n"
+                       << "Input model: " << input_path.string() << '\n'
+                       << "VTU result: " << output_path.string() << '\n';
+                if (summary_path)
+                {
+                    output << "Analysis summary: " << summary_path->string() << '\n';
+                }
             }
             return ExitCode::Success;
         }
         catch (const input::AbaqusParseError &exception)
         {
+            write_progress(output::AnalysisState::failed, exception.what());
             error << "Input-parsing error: " << exception.what() << '\n';
             return ExitCode::InputParsingError;
         }
         catch (const std::invalid_argument &exception)
         {
+            write_progress(output::AnalysisState::failed, exception.what());
             error << "Model validation error: " << exception.what() << '\n';
             return ExitCode::ModelValidationError;
         }
         catch (const std::runtime_error &exception)
         {
+            write_progress(output::AnalysisState::failed, exception.what());
             error << "Numerical solution error: " << exception.what() << '\n';
             return ExitCode::NumericalSolutionError;
         }
         catch (const std::exception &exception)
         {
+            write_progress(output::AnalysisState::failed, exception.what());
             error << "Unexpected internal error: " << exception.what() << '\n';
             return ExitCode::UnexpectedInternalError;
         }

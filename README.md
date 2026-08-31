@@ -154,6 +154,10 @@ The JSON document uses `protocolVersion` `1` and records the completion status,
 analysis type, input and result paths, model sizes, solver iteration count, and
 final residual norm.
 
+Add `--json-progress` after the other ABAQUS options to make standard output a
+JSON Lines stream for application integration. Each line reports a versioned
+analysis lifecycle event; human-readable errors remain on standard error.
+
 The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
 `*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use
 `*DLOAD` with `P1` through `P4` and direct element IDs or element-set names.

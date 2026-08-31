@@ -10,6 +10,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace
 {
@@ -63,6 +64,18 @@ yzero,2
 *Cload
 top,3,-2.5
 )";
+
+std::vector<nlohmann::json> parse_json_lines(const std::string &text)
+{
+    std::istringstream stream(text);
+    std::vector<nlohmann::json> documents;
+    std::string line;
+    while (std::getline(stream, line))
+    {
+        documents.push_back(nlohmann::json::parse(line));
+    }
+    return documents;
+}
 } // namespace
 
 TEST(CommandLine, HelpWritesUsageAndSucceeds)
@@ -251,6 +264,81 @@ TEST(CommandLine, AbaqusInputWritesVersionedAnalysisSummary)
     std::filesystem::remove(summary_path);
 }
 
+TEST(CommandLine, AbaqusInputWritesJsonLinesProgressWithoutHumanOutput)
+{
+    const auto directory = std::filesystem::temp_directory_path();
+    const auto input_path = directory / "finelemethod_cli_progress_input.inp";
+    const auto output_path = directory / "finelemethod_cli_progress_result.vtu";
+    const auto summary_path = directory / "finelemethod_cli_progress_summary.json";
+    {
+        std::ofstream input_file(input_path, std::ios::binary);
+        input_file << valid_abaqus_input;
+    }
+    std::filesystem::remove(output_path);
+    std::filesystem::remove(summary_path);
+    const std::string input_text = input_path.string();
+    const std::string output_text = output_path.string();
+    const std::string summary_text = summary_path.string();
+    const std::array<std::string_view, 7> arguments{"--input",        input_text,  "--output",
+                                                    output_text,      "--summary", summary_text,
+                                                    "--json-progress"};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::Success);
+    EXPECT_TRUE(error.str().empty());
+    const auto events = parse_json_lines(output.str());
+    ASSERT_EQ(events.size(), 4U);
+    EXPECT_EQ(events[0].at("state"), "preparing");
+    EXPECT_EQ(events[1].at("state"), "executing");
+    EXPECT_EQ(events[2].at("state"), "writing-results");
+    EXPECT_EQ(events[3].at("state"), "completed");
+    for (const auto &event : events)
+    {
+        EXPECT_EQ(event.at("protocolVersion"), 1);
+        EXPECT_EQ(event.at("event"), "analysis-progress");
+    }
+    EXPECT_TRUE(std::filesystem::exists(summary_path));
+
+    std::filesystem::remove(input_path);
+    std::filesystem::remove(output_path);
+    std::filesystem::remove(summary_path);
+}
+
+TEST(CommandLine, H8InputWritesJsonLinesProgress)
+{
+    const auto directory = std::filesystem::temp_directory_path();
+    const auto input_path = directory / "finelemethod_cli_h8_progress_input.inp";
+    const auto output_path = directory / "finelemethod_cli_h8_progress_result.vtu";
+    {
+        std::ofstream input_file(input_path, std::ios::binary);
+        input_file << valid_h8_abaqus_input;
+    }
+    std::filesystem::remove(output_path);
+    const std::string input_text = input_path.string();
+    const std::string output_text = output_path.string();
+    const std::array<std::string_view, 5> arguments{"--input", input_text, "--output", output_text,
+                                                    "--json-progress"};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::Success);
+    EXPECT_TRUE(error.str().empty());
+    const auto events = parse_json_lines(output.str());
+    ASSERT_EQ(events.size(), 4U);
+    EXPECT_EQ(events[0].at("state"), "preparing");
+    EXPECT_EQ(events[1].at("state"), "executing");
+    EXPECT_EQ(events[2].at("state"), "writing-results");
+    EXPECT_EQ(events[3].at("state"), "completed");
+
+    std::filesystem::remove(input_path);
+    std::filesystem::remove(output_path);
+}
+
 TEST(CommandLine, AbaqusCpe4InputAutomaticallyWritesPlaneStrainResult)
 {
     const auto directory = std::filesystem::temp_directory_path();
@@ -337,4 +425,28 @@ TEST(CommandLine, AbaqusInputReportsMissingInputFile)
     EXPECT_EQ(exit_code, finelemethod::ExitCode::InputParsingError);
     EXPECT_TRUE(output.str().empty());
     EXPECT_NE(error.str().find("Input-file error"), std::string::npos);
+}
+
+TEST(CommandLine, JsonLinesProgressReportsMissingInputFailure)
+{
+    const auto input_path =
+        std::filesystem::temp_directory_path() / "finelemethod_missing_progress_input.inp";
+    const auto output_path =
+        std::filesystem::temp_directory_path() / "finelemethod_missing_progress_input.vtu";
+    std::filesystem::remove(input_path);
+    const std::string input_text = input_path.string();
+    const std::string output_text = output_path.string();
+    const std::array<std::string_view, 5> arguments{"--input", input_text, "--output", output_text,
+                                                    "--json-progress"};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::InputParsingError);
+    EXPECT_NE(error.str().find("Input-file error"), std::string::npos);
+    const auto events = parse_json_lines(output.str());
+    ASSERT_EQ(events.size(), 2U);
+    EXPECT_EQ(events[0].at("state"), "preparing");
+    EXPECT_EQ(events[1].at("state"), "failed");
 }
