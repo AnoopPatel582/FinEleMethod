@@ -51,6 +51,9 @@ TEST(Q4PlaneStrainAnalysis, ReproducesUniformUniaxialInPlaneStress)
     const auto result = solve_q4_plane_strain_model(
         elements, nodes, materials, dof_map, point_loads, pressure_loads, prescribed_displacements);
 
+    EXPECT_GT(result.solver_iterations, 0U);
+    EXPECT_LT(result.residual_norm, 1.0e-10);
+
     constexpr double axial_displacement = 0.009375;
     constexpr double transverse_displacement = -0.003125;
     constexpr double tolerance = 1.0e-12;

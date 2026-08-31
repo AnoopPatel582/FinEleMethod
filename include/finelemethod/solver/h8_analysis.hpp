@@ -10,6 +10,7 @@
 #include "finelemethod/solver/boundary_conditions.hpp"
 #include "finelemethod/solver/sparse_static_solver.hpp"
 
+#include <cstddef>
 #include <span>
 #include <vector>
 
@@ -20,6 +21,8 @@ struct H8AnalysisResult
     math::DenseVector displacements;
     math::DenseVector reactions;
     std::vector<postprocessing::H8ElementResults> element_results;
+    std::size_t solver_iterations;
+    double residual_norm;
 };
 
 // Runs a sparse linear-static H8 analysis with nodal point loads and uniform

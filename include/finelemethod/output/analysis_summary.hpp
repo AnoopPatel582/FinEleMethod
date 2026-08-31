@@ -13,6 +13,8 @@ struct AnalysisSummary
     std::filesystem::path result_path;
     std::size_t node_count{};
     std::size_t element_count{};
+    std::size_t solver_iterations{};
+    double residual_norm{};
 };
 
 void write_analysis_summary(const std::filesystem::path &path, const AnalysisSummary &summary);

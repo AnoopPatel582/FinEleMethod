@@ -31,6 +31,8 @@ Q4PlaneStressAnalysisResult solve_q4_plane_stress_model(
         std::move(static_result.displacements),
         std::move(static_result.reactions),
         std::move(element_results),
+        static_result.iterations,
+        static_result.residual_norm,
     };
 }
 } // namespace finelemethod::solver

@@ -66,6 +66,9 @@ TEST(H8Analysis, CombinesPointAndFacePressureLoadsForUniformCompression)
     const auto result = solve_h8_model(elements, nodes, materials, dof_map, point_loads,
                                        pressure_loads, prescribed_displacements);
 
+    EXPECT_GT(result.solver_iterations, 0U);
+    EXPECT_LT(result.residual_norm, 1.0e-10);
+
     constexpr double tolerance = 1.0e-12;
     for (const auto &node : nodes.nodes())
     {

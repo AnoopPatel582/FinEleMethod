@@ -17,6 +17,8 @@ void write_analysis_summary(const std::filesystem::path &path, const AnalysisSum
         {"resultFile", summary.result_path.generic_string()},
         {"nodeCount", summary.node_count},
         {"elementCount", summary.element_count},
+        {"solverIterations", summary.solver_iterations},
+        {"residualNorm", summary.residual_norm},
     };
 
     std::ofstream stream(path);

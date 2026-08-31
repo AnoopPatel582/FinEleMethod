@@ -31,6 +31,8 @@ Q4PlaneStrainAnalysisResult solve_q4_plane_strain_model(
         std::move(static_result.displacements),
         std::move(static_result.reactions),
         std::move(element_results),
+        static_result.iterations,
+        static_result.residual_norm,
     };
 }
 } // namespace finelemethod::solver

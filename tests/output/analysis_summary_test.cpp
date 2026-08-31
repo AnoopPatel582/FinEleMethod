@@ -19,6 +19,8 @@ TEST(AnalysisSummary, WritesVersionedCompletedAnalysisDocument)
         .result_path = "results/tension.vtu",
         .node_count = 4,
         .element_count = 1,
+        .solver_iterations = 3,
+        .residual_norm = 1.25e-12,
     };
 
     write_analysis_summary(path, summary);
@@ -32,6 +34,8 @@ TEST(AnalysisSummary, WritesVersionedCompletedAnalysisDocument)
     EXPECT_EQ(document.at("resultFile"), "results/tension.vtu");
     EXPECT_EQ(document.at("nodeCount"), 4);
     EXPECT_EQ(document.at("elementCount"), 1);
+    EXPECT_EQ(document.at("solverIterations"), 3);
+    EXPECT_DOUBLE_EQ(document.at("residualNorm"), 1.25e-12);
 
     stream.close();
     std::filesystem::remove(path);

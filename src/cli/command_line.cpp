@@ -97,13 +97,16 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                     if (summary_path)
                     {
                         output::write_analysis_summary(
-                            *summary_path, output::AnalysisSummary{
-                                               .analysis_type = "h8-three-dimensional",
-                                               .input_path = input_path,
-                                               .result_path = output_path,
-                                               .node_count = solution.model.nodes.size(),
-                                               .element_count = solution.model.elements.size(),
-                                           });
+                            *summary_path,
+                            output::AnalysisSummary{
+                                .analysis_type = "h8-three-dimensional",
+                                .input_path = input_path,
+                                .result_path = output_path,
+                                .node_count = solution.model.nodes.size(),
+                                .element_count = solution.model.elements.size(),
+                                .solver_iterations = solution.result.solver_iterations,
+                                .residual_norm = solution.result.residual_norm,
+                            });
                     }
                 }
                 catch (const std::exception &exception)
@@ -138,14 +141,20 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                         solution.model.analysis_type == input::Q4AnalysisType::plane_stress
                             ? "q4-plane-stress"
                             : "q4-plane-strain";
-                    output::write_analysis_summary(
-                        *summary_path, output::AnalysisSummary{
-                                           .analysis_type = analysis_type,
-                                           .input_path = input_path,
-                                           .result_path = output_path,
-                                           .node_count = solution.model.nodes.size(),
-                                           .element_count = solution.model.elements.size(),
-                                       });
+                    std::visit(
+                        [&](const auto &result) {
+                            output::write_analysis_summary(
+                                *summary_path, output::AnalysisSummary{
+                                                   .analysis_type = analysis_type,
+                                                   .input_path = input_path,
+                                                   .result_path = output_path,
+                                                   .node_count = solution.model.nodes.size(),
+                                                   .element_count = solution.model.elements.size(),
+                                                   .solver_iterations = result.solver_iterations,
+                                                   .residual_norm = result.residual_norm,
+                                               });
+                        },
+                        solution.result);
                 }
             }
             catch (const std::exception &exception)

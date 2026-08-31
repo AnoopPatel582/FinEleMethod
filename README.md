@@ -151,7 +151,8 @@ is needed by another application:
 ```
 
 The JSON document uses `protocolVersion` `1` and records the completion status,
-analysis type, input and result paths, and model node and element counts.
+analysis type, input and result paths, model sizes, solver iteration count, and
+final residual norm.
 
 The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
 `*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use

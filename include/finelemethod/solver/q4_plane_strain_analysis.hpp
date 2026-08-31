@@ -10,6 +10,7 @@
 #include "finelemethod/solver/boundary_conditions.hpp"
 #include "finelemethod/solver/sparse_static_solver.hpp"
 
+#include <cstddef>
 #include <span>
 #include <vector>
 
@@ -20,6 +21,8 @@ struct Q4PlaneStrainAnalysisResult
     math::DenseVector displacements;
     math::DenseVector reactions;
     std::vector<postprocessing::Q4ElementPlaneStrainResults> element_results;
+    std::size_t solver_iterations;
+    double residual_norm;
 };
 
 // Runs a complete sparse linear-static Q4 plane-strain analysis.

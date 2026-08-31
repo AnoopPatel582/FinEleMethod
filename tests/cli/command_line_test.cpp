@@ -242,6 +242,8 @@ TEST(CommandLine, AbaqusInputWritesVersionedAnalysisSummary)
     EXPECT_EQ(document.at("resultFile"), output_path.generic_string());
     EXPECT_EQ(document.at("nodeCount"), 4);
     EXPECT_EQ(document.at("elementCount"), 1);
+    EXPECT_GT(document.at("solverIterations").get<std::size_t>(), 0U);
+    EXPECT_LT(document.at("residualNorm").get<double>(), 1.0e-10);
 
     summary_file.close();
     std::filesystem::remove(input_path);
