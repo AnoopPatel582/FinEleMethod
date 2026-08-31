@@ -3,6 +3,7 @@
 #include "finelemethod/model/dof_map.hpp"
 #include "finelemethod/model/h8_element.hpp"
 #include "finelemethod/model/h8_element_collection.hpp"
+#include "finelemethod/model/h8_face_pressure_load.hpp"
 #include "finelemethod/model/isotropic_elastic_material.hpp"
 #include "finelemethod/model/material_collection.hpp"
 #include "finelemethod/model/node.hpp"
@@ -66,9 +67,10 @@ void write_h8_compression_example(const std::filesystem::path &output_path)
         solver::PrescribedDisplacement{dof_map.global_index(6, model::DisplacementComponent::y),
                                        0.0},
     };
+    const std::array<model::H8FacePressureLoad, 0> pressure_loads{};
 
     const auto result = solver::solve_h8_model(elements, nodes, materials, dof_map, point_loads,
-                                               prescribed_displacements);
+                                               pressure_loads, prescribed_displacements);
     output::write_h8_analysis_vtu(output_path, nodes, elements, dof_map, result);
 }
 } // namespace finelemethod::examples

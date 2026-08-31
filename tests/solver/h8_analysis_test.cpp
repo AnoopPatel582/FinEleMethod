@@ -11,6 +11,8 @@ using finelemethod::model::DisplacementComponent;
 using finelemethod::model::DofMap;
 using finelemethod::model::H8Element;
 using finelemethod::model::H8ElementCollection;
+using finelemethod::model::H8Face;
+using finelemethod::model::H8FacePressureLoad;
 using finelemethod::model::H8NodeIds;
 using finelemethod::model::IsotropicElasticMaterial;
 using finelemethod::model::MaterialCollection;
@@ -21,7 +23,7 @@ using finelemethod::model::SpatialDimension;
 using finelemethod::solver::PrescribedDisplacement;
 using finelemethod::solver::solve_h8_model;
 
-TEST(H8Analysis, ReproducesUniformUniaxialCompression)
+TEST(H8Analysis, CombinesPointAndFacePressureLoadsForUniformCompression)
 {
     NodeCollection nodes;
     nodes.add(Node(1, 0.0, 0.0, 0.0));
@@ -40,11 +42,12 @@ TEST(H8Analysis, ReproducesUniformUniaxialCompression)
     elements.add(H8Element(1, H8NodeIds{{1, 2, 3, 4, 5, 6, 7, 8}}, 1));
 
     const std::array point_loads{
-        PointLoad(5, DisplacementComponent::z, -2.5),
-        PointLoad(6, DisplacementComponent::z, -2.5),
-        PointLoad(7, DisplacementComponent::z, -2.5),
-        PointLoad(8, DisplacementComponent::z, -2.5),
+        PointLoad(5, DisplacementComponent::z, -1.25),
+        PointLoad(6, DisplacementComponent::z, -1.25),
+        PointLoad(7, DisplacementComponent::z, -1.25),
+        PointLoad(8, DisplacementComponent::z, -1.25),
     };
+    const std::array pressure_loads{H8FacePressureLoad(1, H8Face::two, 5.0)};
     const std::array prescribed_displacements{
         PrescribedDisplacement{dof_map.global_index(1, DisplacementComponent::z), 0.0},
         PrescribedDisplacement{dof_map.global_index(2, DisplacementComponent::z), 0.0},
@@ -60,8 +63,8 @@ TEST(H8Analysis, ReproducesUniformUniaxialCompression)
         PrescribedDisplacement{dof_map.global_index(6, DisplacementComponent::y), 0.0},
     };
 
-    const auto result =
-        solve_h8_model(elements, nodes, materials, dof_map, point_loads, prescribed_displacements);
+    const auto result = solve_h8_model(elements, nodes, materials, dof_map, point_loads,
+                                       pressure_loads, prescribed_displacements);
 
     constexpr double tolerance = 1.0e-12;
     for (const auto &node : nodes.nodes())
