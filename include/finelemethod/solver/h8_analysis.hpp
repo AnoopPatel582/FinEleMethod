@@ -8,7 +8,7 @@
 #include "finelemethod/model/point_load.hpp"
 #include "finelemethod/postprocessing/h8_results.hpp"
 #include "finelemethod/solver/boundary_conditions.hpp"
-#include "finelemethod/solver/dense_static_solver.hpp"
+#include "finelemethod/solver/sparse_static_solver.hpp"
 
 #include <span>
 #include <vector>
@@ -22,7 +22,7 @@ struct H8AnalysisResult
     std::vector<postprocessing::H8ElementResults> element_results;
 };
 
-// Runs a dense linear-static H8 analysis with nodal point loads and uniform
+// Runs a sparse linear-static H8 analysis with nodal point loads and uniform
 // element-face pressures.
 [[nodiscard]] H8AnalysisResult solve_h8_model(
     const model::H8ElementCollection &elements, const model::NodeCollection &nodes,
