@@ -2,6 +2,7 @@
 
 #include "abaqus_parser_utilities.hpp"
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <string>
@@ -12,6 +13,7 @@ namespace finelemethod::input
 namespace
 {
 model::DisplacementComponent displacement_component(const std::size_t abaqus_dof,
+                                                    const model::SpatialDimension spatial_dimension,
                                                     const std::size_t line_number)
 {
     if (abaqus_dof == 1)
@@ -22,8 +24,18 @@ model::DisplacementComponent displacement_component(const std::size_t abaqus_dof
     {
         return model::DisplacementComponent::y;
     }
-    throw AbaqusParseError("Unsupported two-dimensional boundary degree of freedom on line " +
-                           std::to_string(line_number) + ".");
+    if (abaqus_dof == 3 && spatial_dimension == model::SpatialDimension::three_dimensional)
+    {
+        return model::DisplacementComponent::z;
+    }
+    throw AbaqusParseError(
+        "Unsupported boundary degree of freedom for the model dimension on line " +
+        std::to_string(line_number) + ".");
+}
+
+std::size_t component_index(const model::DisplacementComponent component)
+{
+    return static_cast<std::size_t>(component);
 }
 
 void validate_boundary_keyword(const std::string_view line, const std::size_t line_number)
@@ -50,11 +62,10 @@ void validate_boundary_keyword(const std::string_view line, const std::size_t li
 } // namespace
 
 std::vector<AbaqusNodalDisplacement> parse_abaqus_nodal_displacements(
-    const std::string_view input_text)
+    const std::string_view input_text, const model::SpatialDimension spatial_dimension)
 {
     std::vector<AbaqusNodalDisplacement> displacements;
-    std::unordered_set<model::NodeId> constrained_x_nodes;
-    std::unordered_set<model::NodeId> constrained_y_nodes;
+    std::array<std::unordered_set<model::NodeId>, 3> constrained_nodes_by_component;
     bool in_boundary_section = false;
     bool found_boundary_section = false;
     std::size_t line_number = 0;
@@ -125,12 +136,11 @@ std::vector<AbaqusNodalDisplacement> parse_abaqus_nodal_displacements(
             for (std::size_t abaqus_dof = first_dof; abaqus_dof <= last_dof; ++abaqus_dof)
             {
                 const model::DisplacementComponent component =
-                    displacement_component(abaqus_dof, line_number);
+                    displacement_component(abaqus_dof, spatial_dimension, line_number);
                 if (const auto *node_id = std::get_if<model::NodeId>(&target))
                 {
-                    auto &constrained_nodes = component == model::DisplacementComponent::x
-                                                  ? constrained_x_nodes
-                                                  : constrained_y_nodes;
+                    auto &constrained_nodes =
+                        constrained_nodes_by_component[component_index(component)];
                     if (!constrained_nodes.insert(*node_id).second)
                     {
                         throw AbaqusParseError("Duplicate prescribed displacement on line " +

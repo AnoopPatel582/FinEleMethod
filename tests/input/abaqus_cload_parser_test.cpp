@@ -11,6 +11,7 @@ namespace
 using finelemethod::input::AbaqusParseError;
 using finelemethod::input::parse_abaqus_concentrated_loads;
 using finelemethod::model::DisplacementComponent;
+using finelemethod::model::SpatialDimension;
 
 TEST(AbaqusCloadParser, ParsesMultipleSectionsAndPreservesRepeatedLoads)
 {
@@ -52,6 +53,18 @@ TEST(AbaqusCloadParser, RejectsUnsupportedTwoDimensionalDof)
     constexpr std::string_view input = "*Cload\n1, 3, 10.0\n";
 
     EXPECT_THROW(static_cast<void>(parse_abaqus_concentrated_loads(input)), AbaqusParseError);
+}
+
+TEST(AbaqusCloadParser, ParsesThreeDimensionalLoad)
+{
+    constexpr std::string_view input = "*Cload\nloaded, 3, -25.0\n";
+
+    const auto loads = parse_abaqus_concentrated_loads(input, SpatialDimension::three_dimensional);
+
+    ASSERT_EQ(loads.size(), 1U);
+    EXPECT_EQ(std::get<std::string>(loads[0].target), "loaded");
+    EXPECT_EQ(loads[0].component, DisplacementComponent::z);
+    EXPECT_DOUBLE_EQ(loads[0].magnitude, -25.0);
 }
 
 TEST(AbaqusCloadParser, RejectsMalformedDataRow)

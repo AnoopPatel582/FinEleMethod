@@ -11,6 +11,7 @@ namespace
 using finelemethod::input::AbaqusParseError;
 using finelemethod::input::parse_abaqus_nodal_displacements;
 using finelemethod::model::DisplacementComponent;
+using finelemethod::model::SpatialDimension;
 
 TEST(AbaqusBoundaryParser, ParsesSingleDofsRangesAndValues)
 {
@@ -53,6 +54,28 @@ TEST(AbaqusBoundaryParser, RejectsUnsupportedTwoDimensionalDof)
     constexpr std::string_view input = "*Boundary\n1, 3, 3\n";
 
     EXPECT_THROW(static_cast<void>(parse_abaqus_nodal_displacements(input)), AbaqusParseError);
+}
+
+TEST(AbaqusBoundaryParser, ParsesThreeDimensionalDofRange)
+{
+    constexpr std::string_view input = "*Boundary\nfixed, 1, 3, 0.0\n";
+
+    const auto displacements =
+        parse_abaqus_nodal_displacements(input, SpatialDimension::three_dimensional);
+
+    ASSERT_EQ(displacements.size(), 3U);
+    EXPECT_EQ(displacements[0].component, DisplacementComponent::x);
+    EXPECT_EQ(displacements[1].component, DisplacementComponent::y);
+    EXPECT_EQ(displacements[2].component, DisplacementComponent::z);
+}
+
+TEST(AbaqusBoundaryParser, RejectsDuplicateThreeDimensionalNodeComponent)
+{
+    constexpr std::string_view input = "*Boundary\n1, 3\n1, 3, 3, 0.0\n";
+
+    EXPECT_THROW(static_cast<void>(
+                     parse_abaqus_nodal_displacements(input, SpatialDimension::three_dimensional)),
+                 AbaqusParseError);
 }
 
 TEST(AbaqusBoundaryParser, RejectsReversedDofRange)

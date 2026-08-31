@@ -17,8 +17,9 @@ struct AbaqusNodalDisplacement
     double value;
 };
 
-// Parses node-based *BOUNDARY displacement data for a two-dimensional model.
-// ABAQUS degree-of-freedom numbers 1 and 2 map to x and y respectively.
+// Parses node-based *BOUNDARY displacement data. ABAQUS degree-of-freedom
+// numbers 1, 2, and (for 3D) 3 map to x, y, and z respectively.
 [[nodiscard]] std::vector<AbaqusNodalDisplacement> parse_abaqus_nodal_displacements(
-    std::string_view input_text);
+    std::string_view input_text,
+    model::SpatialDimension spatial_dimension = model::SpatialDimension::two_dimensional);
 } // namespace finelemethod::input

@@ -11,6 +11,7 @@ namespace finelemethod::input
 namespace
 {
 model::DisplacementComponent load_component(const std::size_t abaqus_dof,
+                                            const model::SpatialDimension spatial_dimension,
                                             const std::size_t line_number)
 {
     if (abaqus_dof == 1)
@@ -21,14 +22,18 @@ model::DisplacementComponent load_component(const std::size_t abaqus_dof,
     {
         return model::DisplacementComponent::y;
     }
-    throw AbaqusParseError("Unsupported two-dimensional concentrated-load degree of freedom on "
-                           "line " +
+    if (abaqus_dof == 3 && spatial_dimension == model::SpatialDimension::three_dimensional)
+    {
+        return model::DisplacementComponent::z;
+    }
+    throw AbaqusParseError("Unsupported concentrated-load degree of freedom for the model "
+                           "dimension on line " +
                            std::to_string(line_number) + ".");
 }
 } // namespace
 
 std::vector<AbaqusConcentratedLoad> parse_abaqus_concentrated_loads(
-    const std::string_view input_text)
+    const std::string_view input_text, const model::SpatialDimension spatial_dimension)
 {
     std::vector<AbaqusConcentratedLoad> concentrated_loads;
     bool in_cload_section = false;
@@ -83,8 +88,8 @@ std::vector<AbaqusConcentratedLoad> parse_abaqus_concentrated_loads(
                                        std::to_string(line_number) + ".");
             }
 
-            concentrated_loads.push_back(
-                AbaqusConcentratedLoad{target, load_component(abaqus_dof, line_number), magnitude});
+            concentrated_loads.push_back(AbaqusConcentratedLoad{
+                target, load_component(abaqus_dof, spatial_dimension, line_number), magnitude});
         }
 
         if (line_end == std::string_view::npos)
