@@ -8,7 +8,7 @@
 #include "finelemethod/model/q4_element_collection.hpp"
 #include "finelemethod/postprocessing/q4_plane_strain_results.hpp"
 #include "finelemethod/solver/boundary_conditions.hpp"
-#include "finelemethod/solver/dense_static_solver.hpp"
+#include "finelemethod/solver/sparse_static_solver.hpp"
 
 #include <span>
 #include <vector>
@@ -22,7 +22,7 @@ struct Q4PlaneStrainAnalysisResult
     std::vector<postprocessing::Q4ElementPlaneStrainResults> element_results;
 };
 
-// Runs a complete dense linear-static Q4 plane-strain analysis.
+// Runs a complete sparse linear-static Q4 plane-strain analysis.
 [[nodiscard]] Q4PlaneStrainAnalysisResult solve_q4_plane_strain_model(
     const model::Q4ElementCollection &elements, const model::NodeCollection &nodes,
     const model::MaterialCollection &materials, const model::DofMap &dof_map,
