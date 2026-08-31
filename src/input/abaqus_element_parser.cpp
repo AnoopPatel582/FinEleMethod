@@ -146,4 +146,122 @@ std::vector<AbaqusQ4Element> parse_abaqus_q4_elements(const std::string_view inp
     }
     return elements;
 }
+
+std::vector<AbaqusH8Element> parse_abaqus_h8_elements(const std::string_view input_text)
+{
+    std::vector<AbaqusH8Element> elements;
+    std::unordered_set<model::ElementId> element_ids;
+    bool in_h8_section = false;
+    bool found_element_section = false;
+    bool found_h8_section = false;
+    std::string element_set;
+    std::size_t line_number = 0;
+    std::size_t line_start = 0;
+
+    while (line_start <= input_text.size())
+    {
+        ++line_number;
+        const std::size_t line_end = input_text.find('\n', line_start);
+        std::string_view line = line_end == std::string_view::npos
+                                    ? input_text.substr(line_start)
+                                    : input_text.substr(line_start, line_end - line_start);
+        if (!line.empty() && line.back() == '\r')
+        {
+            line.remove_suffix(1);
+        }
+        line = detail::trim(line);
+
+        if (line.starts_with("**"))
+        {
+            // ABAQUS comment line.
+        }
+        else if (line.starts_with('*'))
+        {
+            const std::size_t comma = line.find(',');
+            const std::string_view keyword = detail::trim(
+                line.substr(1, comma == std::string_view::npos ? line.size() - 1 : comma - 1));
+            const bool is_element_keyword = detail::equals_case_insensitive(keyword, "ELEMENT");
+            in_h8_section = false;
+            element_set.clear();
+
+            if (is_element_keyword)
+            {
+                found_element_section = true;
+                bool found_type = false;
+                const auto fields = detail::split_fields(line);
+                for (std::size_t field_index = 1; field_index < fields.size(); ++field_index)
+                {
+                    const std::size_t equals = fields[field_index].find('=');
+                    if (equals == std::string_view::npos)
+                    {
+                        continue;
+                    }
+                    const std::string_view name =
+                        detail::trim(fields[field_index].substr(0, equals));
+                    const std::string_view value =
+                        detail::trim(fields[field_index].substr(equals + 1));
+                    if (detail::equals_case_insensitive(name, "TYPE"))
+                    {
+                        found_type = true;
+                        in_h8_section = detail::equals_case_insensitive(value, "C3D8");
+                    }
+                    else if (detail::equals_case_insensitive(name, "ELSET"))
+                    {
+                        element_set = std::string(value);
+                    }
+                }
+                if (!found_type)
+                {
+                    throw AbaqusParseError("ABAQUS *ELEMENT keyword requires TYPE on line " +
+                                           std::to_string(line_number) + ".");
+                }
+                found_h8_section = found_h8_section || in_h8_section;
+            }
+        }
+        else if (in_h8_section && !line.empty())
+        {
+            const auto fields = detail::split_fields(line);
+            if (fields.size() != 9)
+            {
+                throw AbaqusParseError("Expected element ID and eight node IDs on line " +
+                                       std::to_string(line_number) + ".");
+            }
+
+            const model::ElementId id =
+                detail::parse_number<model::ElementId>(fields[0], line_number, "element ID");
+            if (!element_ids.insert(id).second)
+            {
+                throw AbaqusParseError("Duplicate H8 element ID on line " +
+                                       std::to_string(line_number) + ".");
+            }
+            model::H8NodeIds node_ids{};
+            for (std::size_t node_index = 0; node_index < node_ids.size(); ++node_index)
+            {
+                node_ids[node_index] = detail::parse_number<model::NodeId>(
+                    fields[node_index + 1], line_number, "element node ID");
+            }
+            elements.push_back(AbaqusH8Element{id, node_ids, element_set});
+        }
+
+        if (line_end == std::string_view::npos)
+        {
+            break;
+        }
+        line_start = line_end + 1;
+    }
+
+    if (!found_element_section)
+    {
+        throw AbaqusParseError("ABAQUS input does not contain an *ELEMENT section.");
+    }
+    if (!found_h8_section)
+    {
+        throw AbaqusParseError("ABAQUS input does not contain supported *ELEMENT, TYPE=C3D8 data.");
+    }
+    if (elements.empty())
+    {
+        throw AbaqusParseError("ABAQUS H8 element section does not contain any elements.");
+    }
+    return elements;
+}
 } // namespace finelemethod::input
