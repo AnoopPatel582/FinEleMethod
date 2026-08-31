@@ -48,6 +48,7 @@ add_executable(FinEleMethodTests
     input/abaqus_q4_model_parser_test.cpp
     input/abaqus_solid_section_parser_test.cpp
     math/coo_matrix_test.cpp
+    math/csr_matrix_test.cpp
     math/dense_matrix_test.cpp
     math/dense_vector_test.cpp
     math/linear_solver_test.cpp
