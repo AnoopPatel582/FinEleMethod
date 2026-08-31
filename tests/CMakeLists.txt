@@ -76,6 +76,7 @@ add_executable(FinEleMethodTests
     postprocessing/q4_plane_strain_results_test.cpp
     postprocessing/q4_plane_stress_results_test.cpp
     solver/abaqus_q4_analysis_test.cpp
+    solver/abaqus_q4_multiple_material_analysis_test.cpp
     solver/abaqus_h8_analysis_test.cpp
     solver/abaqus_q4_plane_strain_analysis_test.cpp
     solver/abaqus_q4_plane_stress_analysis_test.cpp
@@ -141,4 +142,11 @@ add_test(
     COMMAND FinEleMethod
         --input ${PROJECT_SOURCE_DIR}/examples/abaqus/q4_plate_with_hole.inp
         --output ${PROJECT_BINARY_DIR}/q4_plate_with_hole.vtu
+)
+
+add_test(
+    NAME CommandLineExample.Q4MultipleMaterialsInputRuns
+    COMMAND FinEleMethod
+        --input ${PROJECT_SOURCE_DIR}/examples/abaqus/q4_multiple_materials.inp
+        --output ${PROJECT_BINARY_DIR}/q4_multiple_materials.vtu
 )

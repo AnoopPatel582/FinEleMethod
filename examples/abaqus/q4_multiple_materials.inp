@@ -1,0 +1,35 @@
+*Heading
+** FinEleMethod Q4 two-material composite-bar verification model
+** E_left=1000, E_right=2000, nu=0, axial force=10
+*Node
+1, 0.0, 0.0
+2, 1.0, 0.0
+3, 2.0, 0.0
+4, 0.0, 1.0
+5, 1.0, 1.0
+6, 2.0, 1.0
+*Material, name=SoftMaterial
+*Elastic
+1000.0, 0.0
+*Material, name=StiffMaterial
+*Elastic
+2000.0, 0.0
+*Element, type=CPS4, elset=SoftSection
+1, 1, 2, 5, 4
+*Element, type=CPS4, elset=StiffSection
+2, 2, 3, 6, 5
+*Solid Section, elset=SoftSection, material=SoftMaterial
+1.0
+*Solid Section, elset=StiffSection, material=StiffMaterial
+1.0
+*Nset, nset=FixedXY
+1
+*Nset, nset=FixedX
+4
+*Nset, nset=LoadedEdge
+3, 6
+*Boundary
+FixedXY, 1, 2, 0.0
+FixedX, 1, 1, 0.0
+*Cload
+LoadedEdge, 1, 5.0

@@ -128,6 +128,17 @@ The automated benchmark compares the recovered hoop stress near the hole with
 the analytical Kirsch solution. See
 [the plate-with-a-hole benchmark report](docs/benchmarks/plate_with_hole.md).
 
+Run the supplied Q4 multiple-material verification model:
+
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethod.exe `
+  --input .\examples\abaqus\q4_multiple_materials.inp `
+  --output .\out\q4_multiple_materials.vtu
+```
+
+Its two elements carry the same axial stress but use elastic moduli of `1000`
+and `2000`, producing exact axial strains of `0.01` and `0.005`, respectively.
+
 The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
 `*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use
 `*DLOAD` with `P1` through `P4` and direct element IDs or element-set names.
