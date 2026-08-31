@@ -116,6 +116,8 @@ solutions where appropriate.
 ## 10. Analysis-process protocol
 
 - The GUI writes `analysis-request.json`.
+- Analysis-request protocol version 1 requires relative `inputFile`,
+  `resultFile`, and `summaryFile` paths, resolved from the request directory.
 - The CLI reports progress through JSON Lines on standard output.
 - Progress records use event type `analysis-progress` and the lifecycle states
   `preparing`, `executing`, `writing-results`, `completed`, `failed`, and

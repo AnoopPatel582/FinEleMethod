@@ -47,6 +47,7 @@ add_library(FinEleMethodCore STATIC
     src/input/abaqus_node_set_parser.cpp
     src/input/abaqus_q4_model_parser.cpp
     src/input/abaqus_solid_section_parser.cpp
+    src/input/analysis_request.cpp
     src/math/coo_matrix.cpp
     src/math/csr_matrix.cpp
     src/math/dense_matrix.cpp
