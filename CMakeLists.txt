@@ -69,6 +69,7 @@ add_library(FinEleMethodCore STATIC
     src/model/q4_element.cpp
     src/model/q4_element_collection.cpp
     src/output/h8_analysis_vtu.cpp
+    src/output/analysis_progress.cpp
     src/output/analysis_summary.cpp
     src/output/q4_analysis_vtu.cpp
     src/output/q4_vtu_writer.cpp

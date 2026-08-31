@@ -117,6 +117,9 @@ solutions where appropriate.
 
 - The GUI writes `analysis-request.json`.
 - The CLI reports progress through JSON Lines on standard output.
+- Progress records use event type `analysis-progress` and the lifecycle states
+  `preparing`, `executing`, `writing-results`, `completed`, `failed`, and
+  `cancelled`.
 - Results and a summary are written to files in the run directory.
 - The protocol includes a `protocolVersion` for compatibility management.
 - The initial analysis-summary contract uses `protocolVersion` `1`.
