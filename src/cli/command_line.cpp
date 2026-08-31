@@ -6,6 +6,7 @@
 #include "finelemethod/input/abaqus_element_parser.hpp"
 #include "finelemethod/input/abaqus_input_file.hpp"
 #include "finelemethod/input/abaqus_parse_error.hpp"
+#include "finelemethod/input/analysis_request.hpp"
 #include "finelemethod/model/dof_map.hpp"
 #include "finelemethod/output/analysis_progress.hpp"
 #include "finelemethod/output/analysis_summary.hpp"
@@ -14,6 +15,7 @@
 #include "finelemethod/solver/abaqus_h8_analysis.hpp"
 #include "finelemethod/solver/abaqus_q4_analysis.hpp"
 
+#include <array>
 #include <filesystem>
 #include <optional>
 #include <ostream>
@@ -30,12 +32,14 @@ void write_help(std::ostream &stream)
     stream << application_name() << '\n'
            << "Usage:\n"
            << "  FinEleMethod --help\n"
+           << "  FinEleMethod --request <analysis-request.json>\n"
            << "  FinEleMethod --input <model.inp> --output <result.vtu> "
               "[--summary <summary.json>] [--json-progress]\n"
            << "  FinEleMethod --example q4-tension --output <file.vtu>\n"
            << "  FinEleMethod --example h8-compression --output <file.vtu>\n\n"
            << "Options:\n"
            << "  -h, --help  Show this help message.\n"
+           << "  --request <file.json>  Run a versioned analysis request.\n"
            << "  --input <model.inp>   Read and solve an ABAQUS CPS4, CPE4, or C3D8 model.\n"
            << "  --example q4-tension  Run the built-in Q4 uniaxial-tension example.\n"
            << "  --example h8-compression  Run the built-in H8 block-compression example.\n"
@@ -59,6 +63,41 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
     {
         write_help(output);
         return ExitCode::Success;
+    }
+
+    if (arguments.size() == 2 && arguments[0] == "--request")
+    {
+        const std::filesystem::path request_path{std::string(arguments[1])};
+        try
+        {
+            const input::AnalysisRequest request = input::read_analysis_request(request_path);
+            const std::filesystem::path request_directory = request_path.parent_path();
+            const std::array<std::string, 7> owned_arguments{
+                "--input",
+                (request_directory / request.input_file).lexically_normal().string(),
+                "--output",
+                (request_directory / request.result_file).lexically_normal().string(),
+                "--summary",
+                (request_directory / request.summary_file).lexically_normal().string(),
+                "--json-progress",
+            };
+            const std::array<std::string_view, 7> request_arguments{
+                owned_arguments[0], owned_arguments[1], owned_arguments[2], owned_arguments[3],
+                owned_arguments[4], owned_arguments[5], owned_arguments[6],
+            };
+            return run(request_arguments, output, error);
+        }
+        catch (const std::exception &exception)
+        {
+            output::write_analysis_progress_json_line(
+                output, output::AnalysisProgressEvent{output::AnalysisState::preparing,
+                                                      "Reading analysis request."});
+            output::write_analysis_progress_json_line(
+                output,
+                output::AnalysisProgressEvent{output::AnalysisState::failed, exception.what()});
+            error << "Analysis-request error: " << exception.what() << '\n';
+            return ExitCode::InputParsingError;
+        }
     }
 
     const bool has_summary = arguments.size() >= 6 && arguments[4] == "--summary";

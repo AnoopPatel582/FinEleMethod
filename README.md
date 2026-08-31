@@ -158,6 +158,29 @@ Add `--json-progress` after the other ABAQUS options to make standard output a
 JSON Lines stream for application integration. Each line reports a versioned
 analysis lifecycle event; human-readable errors remain on standard error.
 
+The future GUI can execute the same workflow using an `analysis-request.json`
+file. Its version-1 format is:
+
+```json
+{
+  "protocolVersion": 1,
+  "inputFile": "input/model.inp",
+  "resultFile": "results/model.vtu",
+  "summaryFile": "results/analysis-summary.json"
+}
+```
+
+All paths are relative to the request file's directory. Run it with:
+
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethod.exe `
+  --request .\path\to\analysis-request.json
+```
+
+Request mode writes JSON Lines progress automatically and creates both the VTU
+result and JSON summary at the requested locations. Parent directories must
+already exist.
+
 The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
 `*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use
 `*DLOAD` with `P1` through `P4` and direct element IDs or element-set names.

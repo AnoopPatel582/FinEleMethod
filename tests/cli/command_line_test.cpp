@@ -118,6 +118,79 @@ TEST(CommandLine, UnknownOptionWritesUsageError)
     EXPECT_NE(error.str().find("unknown command-line argument"), std::string::npos);
 }
 
+TEST(CommandLine, AnalysisRequestRunsModelWithJsonProgress)
+{
+    const auto directory = std::filesystem::temp_directory_path() / "finelemethod_cli_request_test";
+    std::filesystem::remove_all(directory);
+    std::filesystem::create_directories(directory / "input");
+    std::filesystem::create_directories(directory / "results");
+    const auto request_path = directory / "analysis-request.json";
+    const auto input_path = directory / "input" / "model.inp";
+    const auto result_path = directory / "results" / "model.vtu";
+    const auto summary_path = directory / "results" / "analysis-summary.json";
+    {
+        std::ofstream input_file(input_path);
+        input_file << valid_abaqus_input;
+        std::ofstream request_file(request_path);
+        request_file << R"({
+  "protocolVersion": 1,
+  "inputFile": "input/model.inp",
+  "resultFile": "results/model.vtu",
+  "summaryFile": "results/analysis-summary.json"
+})";
+    }
+    const std::string request_text = request_path.string();
+    const std::array<std::string_view, 2> arguments{"--request", request_text};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::Success);
+    EXPECT_TRUE(error.str().empty());
+    const auto events = parse_json_lines(output.str());
+    ASSERT_EQ(events.size(), 4U);
+    EXPECT_EQ(events[0].at("state"), "preparing");
+    EXPECT_EQ(events[1].at("state"), "executing");
+    EXPECT_EQ(events[2].at("state"), "writing-results");
+    EXPECT_EQ(events[3].at("state"), "completed");
+    EXPECT_TRUE(std::filesystem::exists(result_path));
+    EXPECT_TRUE(std::filesystem::exists(summary_path));
+
+    std::ifstream summary_file(summary_path);
+    const auto summary = nlohmann::json::parse(summary_file);
+    EXPECT_EQ(summary.at("protocolVersion"), 1);
+    EXPECT_EQ(summary.at("status"), "completed");
+
+    summary_file.close();
+    std::filesystem::remove_all(directory);
+}
+
+TEST(CommandLine, InvalidAnalysisRequestWritesFailedJsonProgress)
+{
+    const auto request_path =
+        std::filesystem::temp_directory_path() / "finelemethod-invalid-analysis-request.json";
+    {
+        std::ofstream request_file(request_path);
+        request_file << R"({"protocolVersion": 2})";
+    }
+    const std::string request_text = request_path.string();
+    const std::array<std::string_view, 2> arguments{"--request", request_text};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::InputParsingError);
+    EXPECT_NE(error.str().find("Analysis-request error"), std::string::npos);
+    const auto events = parse_json_lines(output.str());
+    ASSERT_EQ(events.size(), 2U);
+    EXPECT_EQ(events[0].at("state"), "preparing");
+    EXPECT_EQ(events[1].at("state"), "failed");
+
+    std::filesystem::remove(request_path);
+}
+
 TEST(CommandLine, Q4TensionExampleWritesParaViewResult)
 {
     const auto path =
