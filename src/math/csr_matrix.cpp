@@ -1,5 +1,7 @@
 #include "finelemethod/math/csr_matrix.hpp"
 
+#include "finelemethod/math/dense_vector.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -94,5 +96,25 @@ CsrMatrix convert_to_csr(const CooMatrix &matrix)
 
     return CsrMatrix(matrix.rows(), matrix.columns(), std::move(row_offsets),
                      std::move(column_indices), std::move(values));
+}
+
+DenseVector operator*(const CsrMatrix &matrix, const DenseVector &vector)
+{
+    if (matrix.columns() != vector.size())
+    {
+        throw std::invalid_argument(
+            "CSR matrix columns must match vector size for multiplication.");
+    }
+
+    DenseVector result(matrix.rows());
+    for (std::size_t row = 0; row < matrix.rows(); ++row)
+    {
+        for (std::size_t index = matrix.row_offsets()[row]; index < matrix.row_offsets()[row + 1];
+             ++index)
+        {
+            result[row] += matrix.values()[index] * vector[matrix.column_indices()[index]];
+        }
+    }
+    return result;
 }
 } // namespace finelemethod::math

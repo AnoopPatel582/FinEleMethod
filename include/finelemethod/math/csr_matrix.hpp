@@ -8,6 +8,8 @@
 
 namespace finelemethod::math
 {
+class DenseVector;
+
 class CsrMatrix
 {
   public:
@@ -36,4 +38,5 @@ class CsrMatrix
 // Sorts coordinate entries into row-major order, sums duplicate coordinates,
 // and removes entries whose assembled value is exactly zero.
 [[nodiscard]] CsrMatrix convert_to_csr(const CooMatrix &matrix);
+[[nodiscard]] DenseVector operator*(const CsrMatrix &matrix, const DenseVector &vector);
 } // namespace finelemethod::math

@@ -1,5 +1,6 @@
 #include "finelemethod/math/coo_matrix.hpp"
 #include "finelemethod/math/csr_matrix.hpp"
+#include "finelemethod/math/dense_vector.hpp"
 
 #include <gtest/gtest.h>
 
@@ -12,6 +13,7 @@ namespace
 {
 using finelemethod::math::convert_to_csr;
 using finelemethod::math::CooMatrix;
+using finelemethod::math::DenseVector;
 
 TEST(CsrMatrix, ConvertsEmptyCoordinateMatrix)
 {
@@ -89,5 +91,47 @@ TEST(CsrMatrix, RejectsOverflowWhileSummingDuplicates)
     coordinate_matrix.add(0, 0, std::numeric_limits<double>::max());
 
     EXPECT_THROW(static_cast<void>(convert_to_csr(coordinate_matrix)), std::overflow_error);
+}
+
+TEST(CsrMatrix, MultipliesRectangularMatrixByDenseVector)
+{
+    CooMatrix coordinate_matrix(3, 4);
+    coordinate_matrix.add(0, 0, 2.0);
+    coordinate_matrix.add(0, 2, -1.0);
+    coordinate_matrix.add(2, 1, 3.0);
+    coordinate_matrix.add(2, 3, 4.0);
+    const auto matrix = convert_to_csr(coordinate_matrix);
+    DenseVector vector(4);
+    vector[0] = 5.0;
+    vector[1] = 2.0;
+    vector[2] = -3.0;
+    vector[3] = 0.5;
+
+    const DenseVector result = matrix * vector;
+
+    ASSERT_EQ(result.size(), 3U);
+    EXPECT_DOUBLE_EQ(result[0], 13.0);
+    EXPECT_DOUBLE_EQ(result[1], 0.0);
+    EXPECT_DOUBLE_EQ(result[2], 8.0);
+}
+
+TEST(CsrMatrix, EmptyMatrixProducesZeroVector)
+{
+    const auto matrix = convert_to_csr(CooMatrix(2, 3));
+    const DenseVector vector(3, 7.0);
+
+    const DenseVector result = matrix * vector;
+
+    ASSERT_EQ(result.size(), 2U);
+    EXPECT_DOUBLE_EQ(result[0], 0.0);
+    EXPECT_DOUBLE_EQ(result[1], 0.0);
+}
+
+TEST(CsrMatrix, RejectsVectorWithMismatchedSize)
+{
+    const auto matrix = convert_to_csr(CooMatrix(2, 3));
+    const DenseVector vector(2);
+
+    EXPECT_THROW(static_cast<void>(matrix * vector), std::invalid_argument);
 }
 } // namespace
