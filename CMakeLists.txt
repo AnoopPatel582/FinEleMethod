@@ -83,6 +83,7 @@ add_library(FinEleMethodCore STATIC
     src/solver/q4_plane_strain_analysis.cpp
     src/solver/q4_plane_stress_analysis.cpp
     src/solver/reactions.cpp
+    src/solver/sparse_static_solver.cpp
 )
 
 add_library(FinEleMethod::Core ALIAS FinEleMethodCore)

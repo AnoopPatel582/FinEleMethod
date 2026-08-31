@@ -87,6 +87,7 @@ add_executable(FinEleMethodTests
     solver/q4_plane_stress_analysis_test.cpp
     solver/reactions_test.cpp
     solver/sparse_boundary_conditions_test.cpp
+    solver/sparse_static_solver_test.cpp
 )
 
 target_compile_features(FinEleMethodTests PRIVATE cxx_std_20)
