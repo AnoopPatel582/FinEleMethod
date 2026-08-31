@@ -7,12 +7,14 @@
 #include "finelemethod/input/abaqus_input_file.hpp"
 #include "finelemethod/input/abaqus_parse_error.hpp"
 #include "finelemethod/model/dof_map.hpp"
+#include "finelemethod/output/analysis_summary.hpp"
 #include "finelemethod/output/h8_analysis_vtu.hpp"
 #include "finelemethod/output/q4_analysis_vtu.hpp"
 #include "finelemethod/solver/abaqus_h8_analysis.hpp"
 #include "finelemethod/solver/abaqus_q4_analysis.hpp"
 
 #include <filesystem>
+#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -27,7 +29,8 @@ void write_help(std::ostream &stream)
     stream << application_name() << '\n'
            << "Usage:\n"
            << "  FinEleMethod --help\n"
-           << "  FinEleMethod --input <model.inp> --output <result.vtu>\n"
+           << "  FinEleMethod --input <model.inp> --output <result.vtu> "
+              "[--summary <summary.json>]\n"
            << "  FinEleMethod --example q4-tension --output <file.vtu>\n"
            << "  FinEleMethod --example h8-compression --output <file.vtu>\n\n"
            << "Options:\n"
@@ -36,6 +39,7 @@ void write_help(std::ostream &stream)
            << "  --example q4-tension  Run the built-in Q4 uniaxial-tension example.\n"
            << "  --example h8-compression  Run the built-in H8 block-compression example.\n"
            << "  --output <file.vtu>   Write analysis results to an ASCII VTU file.\n";
+    stream << "  --summary <file.json>  Write a versioned analysis summary.\n";
 }
 } // namespace
 
@@ -55,10 +59,16 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
         return ExitCode::Success;
     }
 
-    if (arguments.size() == 4 && arguments[0] == "--input" && arguments[2] == "--output")
+    const bool is_input_analysis = (arguments.size() == 4 || arguments.size() == 6) &&
+                                   arguments[0] == "--input" && arguments[2] == "--output" &&
+                                   (arguments.size() == 4 || arguments[4] == "--summary");
+    if (is_input_analysis)
     {
         const std::filesystem::path input_path{std::string(arguments[1])};
         const std::filesystem::path output_path{std::string(arguments[3])};
+        const std::optional<std::filesystem::path> summary_path =
+            arguments.size() == 6 ? std::optional<std::filesystem::path>{std::string(arguments[5])}
+                                  : std::nullopt;
         std::string input_text;
         try
         {
@@ -84,6 +94,17 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                     output::write_h8_analysis_vtu(output_path, solution.model.nodes,
                                                   solution.model.elements, dof_map,
                                                   solution.result);
+                    if (summary_path)
+                    {
+                        output::write_analysis_summary(
+                            *summary_path, output::AnalysisSummary{
+                                               .analysis_type = "h8-three-dimensional",
+                                               .input_path = input_path,
+                                               .result_path = output_path,
+                                               .node_count = solution.model.nodes.size(),
+                                               .element_count = solution.model.elements.size(),
+                                           });
+                    }
                 }
                 catch (const std::exception &exception)
                 {
@@ -93,6 +114,10 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                 output << "Completed ABAQUS H8 analysis.\n"
                        << "Input model: " << input_path.string() << '\n'
                        << "VTU result: " << output_path.string() << '\n';
+                if (summary_path)
+                {
+                    output << "Analysis summary: " << summary_path->string() << '\n';
+                }
                 return ExitCode::Success;
             }
 
@@ -107,6 +132,21 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                                                       solution.model.elements, dof_map, result);
                     },
                     solution.result);
+                if (summary_path)
+                {
+                    const std::string analysis_type =
+                        solution.model.analysis_type == input::Q4AnalysisType::plane_stress
+                            ? "q4-plane-stress"
+                            : "q4-plane-strain";
+                    output::write_analysis_summary(
+                        *summary_path, output::AnalysisSummary{
+                                           .analysis_type = analysis_type,
+                                           .input_path = input_path,
+                                           .result_path = output_path,
+                                           .node_count = solution.model.nodes.size(),
+                                           .element_count = solution.model.elements.size(),
+                                       });
+                }
             }
             catch (const std::exception &exception)
             {
@@ -120,6 +160,10 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
             output << "Completed ABAQUS Q4 " << formulation << " analysis.\n"
                    << "Input model: " << input_path.string() << '\n'
                    << "VTU result: " << output_path.string() << '\n';
+            if (summary_path)
+            {
+                output << "Analysis summary: " << summary_path->string() << '\n';
+            }
             return ExitCode::Success;
         }
         catch (const input::AbaqusParseError &exception)

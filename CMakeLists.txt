@@ -4,6 +4,8 @@ project(FinEleMethod LANGUAGES CXX)
 
 include(CTest)
 
+find_package(nlohmann_json CONFIG REQUIRED)
+
 add_library(FinEleMethodCore STATIC
     src/assembly/coo_assembly.cpp
     src/assembly/h8_dof_mapping.cpp
@@ -67,6 +69,7 @@ add_library(FinEleMethodCore STATIC
     src/model/q4_element.cpp
     src/model/q4_element_collection.cpp
     src/output/h8_analysis_vtu.cpp
+    src/output/analysis_summary.cpp
     src/output/q4_analysis_vtu.cpp
     src/output/q4_vtu_writer.cpp
     src/postprocessing/h8_results.cpp
@@ -93,6 +96,7 @@ target_include_directories(FinEleMethodCore
     PUBLIC
         ${PROJECT_SOURCE_DIR}/include
 )
+target_link_libraries(FinEleMethodCore PUBLIC nlohmann_json::nlohmann_json)
 
 add_library(FinEleMethodCli STATIC
     src/cli/command_line.cpp

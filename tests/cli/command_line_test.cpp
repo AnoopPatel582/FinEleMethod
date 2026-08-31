@@ -1,6 +1,7 @@
 #include "finelemethod/cli/command_line.hpp"
 
 #include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
 
 #include <array>
 #include <filesystem>
@@ -205,6 +206,47 @@ TEST(CommandLine, AbaqusInputWritesSolvedParaViewResult)
     result_file.close();
     std::filesystem::remove(input_path);
     std::filesystem::remove(output_path);
+}
+
+TEST(CommandLine, AbaqusInputWritesVersionedAnalysisSummary)
+{
+    const auto directory = std::filesystem::temp_directory_path();
+    const auto input_path = directory / "finelemethod_cli_summary_input.inp";
+    const auto output_path = directory / "finelemethod_cli_summary_result.vtu";
+    const auto summary_path = directory / "finelemethod_cli_summary.json";
+    {
+        std::ofstream input_file(input_path, std::ios::binary);
+        input_file << valid_abaqus_input;
+    }
+    std::filesystem::remove(output_path);
+    std::filesystem::remove(summary_path);
+    const std::string input_text = input_path.string();
+    const std::string output_text = output_path.string();
+    const std::string summary_text = summary_path.string();
+    const std::array<std::string_view, 6> arguments{"--input",   input_text,  "--output",
+                                                    output_text, "--summary", summary_text};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::Success);
+    EXPECT_TRUE(error.str().empty());
+    EXPECT_NE(output.str().find("Analysis summary:"), std::string::npos);
+    std::ifstream summary_file(summary_path);
+    const auto document = nlohmann::json::parse(summary_file);
+    EXPECT_EQ(document.at("protocolVersion"), 1);
+    EXPECT_EQ(document.at("status"), "completed");
+    EXPECT_EQ(document.at("analysisType"), "q4-plane-stress");
+    EXPECT_EQ(document.at("inputFile"), input_path.generic_string());
+    EXPECT_EQ(document.at("resultFile"), output_path.generic_string());
+    EXPECT_EQ(document.at("nodeCount"), 4);
+    EXPECT_EQ(document.at("elementCount"), 1);
+
+    summary_file.close();
+    std::filesystem::remove(input_path);
+    std::filesystem::remove(output_path);
+    std::filesystem::remove(summary_path);
 }
 
 TEST(CommandLine, AbaqusCpe4InputAutomaticallyWritesPlaneStrainResult)

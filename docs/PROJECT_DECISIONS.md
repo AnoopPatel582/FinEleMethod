@@ -119,6 +119,7 @@ solutions where appropriate.
 - The CLI reports progress through JSON Lines on standard output.
 - Results and a summary are written to files in the run directory.
 - The protocol includes a `protocolVersion` for compatibility management.
+- The initial analysis-summary contract uses `protocolVersion` `1`.
 - Cancellation uses a cancellation-flag mechanism.
 - Run lifecycle states will distinguish preparation, execution, completion,
   failure, and cancellation.

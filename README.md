@@ -17,10 +17,11 @@ models and write ParaView results.
 - ABAQUS `.inp` parsing for nodes, CPS4, CPE4, and C3D8 elements, isotropic
   materials, solid sections, nodal displacement constraints, and concentrated
   nodal loads.
-- Dense linear-static Q4 plane-stress, Q4 plane-strain, and H8 solutions with
+- Sparse linear-static Q4 plane-stress, Q4 plane-strain, and H8 solutions with
   displacement, reaction, strain, stress, von Mises, and principal-stress
   recovery.
 - ASCII `.vtu` output for ParaView.
+- Optional versioned JSON analysis summaries for application integration.
 
 ## Prerequisites
 
@@ -138,6 +139,19 @@ Run the supplied Q4 multiple-material verification model:
 
 Its two elements carry the same axial stress but use elastic moduli of `1000`
 and `2000`, producing exact axial strains of `0.01` and `0.005`, respectively.
+
+Add `--summary` to an ABAQUS analysis when a machine-readable completion record
+is needed by another application:
+
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethod.exe `
+  --input .\examples\abaqus\q4_tension.inp `
+  --output .\out\q4_tension.vtu `
+  --summary .\out\q4_tension-summary.json
+```
+
+The JSON document uses `protocolVersion` `1` and records the completion status,
+analysis type, input and result paths, and model node and element counts.
 
 The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
 `*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use
