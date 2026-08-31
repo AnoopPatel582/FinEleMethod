@@ -59,6 +59,7 @@ add_executable(FinEleMethodTests
     model/q4_edge_pressure_load_test.cpp
     model/q4_element_test.cpp
     model/q4_element_collection_test.cpp
+    output/h8_analysis_vtu_test.cpp
     output/q4_analysis_vtu_test.cpp
     output/q4_vtu_writer_test.cpp
     postprocessing/h8_results_test.cpp
