@@ -166,6 +166,9 @@ architectural or implementation changes. It records the confirmed scope,
 toolchain, FEM roadmap, numerical approach, storage model, and future GUI
 protocol.
 
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the implemented component
+architecture, solver workflow, numerical data flow, and future GUI boundary.
+
 ## Licence status
 
 No open-source licence has been granted at this stage. All rights are reserved.
