@@ -115,6 +115,18 @@ Run the supplied Q4 cantilever-beam benchmark:
 The automated benchmark compares its tip displacement and support reaction
 with beam theory. See [the cantilever benchmark report](docs/benchmarks/cantilever_beam.md).
 
+Run the supplied Q4 plate-with-a-circular-hole benchmark:
+
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethod.exe `
+  --input .\examples\abaqus\q4_plate_with_hole.inp `
+  --output .\out\q4_plate_with_hole.vtu
+```
+
+The automated benchmark compares the recovered hoop stress near the hole with
+the analytical Kirsch solution. See
+[the plate-with-a-hole benchmark report](docs/benchmarks/plate_with_hole.md).
+
 The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
 `*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use
 `*DLOAD` with `P1` through `P4` and direct element IDs or element-set names.

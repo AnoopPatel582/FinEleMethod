@@ -10,6 +10,7 @@ add_executable(FinEleMethodTests
     assembly/q4_plane_strain_stiffness_assembly_test.cpp
     assembly/q4_stiffness_assembly_test.cpp
     benchmarks/q4_cantilever_benchmark_test.cpp
+    benchmarks/q4_plate_with_hole_benchmark_test.cpp
     cli/command_line_test.cpp
     core/application_test.cpp
     core/exit_code_test.cpp
@@ -126,4 +127,11 @@ add_test(
     COMMAND FinEleMethod
         --input ${PROJECT_SOURCE_DIR}/examples/abaqus/q4_plane_strain_tension.inp
         --output ${PROJECT_BINARY_DIR}/q4_plane_strain_tension_example.vtu
+)
+
+add_test(
+    NAME CommandLineExample.Q4PlateWithHoleInputRuns
+    COMMAND FinEleMethod
+        --input ${PROJECT_SOURCE_DIR}/examples/abaqus/q4_plate_with_hole.inp
+        --output ${PROJECT_BINARY_DIR}/q4_plate_with_hole.vtu
 )
