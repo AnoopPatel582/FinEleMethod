@@ -35,6 +35,7 @@ add_executable(FinEleMethodTests
     input/abaqus_cload_parser_test.cpp
     input/abaqus_dload_parser_test.cpp
     input/abaqus_element_parser_test.cpp
+    input/abaqus_h8_model_parser_test.cpp
     input/abaqus_input_file_test.cpp
     input/abaqus_material_parser_test.cpp
     input/abaqus_node_parser_test.cpp

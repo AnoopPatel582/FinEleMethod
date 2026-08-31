@@ -35,6 +35,7 @@ add_library(FinEleMethodCore STATIC
     src/input/abaqus_cload_parser.cpp
     src/input/abaqus_dload_parser.cpp
     src/input/abaqus_element_parser.cpp
+    src/input/abaqus_h8_model_parser.cpp
     src/input/abaqus_input_file.cpp
     src/input/abaqus_material_parser.cpp
     src/input/abaqus_node_parser.cpp
