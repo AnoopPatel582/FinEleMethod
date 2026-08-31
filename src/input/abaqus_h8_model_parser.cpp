@@ -4,6 +4,7 @@
 
 #include "finelemethod/input/abaqus_boundary_parser.hpp"
 #include "finelemethod/input/abaqus_cload_parser.hpp"
+#include "finelemethod/input/abaqus_dload_parser.hpp"
 #include "finelemethod/input/abaqus_element_parser.hpp"
 #include "finelemethod/input/abaqus_material_parser.hpp"
 #include "finelemethod/input/abaqus_node_parser.hpp"
@@ -149,6 +150,7 @@ AbaqusH8Model parse_abaqus_h8_model(const std::string_view input_text)
         material_ids_by_element_set.emplace(uppercase_copy(section.element_set), material->second);
     }
 
+    std::unordered_map<std::string, std::vector<model::ElementId>> element_ids_by_set;
     for (const AbaqusH8Element &element : parse_abaqus_h8_elements(input_text))
     {
         if (element.element_set.empty())
@@ -173,6 +175,7 @@ AbaqusH8Model parse_abaqus_h8_model(const std::string_view input_text)
             }
         }
         model.elements.add(model::H8Element(element.id, element.node_ids, material_id->second));
+        element_ids_by_set[uppercase_copy(element.element_set)].push_back(element.id);
     }
 
     const auto parsed_displacements =
@@ -268,6 +271,42 @@ AbaqusH8Model parse_abaqus_h8_model(const std::string_view input_text)
         for (const model::NodeId node_id : node_set->second->node_ids)
         {
             add_point_load(node_id, load.component, load.magnitude);
+        }
+    }
+
+    if (detail::contains_keyword(input_text, "DLOAD"))
+    {
+        const auto parsed_pressures = parse_abaqus_h8_face_pressures(input_text);
+        const auto add_pressure = [&](const model::ElementId element_id, const model::H8Face face,
+                                      const double pressure) {
+            if (!model.elements.contains(element_id))
+            {
+                throw AbaqusParseError("ABAQUS distributed load references unknown H8 element " +
+                                       std::to_string(element_id) + ".");
+            }
+            model.pressure_loads.emplace_back(element_id, face, pressure);
+        };
+
+        for (const AbaqusH8FacePressure &pressure : parsed_pressures)
+        {
+            if (const auto *element_id = std::get_if<model::ElementId>(&pressure.target))
+            {
+                add_pressure(*element_id, pressure.face, pressure.pressure);
+                continue;
+            }
+
+            const std::string &set_name = std::get<std::string>(pressure.target);
+            const auto element_set = element_ids_by_set.find(uppercase_copy(set_name));
+            if (element_set == element_ids_by_set.end())
+            {
+                throw AbaqusParseError(
+                    "ABAQUS distributed load references unknown H8 element set '" + set_name +
+                    "'.");
+            }
+            for (const model::ElementId element_id : element_set->second)
+            {
+                add_pressure(element_id, pressure.face, pressure.pressure);
+            }
         }
     }
 

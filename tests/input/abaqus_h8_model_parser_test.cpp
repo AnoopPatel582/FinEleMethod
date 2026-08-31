@@ -11,6 +11,7 @@ namespace
 using finelemethod::input::AbaqusParseError;
 using finelemethod::input::parse_abaqus_h8_model;
 using finelemethod::model::DisplacementComponent;
+using finelemethod::model::H8Face;
 using finelemethod::model::H8NodeIds;
 
 constexpr std::string_view valid_model = R"(*Node
@@ -36,6 +37,9 @@ constexpr std::string_view valid_model = R"(*Node
 fixed, 1, 3
 *Cload
 loaded, 3, -25
+*Dload
+block, P2, 5
+10, P1, 2
 )";
 
 TEST(AbaqusH8ModelParser, ConnectsSupportedThreeDimensionalModelData)
@@ -54,6 +58,11 @@ TEST(AbaqusH8ModelParser, ConnectsSupportedThreeDimensionalModelData)
     EXPECT_EQ(model.point_loads[0].node_id(), 2U);
     EXPECT_EQ(model.point_loads[0].component(), DisplacementComponent::z);
     EXPECT_DOUBLE_EQ(model.point_loads[0].magnitude(), -25.0);
+    ASSERT_EQ(model.pressure_loads.size(), 2U);
+    EXPECT_EQ(model.pressure_loads[0].element_id(), 10U);
+    EXPECT_EQ(model.pressure_loads[0].face(), H8Face::two);
+    EXPECT_DOUBLE_EQ(model.pressure_loads[0].pressure(), 5.0);
+    EXPECT_EQ(model.pressure_loads[1].face(), H8Face::one);
 }
 
 TEST(AbaqusH8ModelParser, RejectsElementWithoutSolidSection)

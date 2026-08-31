@@ -40,7 +40,9 @@ bottom, 3
 xzero, 1
 yzero, 2
 *Cload
-top, 3, -2.5
+top, 3, -1.25
+*Dload
+block, P2, 5.0
 )";
 
 TEST(AbaqusH8Analysis, SolvesUniformUniaxialCompressionFromInputText)

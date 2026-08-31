@@ -107,8 +107,8 @@ X and Y strains of `0.0025`, uniform Z stress of `-10.0`, von Mises stress of
 The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
 `*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use
 `*DLOAD` with `P1` through `P4` and direct element IDs or element-set names.
-H8 input currently supports nodal point loads; H8 face-pressure loading and
-other element types will be added in later increments.
+H8 face pressures use `*DLOAD` with `P1` through `P6` and direct element IDs or
+element-set names. Other element types will be added in later increments.
 
 ## Project decisions
 
