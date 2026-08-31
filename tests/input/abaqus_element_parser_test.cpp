@@ -6,7 +6,9 @@
 
 namespace
 {
+using finelemethod::input::AbaqusElementFamily;
 using finelemethod::input::AbaqusParseError;
+using finelemethod::input::detect_abaqus_element_family;
 using finelemethod::input::parse_abaqus_h8_elements;
 using finelemethod::input::parse_abaqus_q4_elements;
 using finelemethod::input::Q4AnalysisType;
@@ -123,5 +125,21 @@ TEST(AbaqusElementParser, H8RejectsInputWithOnlyUnsupportedElementTypes)
     constexpr std::string_view input = "*Element, type=C3D8R\n1, 1, 2, 3, 4, 5, 6, 7, 8\n";
 
     EXPECT_THROW(static_cast<void>(parse_abaqus_h8_elements(input)), AbaqusParseError);
+}
+
+TEST(AbaqusElementParser, DetectsSupportedElementFamilies)
+{
+    EXPECT_EQ(detect_abaqus_element_family("*Element, type=CPS4\n1,1,2,3,4\n"),
+              AbaqusElementFamily::q4);
+    EXPECT_EQ(detect_abaqus_element_family("*ELEMENT, ELSET=block, TYPE = C3D8\n"),
+              AbaqusElementFamily::h8);
+}
+
+TEST(AbaqusElementParser, RejectsMixedSupportedElementFamilies)
+{
+    constexpr std::string_view input =
+        "*Element, type=CPE4\n1,1,2,3,4\n*Element, type=C3D8\n2,1,2,3,4,5,6,7,8\n";
+
+    EXPECT_THROW(static_cast<void>(detect_abaqus_element_family(input)), AbaqusParseError);
 }
 } // namespace

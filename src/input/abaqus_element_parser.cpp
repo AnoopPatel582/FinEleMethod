@@ -264,4 +264,76 @@ std::vector<AbaqusH8Element> parse_abaqus_h8_elements(const std::string_view inp
     }
     return elements;
 }
+
+AbaqusElementFamily detect_abaqus_element_family(const std::string_view input_text)
+{
+    bool found_q4 = false;
+    bool found_h8 = false;
+    std::size_t line_number = 0;
+    std::size_t line_start = 0;
+
+    while (line_start <= input_text.size())
+    {
+        ++line_number;
+        const std::size_t line_end = input_text.find('\n', line_start);
+        std::string_view line = line_end == std::string_view::npos
+                                    ? input_text.substr(line_start)
+                                    : input_text.substr(line_start, line_end - line_start);
+        if (!line.empty() && line.back() == '\r')
+        {
+            line.remove_suffix(1);
+        }
+        line = detail::trim(line);
+
+        if (line.starts_with('*') && !line.starts_with("**"))
+        {
+            const std::size_t comma = line.find(',');
+            const std::string_view keyword = detail::trim(
+                line.substr(1, comma == std::string_view::npos ? line.size() - 1 : comma - 1));
+            if (detail::equals_case_insensitive(keyword, "ELEMENT"))
+            {
+                const auto fields = detail::split_fields(line);
+                for (std::size_t field_index = 1; field_index < fields.size(); ++field_index)
+                {
+                    const std::size_t equals = fields[field_index].find('=');
+                    if (equals == std::string_view::npos)
+                    {
+                        continue;
+                    }
+                    const std::string_view name =
+                        detail::trim(fields[field_index].substr(0, equals));
+                    const std::string_view value =
+                        detail::trim(fields[field_index].substr(equals + 1));
+                    if (!detail::equals_case_insensitive(name, "TYPE"))
+                    {
+                        continue;
+                    }
+                    found_q4 = found_q4 || detail::equals_case_insensitive(value, "CPS4") ||
+                               detail::equals_case_insensitive(value, "CPE4");
+                    found_h8 = found_h8 || detail::equals_case_insensitive(value, "C3D8");
+                }
+            }
+        }
+
+        if (line_end == std::string_view::npos)
+        {
+            break;
+        }
+        line_start = line_end + 1;
+    }
+
+    if (found_q4 && found_h8)
+    {
+        throw AbaqusParseError("ABAQUS model cannot mix supported Q4 and H8 element families.");
+    }
+    if (found_h8)
+    {
+        return AbaqusElementFamily::h8;
+    }
+    if (found_q4)
+    {
+        return AbaqusElementFamily::q4;
+    }
+    throw AbaqusParseError("ABAQUS input does not contain a supported element family.");
+}
 } // namespace finelemethod::input

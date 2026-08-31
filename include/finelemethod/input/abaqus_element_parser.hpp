@@ -16,6 +16,12 @@ enum class Q4AnalysisType
     plane_strain,
 };
 
+enum class AbaqusElementFamily
+{
+    q4,
+    h8,
+};
+
 struct AbaqusQ4Element
 {
     model::ElementId id;
@@ -38,4 +44,8 @@ struct AbaqusH8Element
 // Parses all *ELEMENT, TYPE=C3D8 sections. The material is resolved later from
 // ABAQUS solid-section definitions.
 [[nodiscard]] std::vector<AbaqusH8Element> parse_abaqus_h8_elements(std::string_view input_text);
+
+// Identifies the supported element family from *ELEMENT keywords. A model that
+// mixes supported 2D and 3D element families is rejected.
+[[nodiscard]] AbaqusElementFamily detect_abaqus_element_family(std::string_view input_text);
 } // namespace finelemethod::input

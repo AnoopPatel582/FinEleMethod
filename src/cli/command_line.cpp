@@ -3,14 +3,16 @@
 #include "finelemethod/core/application.hpp"
 #include "finelemethod/examples/h8_compression_example.hpp"
 #include "finelemethod/examples/q4_tension_example.hpp"
+#include "finelemethod/input/abaqus_element_parser.hpp"
 #include "finelemethod/input/abaqus_input_file.hpp"
 #include "finelemethod/input/abaqus_parse_error.hpp"
 #include "finelemethod/model/dof_map.hpp"
+#include "finelemethod/output/h8_analysis_vtu.hpp"
 #include "finelemethod/output/q4_analysis_vtu.hpp"
+#include "finelemethod/solver/abaqus_h8_analysis.hpp"
 #include "finelemethod/solver/abaqus_q4_analysis.hpp"
 
 #include <filesystem>
-#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -30,7 +32,7 @@ void write_help(std::ostream &stream)
            << "  FinEleMethod --example h8-compression --output <file.vtu>\n\n"
            << "Options:\n"
            << "  -h, --help  Show this help message.\n"
-           << "  --input <model.inp>   Read and solve an ABAQUS Q4 CPS4 or CPE4 model.\n"
+           << "  --input <model.inp>   Read and solve an ABAQUS CPS4, CPE4, or C3D8 model.\n"
            << "  --example q4-tension  Run the built-in Q4 uniaxial-tension example.\n"
            << "  --example h8-compression  Run the built-in H8 block-compression example.\n"
            << "  --output <file.vtu>   Write analysis results to an ASCII VTU file.\n";
@@ -68,10 +70,57 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
             return ExitCode::InputParsingError;
         }
 
-        std::optional<solver::AbaqusQ4Solution> solution;
         try
         {
-            solution.emplace(solver::analyze_abaqus_q4(input_text));
+            const input::AbaqusElementFamily family =
+                input::detect_abaqus_element_family(input_text);
+            if (family == input::AbaqusElementFamily::h8)
+            {
+                auto solution = solver::analyze_abaqus_h8(input_text);
+                const model::DofMap dof_map(solution.model.nodes,
+                                            model::SpatialDimension::three_dimensional);
+                try
+                {
+                    output::write_h8_analysis_vtu(output_path, solution.model.nodes,
+                                                  solution.model.elements, dof_map,
+                                                  solution.result);
+                }
+                catch (const std::exception &exception)
+                {
+                    error << "Result-writing error: " << exception.what() << '\n';
+                    return ExitCode::ResultWritingError;
+                }
+                output << "Completed ABAQUS H8 analysis.\n"
+                       << "Input model: " << input_path.string() << '\n'
+                       << "VTU result: " << output_path.string() << '\n';
+                return ExitCode::Success;
+            }
+
+            auto solution = solver::analyze_abaqus_q4(input_text);
+            const model::DofMap dof_map(solution.model.nodes,
+                                        model::SpatialDimension::two_dimensional);
+            try
+            {
+                std::visit(
+                    [&](const auto &result) {
+                        output::write_q4_analysis_vtu(output_path, solution.model.nodes,
+                                                      solution.model.elements, dof_map, result);
+                    },
+                    solution.result);
+            }
+            catch (const std::exception &exception)
+            {
+                error << "Result-writing error: " << exception.what() << '\n';
+                return ExitCode::ResultWritingError;
+            }
+            const std::string_view formulation =
+                solution.model.analysis_type == input::Q4AnalysisType::plane_stress
+                    ? "plane-stress"
+                    : "plane-strain";
+            output << "Completed ABAQUS Q4 " << formulation << " analysis.\n"
+                   << "Input model: " << input_path.string() << '\n'
+                   << "VTU result: " << output_path.string() << '\n';
+            return ExitCode::Success;
         }
         catch (const input::AbaqusParseError &exception)
         {
@@ -92,31 +141,6 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
         {
             error << "Unexpected internal error: " << exception.what() << '\n';
             return ExitCode::UnexpectedInternalError;
-        }
-
-        try
-        {
-            const model::DofMap dof_map(solution->model.nodes,
-                                        model::SpatialDimension::two_dimensional);
-            std::visit(
-                [&](const auto &result) {
-                    output::write_q4_analysis_vtu(output_path, solution->model.nodes,
-                                                  solution->model.elements, dof_map, result);
-                },
-                solution->result);
-            const std::string_view formulation =
-                solution->model.analysis_type == input::Q4AnalysisType::plane_stress
-                    ? "plane-stress"
-                    : "plane-strain";
-            output << "Completed ABAQUS Q4 " << formulation << " analysis.\n"
-                   << "Input model: " << input_path.string() << '\n'
-                   << "VTU result: " << output_path.string() << '\n';
-            return ExitCode::Success;
-        }
-        catch (const std::exception &exception)
-        {
-            error << "Result-writing error: " << exception.what() << '\n';
-            return ExitCode::ResultWritingError;
         }
     }
 
