@@ -102,7 +102,8 @@ Run the supplied H8 three-dimensional block-compression verification model:
 
 Its analytical solution has a top-face Z displacement of `-0.01`, transverse
 X and Y strains of `0.0025`, uniform Z stress of `-10.0`, von Mises stress of
-`10.0`, and a total bottom-face Z reaction of `10.0`.
+`10.0`, and a total bottom-face Z reaction of `10.0`. See
+[the H8 compression benchmark report](docs/benchmarks/h8_compression.md).
 
 Run the supplied Q4 cantilever-beam benchmark:
 
