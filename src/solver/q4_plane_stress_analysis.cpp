@@ -17,13 +17,13 @@ Q4PlaneStressAnalysisResult solve_q4_plane_stress_model(
     const std::span<const PrescribedDisplacement> prescribed_displacements)
 {
     const auto stiffness_matrix =
-        assembly::assemble_q4_plane_stress_stiffness(elements, nodes, materials, dof_map);
+        assembly::assemble_q4_plane_stress_stiffness_coo(elements, nodes, materials, dof_map);
     auto load_vector = assembly::assemble_point_load_vector(dof_map, point_loads);
     load_vector +=
         assembly::assemble_q4_edge_pressure_loads(elements, nodes, dof_map, pressure_loads);
 
     auto static_result =
-        solve_dense_static_system(stiffness_matrix, load_vector, prescribed_displacements);
+        solve_sparse_static_system(stiffness_matrix, load_vector, prescribed_displacements);
     auto element_results = postprocessing::recover_q4_plane_stress_model_results(
         elements, nodes, materials, dof_map, static_result.displacements);
 
