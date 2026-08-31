@@ -169,7 +169,8 @@ protocol.
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the implemented component
 architecture, solver workflow, numerical data flow, and future GUI boundary.
 The [Q4 formulation](docs/formulations/Q4.md) documents the implemented plane-
-stress and plane-strain mathematics.
+stress and plane-strain mathematics. The [H8 formulation](docs/formulations/H8.md)
+documents the implemented three-dimensional solid mechanics.
 
 ## Licence status
 
