@@ -52,11 +52,43 @@ model::Q4Edge parse_edge_label(const std::string_view label, const std::size_t l
     throw AbaqusParseError("Unsupported Q4 distributed-load type on line " +
                            std::to_string(line_number) + ".");
 }
-} // namespace
 
-std::vector<AbaqusQ4EdgePressure> parse_abaqus_q4_edge_pressures(const std::string_view input_text)
+model::H8Face parse_face_label(const std::string_view label, const std::size_t line_number)
 {
-    std::vector<AbaqusQ4EdgePressure> pressure_loads;
+    if (detail::equals_case_insensitive(label, "P1"))
+    {
+        return model::H8Face::one;
+    }
+    if (detail::equals_case_insensitive(label, "P2"))
+    {
+        return model::H8Face::two;
+    }
+    if (detail::equals_case_insensitive(label, "P3"))
+    {
+        return model::H8Face::three;
+    }
+    if (detail::equals_case_insensitive(label, "P4"))
+    {
+        return model::H8Face::four;
+    }
+    if (detail::equals_case_insensitive(label, "P5"))
+    {
+        return model::H8Face::five;
+    }
+    if (detail::equals_case_insensitive(label, "P6"))
+    {
+        return model::H8Face::six;
+    }
+    throw AbaqusParseError("Unsupported H8 distributed-load type on line " +
+                           std::to_string(line_number) + ".");
+}
+
+template <typename PressureLoad, typename LabelParser>
+std::vector<PressureLoad> parse_pressure_loads(const std::string_view input_text,
+                                               LabelParser parse_label,
+                                               const std::string_view result_description)
+{
+    std::vector<PressureLoad> pressure_loads;
     bool in_dload_section = false;
     bool found_dload_section = false;
     std::size_t line_number = 0;
@@ -97,20 +129,20 @@ std::vector<AbaqusQ4EdgePressure> parse_abaqus_q4_edge_pressures(const std::stri
             const auto fields = detail::split_fields(line);
             if (fields.size() != 3)
             {
-                throw AbaqusParseError("Expected element, pressure edge, and magnitude on line " +
+                throw AbaqusParseError("Expected element, pressure face, and magnitude on line " +
                                        std::to_string(line_number) + ".");
             }
 
             const AbaqusElementTarget target = parse_element_target(fields[0], line_number);
-            const model::Q4Edge edge = parse_edge_label(fields[1], line_number);
+            const auto label = parse_label(fields[1], line_number);
             const double pressure =
-                detail::parse_number<double>(fields[2], line_number, "edge-pressure magnitude");
+                detail::parse_number<double>(fields[2], line_number, "pressure magnitude");
             if (!std::isfinite(pressure))
             {
-                throw AbaqusParseError("Edge-pressure magnitude must be finite on line " +
+                throw AbaqusParseError("Pressure magnitude must be finite on line " +
                                        std::to_string(line_number) + ".");
             }
-            pressure_loads.push_back(AbaqusQ4EdgePressure{target, edge, pressure});
+            pressure_loads.push_back(PressureLoad{target, label, pressure});
         }
 
         if (line_end == std::string_view::npos)
@@ -126,8 +158,22 @@ std::vector<AbaqusQ4EdgePressure> parse_abaqus_q4_edge_pressures(const std::stri
     }
     if (pressure_loads.empty())
     {
-        throw AbaqusParseError("ABAQUS *DLOAD section does not contain edge-pressure data.");
+        throw AbaqusParseError("ABAQUS *DLOAD section does not contain " +
+                               std::string(result_description) + " data.");
     }
     return pressure_loads;
+}
+} // namespace
+
+std::vector<AbaqusQ4EdgePressure> parse_abaqus_q4_edge_pressures(const std::string_view input_text)
+{
+    return parse_pressure_loads<AbaqusQ4EdgePressure>(input_text, parse_edge_label,
+                                                      "edge-pressure");
+}
+
+std::vector<AbaqusH8FacePressure> parse_abaqus_h8_face_pressures(const std::string_view input_text)
+{
+    return parse_pressure_loads<AbaqusH8FacePressure>(input_text, parse_face_label,
+                                                      "face-pressure");
 }
 } // namespace finelemethod::input
