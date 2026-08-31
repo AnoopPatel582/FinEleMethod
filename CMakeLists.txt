@@ -29,6 +29,7 @@ add_library(FinEleMethodCore STATIC
     src/elements/q4_plane_stress_recovery.cpp
     src/elements/q4_shape_functions.cpp
     src/elements/q4_strain_displacement.cpp
+    src/examples/h8_compression_example.cpp
     src/examples/q4_tension_example.cpp
     src/input/abaqus_boundary_parser.cpp
     src/input/abaqus_cload_parser.cpp

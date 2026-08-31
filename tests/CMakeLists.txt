@@ -99,6 +99,12 @@ add_test(
 )
 
 add_test(
+    NAME CommandLineExample.H8CompressionRuns
+    COMMAND FinEleMethod --example h8-compression
+        --output ${PROJECT_BINARY_DIR}/h8_compression_example.vtu
+)
+
+add_test(
     NAME CommandLineExample.Q4PlaneStrainTensionInputRuns
     COMMAND FinEleMethod
         --input ${PROJECT_SOURCE_DIR}/examples/abaqus/q4_plane_strain_tension.inp

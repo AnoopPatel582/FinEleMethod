@@ -117,6 +117,34 @@ TEST(CommandLine, Q4TensionExampleReportsResultWritingFailure)
     EXPECT_NE(error.str().find("Result-writing error"), std::string::npos);
 }
 
+TEST(CommandLine, H8CompressionExampleWritesParaViewResult)
+{
+    const auto path =
+        std::filesystem::temp_directory_path() / "finelemethod_cli_h8_compression_test.vtu";
+    std::filesystem::remove(path);
+    const std::string path_text = path.string();
+    const std::array<std::string_view, 4> arguments{"--example", "h8-compression", "--output",
+                                                    path_text};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::Success);
+    EXPECT_TRUE(error.str().empty());
+    EXPECT_NE(output.str().find("Completed H8 compression example"), std::string::npos);
+    std::ifstream file(path, std::ios::binary);
+    const std::string vtu{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
+    EXPECT_NE(vtu.find("<Piece NumberOfPoints=\"8\" NumberOfCells=\"1\">"), std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"types\" format=\"ascii\">\n          12"), std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"Displacement\""), std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"ReactionForce\""), std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"Stress\" NumberOfComponents=\"6\""), std::string::npos);
+    EXPECT_NE(vtu.find("Name=\"VonMises\""), std::string::npos);
+    file.close();
+    std::filesystem::remove(path);
+}
+
 TEST(CommandLine, AbaqusInputWritesSolvedParaViewResult)
 {
     const auto directory = std::filesystem::temp_directory_path();
