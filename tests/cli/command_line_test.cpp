@@ -191,6 +191,43 @@ TEST(CommandLine, InvalidAnalysisRequestWritesFailedJsonProgress)
     std::filesystem::remove(request_path);
 }
 
+TEST(CommandLine, AnalysisRequestHonorsPreexistingCancellationFlag)
+{
+    const auto directory =
+        std::filesystem::temp_directory_path() / "finelemethod_cli_cancelled_request_test";
+    std::filesystem::remove_all(directory);
+    std::filesystem::create_directories(directory / "input");
+    std::filesystem::create_directories(directory / "results");
+    const auto request_path = directory / "analysis-request.json";
+    const auto result_path = directory / "results" / "model.vtu";
+    const auto summary_path = directory / "results" / "analysis-summary.json";
+    std::ofstream(directory / "input" / "model.inp") << valid_abaqus_input;
+    std::ofstream(request_path) << R"({
+  "protocolVersion": 1,
+  "inputFile": "input/model.inp",
+  "resultFile": "results/model.vtu",
+  "summaryFile": "results/analysis-summary.json"
+})";
+    std::ofstream(directory / "cancellation-requested.flag") << "Cancellation requested.\n";
+    const std::string request_text = request_path.string();
+    const std::array<std::string_view, 2> arguments{"--request", request_text};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::Cancelled);
+    EXPECT_TRUE(error.str().empty());
+    const auto events = parse_json_lines(output.str());
+    ASSERT_EQ(events.size(), 2U);
+    EXPECT_EQ(events[0].at("state"), "preparing");
+    EXPECT_EQ(events[1].at("state"), "cancelled");
+    EXPECT_FALSE(std::filesystem::exists(result_path));
+    EXPECT_FALSE(std::filesystem::exists(summary_path));
+
+    std::filesystem::remove_all(directory);
+}
+
 TEST(CommandLine, Q4TensionExampleWritesParaViewResult)
 {
     const auto path =

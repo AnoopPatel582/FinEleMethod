@@ -27,7 +27,9 @@ Each prepared analysis receives the next numbered directory (`run-0001`,
 `run-0002`, and so on), an immutable model snapshot, a validated request, and a
 dedicated results directory.
 Cooperative analysis cancellation uses a run-local
-`cancellation-requested.flag` rather than forcibly terminating the solver.
+`cancellation-requested.flag` rather than forcibly terminating the solver. In
+request mode, the CLI checks this flag at safe lifecycle boundaries, reports the
+`cancelled` state, and exits with code `6` without writing completion outputs.
 
 ## Current capabilities
 

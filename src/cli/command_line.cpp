@@ -12,6 +12,7 @@
 #include "finelemethod/output/analysis_summary.hpp"
 #include "finelemethod/output/h8_analysis_vtu.hpp"
 #include "finelemethod/output/q4_analysis_vtu.hpp"
+#include "finelemethod/project/cancellation_flag.hpp"
 #include "finelemethod/solver/abaqus_h8_analysis.hpp"
 #include "finelemethod/solver/abaqus_q4_analysis.hpp"
 
@@ -72,7 +73,7 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
         {
             const input::AnalysisRequest request = input::read_analysis_request(request_path);
             const std::filesystem::path request_directory = request_path.parent_path();
-            const std::array<std::string, 7> owned_arguments{
+            const std::array<std::string, 9> owned_arguments{
                 "--input",
                 (request_directory / request.input_file).lexically_normal().string(),
                 "--output",
@@ -80,10 +81,13 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                 "--summary",
                 (request_directory / request.summary_file).lexically_normal().string(),
                 "--json-progress",
+                "--cancellation-directory",
+                request_directory.lexically_normal().string(),
             };
-            const std::array<std::string_view, 7> request_arguments{
-                owned_arguments[0], owned_arguments[1], owned_arguments[2], owned_arguments[3],
-                owned_arguments[4], owned_arguments[5], owned_arguments[6],
+            const std::array<std::string_view, 9> request_arguments{
+                owned_arguments[0], owned_arguments[1], owned_arguments[2],
+                owned_arguments[3], owned_arguments[4], owned_arguments[5],
+                owned_arguments[6], owned_arguments[7], owned_arguments[8],
             };
             return run(request_arguments, output, error);
         }
@@ -102,13 +106,17 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
 
     const bool has_summary = arguments.size() >= 6 && arguments[4] == "--summary";
     const bool has_json_progress = (arguments.size() == 5 && arguments[4] == "--json-progress") ||
-                                   (arguments.size() == 7 && arguments[6] == "--json-progress");
+                                   (arguments.size() == 7 && arguments[6] == "--json-progress") ||
+                                   (arguments.size() == 9 && arguments[6] == "--json-progress");
+    const bool has_cancellation_directory =
+        arguments.size() == 9 && arguments[7] == "--cancellation-directory";
     const bool is_input_analysis =
-        arguments.size() >= 4 && arguments.size() <= 7 && arguments[0] == "--input" &&
+        arguments.size() >= 4 && arguments.size() <= 9 && arguments[0] == "--input" &&
         arguments[2] == "--output" &&
         ((arguments.size() == 4) || (arguments.size() == 5 && has_json_progress) ||
          (arguments.size() == 6 && has_summary) ||
-         (arguments.size() == 7 && has_summary && has_json_progress));
+         (arguments.size() == 7 && has_summary && has_json_progress) ||
+         (arguments.size() == 9 && has_summary && has_json_progress && has_cancellation_directory));
     if (is_input_analysis)
     {
         const std::filesystem::path input_path{std::string(arguments[1])};
@@ -116,6 +124,10 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
         const std::optional<std::filesystem::path> summary_path =
             has_summary ? std::optional<std::filesystem::path>{std::string(arguments[5])}
                         : std::nullopt;
+        const std::optional<std::filesystem::path> cancellation_directory =
+            has_cancellation_directory
+                ? std::optional<std::filesystem::path>{std::string(arguments[8])}
+                : std::nullopt;
         const auto write_progress = [&](const output::AnalysisState state,
                                         const std::string_view message) {
             if (has_json_progress)
@@ -124,8 +136,21 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                     output, output::AnalysisProgressEvent{state, std::string(message)});
             }
         };
+        const auto cancellation_requested = [&] {
+            if (!cancellation_directory ||
+                !project::is_analysis_cancellation_requested(*cancellation_directory))
+            {
+                return false;
+            }
+            write_progress(output::AnalysisState::cancelled, "Analysis cancelled by user.");
+            return true;
+        };
 
         write_progress(output::AnalysisState::preparing, "Reading input model.");
+        if (cancellation_requested())
+        {
+            return ExitCode::Cancelled;
+        }
         std::string input_text;
         try
         {
@@ -140,6 +165,10 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
 
         try
         {
+            if (cancellation_requested())
+            {
+                return ExitCode::Cancelled;
+            }
             write_progress(output::AnalysisState::executing, "Solving finite element model.");
             const input::AbaqusElementFamily family =
                 input::detect_abaqus_element_family(input_text);
@@ -148,6 +177,10 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                 auto solution = solver::analyze_abaqus_h8(input_text);
                 const model::DofMap dof_map(solution.model.nodes,
                                             model::SpatialDimension::three_dimensional);
+                if (cancellation_requested())
+                {
+                    return ExitCode::Cancelled;
+                }
                 try
                 {
                     write_progress(output::AnalysisState::writing_results,
@@ -193,6 +226,10 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
             auto solution = solver::analyze_abaqus_q4(input_text);
             const model::DofMap dof_map(solution.model.nodes,
                                         model::SpatialDimension::two_dimensional);
+            if (cancellation_requested())
+            {
+                return ExitCode::Cancelled;
+            }
             try
             {
                 write_progress(output::AnalysisState::writing_results, "Writing analysis results.");
