@@ -139,7 +139,11 @@ install(
     TARGETS FinEleMethod FinEleMethodGui
     RUNTIME DESTINATION .
 )
-install(FILES $<TARGET_RUNTIME_DLLS:FinEleMethodGui> DESTINATION .)
+install(
+    DIRECTORY "$<TARGET_FILE_DIR:FinEleMethodGui>/"
+    DESTINATION .
+    FILES_MATCHING PATTERN "*.dll"
+)
 install(FILES README.md docs/BEGINNERS_GUIDE.md DESTINATION docs)
 install(DIRECTORY examples/abaqus DESTINATION examples)
 

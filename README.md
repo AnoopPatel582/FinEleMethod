@@ -104,7 +104,9 @@ cmake --install .\out\build\windows-msvc `
 ```
 
 The staged folder contains the command-line solver, workbench, required
-third-party runtime DLLs, documentation, and ABAQUS examples. It intentionally
+app-local runtime DLLs, documentation, and ABAQUS examples. Runtime staging
+copies the complete DLL set placed beside the Release applications by vcpkg so
+transitive dependencies such as `z.dll` are not omitted. It intentionally
 excludes test binaries and development libraries. The Microsoft Visual C++
 Runtime prerequisite will be handled by the future installer.
 
