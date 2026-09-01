@@ -10,8 +10,10 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
 
 class wxButton;
+class wxChoice;
 class wxCloseEvent;
 class wxCommandEvent;
 class wxProcess;
@@ -35,6 +37,7 @@ class MainFrame final : public wxFrame
     void create_project(wxCommandEvent &event);
     void activate_project(project::ProjectFile project);
     void refresh_run_history();
+    void select_history_run(wxCommandEvent &event);
     void run_analysis(wxCommandEvent &event);
     void cancel_analysis(wxCommandEvent &event);
     void poll_analysis_progress(wxTimerEvent &event);
@@ -50,6 +53,7 @@ class MainFrame final : public wxFrame
     wxStaticText *progress_text_{};
     wxStaticText *summary_text_{};
     wxStaticText *run_history_text_{};
+    wxChoice *run_history_choice_{};
     wxButton *create_project_button_{};
     wxButton *browse_button_{};
     wxButton *run_button_{};
@@ -58,6 +62,7 @@ class MainFrame final : public wxFrame
     std::filesystem::path selected_input_file_;
     std::optional<project::ProjectFile> active_project_;
     std::optional<project::AnalysisRun> active_run_;
+    std::vector<project::AnalysisRun> history_runs_;
     std::optional<output::AnalysisSummary> completed_summary_;
     wxProcess *solver_process_{};
     wxTimer progress_timer_;

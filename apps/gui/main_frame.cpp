@@ -5,6 +5,7 @@
 #include "finelemethod/project/cancellation_flag.hpp"
 
 #include <wx/button.h>
+#include <wx/choice.h>
 #include <wx/dirdlg.h>
 #include <wx/filedlg.h>
 #include <wx/font.h>
@@ -39,6 +40,7 @@ constexpr int progress_timer_id = wxID_HIGHEST + 5;
 constexpr int open_result_id = wxID_HIGHEST + 6;
 constexpr int open_project_id = wxID_HIGHEST + 7;
 constexpr int cancel_analysis_id = wxID_HIGHEST + 8;
+constexpr int run_history_id = wxID_HIGHEST + 9;
 } // namespace
 
 MainFrame::MainFrame()
@@ -136,6 +138,10 @@ void MainFrame::create_content()
     project_box->Add(project_row, 0, wxEXPAND | wxALL, 10);
     run_history_text_ = new wxStaticText(panel, wxID_ANY, "Run history: no project open");
     project_box->Add(run_history_text_, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+    run_history_choice_ = new wxChoice(panel, run_history_id);
+    run_history_choice_->Disable();
+    run_history_choice_->Bind(wxEVT_CHOICE, &MainFrame::select_history_run, this);
+    project_box->Add(run_history_choice_, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
     auto *solver_box = new wxStaticBoxSizer(wxVERTICAL, panel, "Solver status");
     solver_box->Add(new wxStaticText(panel, wxID_ANY, "Command-line solver engine: ready"), 0,
@@ -235,6 +241,9 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     progress_text_->SetLabel("Progress: idle");
     summary_text_->SetLabel("Summary: unavailable");
     run_history_text_->SetLabel("Run history: no project open");
+    history_runs_.clear();
+    run_history_choice_->Clear();
+    run_history_choice_->Disable();
     create_project_button_->Enable();
     run_button_->Disable();
     open_result_button_->Disable();
@@ -310,22 +319,88 @@ void MainFrame::activate_project(project::ProjectFile project)
 
 void MainFrame::refresh_run_history()
 {
+    history_runs_.clear();
+    run_history_choice_->Clear();
     if (!active_project_)
     {
         run_history_text_->SetLabel("Run history: no project open");
+        run_history_choice_->Disable();
         return;
     }
 
-    const std::vector<project::AnalysisRun> runs = project::list_analysis_runs(*active_project_);
-    if (runs.empty())
+    history_runs_ = project::list_analysis_runs(*active_project_);
+    if (history_runs_.empty())
     {
         run_history_text_->SetLabel("Run history: no analyses prepared");
+        run_history_choice_->Disable();
         return;
     }
 
     run_history_text_->SetLabel(wxString::Format(
-        "Run history: %llu prepared | Latest: %s", static_cast<unsigned long long>(runs.size()),
-        wxString{runs.back().run_directory.filename().wstring()}.c_str()));
+        "Run history: %llu prepared | Latest: %s",
+        static_cast<unsigned long long>(history_runs_.size()),
+        wxString{history_runs_.back().run_directory.filename().wstring()}.c_str()));
+    for (const project::AnalysisRun &run : history_runs_)
+    {
+        run_history_choice_->Append(wxString{run.run_directory.filename().wstring()});
+    }
+    run_history_choice_->Enable(solver_process_ == nullptr);
+    run_history_choice_->SetSelection(wxNOT_FOUND);
+    if (active_run_)
+    {
+        for (std::size_t index = 0; index < history_runs_.size(); ++index)
+        {
+            if (history_runs_[index].run_directory == active_run_->run_directory)
+            {
+                run_history_choice_->SetSelection(static_cast<int>(index));
+                break;
+            }
+        }
+    }
+}
+
+void MainFrame::select_history_run(wxCommandEvent &event)
+{
+    const int selection = event.GetSelection();
+    if (solver_process_ != nullptr || selection < 0 ||
+        static_cast<std::size_t>(selection) >= history_runs_.size())
+    {
+        return;
+    }
+
+    active_run_ = history_runs_[static_cast<std::size_t>(selection)];
+    completed_summary_.reset();
+    run_path_->SetValue(wxString{active_run_->run_directory.wstring()});
+    open_result_button_->Disable();
+    GetMenuBar()->Enable(open_result_id, false);
+
+    try
+    {
+        const output::AnalysisSummary summary =
+            output::read_analysis_summary(active_run_->summary_file);
+        if (summary.input_path.lexically_normal() != active_run_->input_file.lexically_normal() ||
+            summary.result_path.lexically_normal() != active_run_->result_file.lexically_normal() ||
+            !std::filesystem::is_regular_file(active_run_->result_file))
+        {
+            throw std::runtime_error("Historical analysis outputs do not match the selected run.");
+        }
+
+        completed_summary_ = summary;
+        summary_text_->SetLabel(wxString::Format(
+            "Summary: %s | Nodes: %llu | Elements: %llu | Iterations: %llu | Residual: %.3e",
+            wxString::FromUTF8(summary.analysis_type).c_str(),
+            static_cast<unsigned long long>(summary.node_count),
+            static_cast<unsigned long long>(summary.element_count),
+            static_cast<unsigned long long>(summary.solver_iterations), summary.residual_norm));
+        open_result_button_->Enable();
+        GetMenuBar()->Enable(open_result_id, true);
+        SetStatusText("Completed historical run selected");
+    }
+    catch (const std::exception &)
+    {
+        summary_text_->SetLabel("Summary: selected run has no completed result");
+        SetStatusText("Incomplete historical run selected");
+    }
 }
 
 void MainFrame::run_analysis(wxCommandEvent &)
@@ -385,6 +460,7 @@ void MainFrame::run_analysis(wxCommandEvent &)
         cancel_button_->Enable();
         open_result_button_->Disable();
         browse_button_->Disable();
+        run_history_choice_->Disable();
         GetMenuBar()->Enable(open_project_id, false);
         GetMenuBar()->Enable(open_input_id, false);
         GetMenuBar()->Enable(run_analysis_id, false);
@@ -516,6 +592,7 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     run_button_->Enable(active_project_.has_value());
     cancel_button_->Disable();
     browse_button_->Enable();
+    run_history_choice_->Enable(!history_runs_.empty());
     GetMenuBar()->Enable(open_project_id, true);
     GetMenuBar()->Enable(open_input_id, true);
     GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
