@@ -22,6 +22,9 @@ run identifier. Its run selector lists the numbered history and displays the
 directory of a selected run. Selecting a completed run validates and restores
 its summary and makes its existing VTU result available to open again. The
 selected run directory can also be opened directly in Windows Explorer.
+Run-history entries are labelled `completed` only when both their versioned
+summary and referenced VTU result pass validation; all other runs are labelled
+`not completed` without inferring a more specific cause.
 
 The project-storage layer can create a new file-based project, copy its
 authoritative ABAQUS model into `input/`, create an initially empty `runs/`

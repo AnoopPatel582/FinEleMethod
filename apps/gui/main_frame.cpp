@@ -354,7 +354,10 @@ void MainFrame::refresh_run_history()
         wxString{history_runs_.back().run_directory.filename().wstring()}.c_str()));
     for (const project::AnalysisRun &run : history_runs_)
     {
-        run_history_choice_->Append(wxString{run.run_directory.filename().wstring()});
+        const wxString status =
+            project::is_analysis_run_completed(run) ? "completed" : "not completed";
+        run_history_choice_->Append(wxString{run.run_directory.filename().wstring()} + " (" +
+                                    status + ")");
     }
     run_history_choice_->Enable(solver_process_ == nullptr);
     run_history_choice_->SetSelection(wxNOT_FOUND);
@@ -608,6 +611,7 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     consume_progress_lines(true);
     delete solver_process_;
     solver_process_ = nullptr;
+    refresh_run_history();
     run_button_->Enable(active_project_.has_value());
     cancel_button_->Disable();
     browse_button_->Enable();

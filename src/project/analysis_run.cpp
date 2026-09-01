@@ -1,6 +1,7 @@
 #include "finelemethod/project/analysis_run.hpp"
 
 #include "finelemethod/input/analysis_request.hpp"
+#include "finelemethod/output/analysis_summary.hpp"
 
 #include <algorithm>
 #include <charconv>
@@ -85,6 +86,21 @@ std::vector<AnalysisRun> list_analysis_runs(const ProjectFile &project)
     }
     std::ranges::sort(runs, {}, &AnalysisRun::number);
     return runs;
+}
+
+bool is_analysis_run_completed(const AnalysisRun &run)
+{
+    try
+    {
+        const output::AnalysisSummary summary = output::read_analysis_summary(run.summary_file);
+        return summary.input_path.lexically_normal() == run.input_file.lexically_normal() &&
+               summary.result_path.lexically_normal() == run.result_file.lexically_normal() &&
+               std::filesystem::is_regular_file(run.result_file);
+    }
+    catch (const std::exception &)
+    {
+        return false;
+    }
 }
 
 AnalysisRun prepare_analysis_run(const ProjectFile &project)

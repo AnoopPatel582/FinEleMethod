@@ -25,4 +25,8 @@ struct AnalysisRun
 // Discovers prepared run directories and returns them in ascending run-number
 // order. Unrelated entries in the project's runs directory are ignored.
 [[nodiscard]] std::vector<AnalysisRun> list_analysis_runs(const ProjectFile &project);
+
+// Returns true only when the run has a valid completed summary whose input and
+// result paths match the run and whose VTU result exists.
+[[nodiscard]] bool is_analysis_run_completed(const AnalysisRun &run);
 } // namespace finelemethod::project

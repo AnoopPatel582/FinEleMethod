@@ -1,6 +1,7 @@
 #include "finelemethod/project/analysis_run.hpp"
 
 #include "finelemethod/input/analysis_request.hpp"
+#include "finelemethod/output/analysis_summary.hpp"
 
 #include <gtest/gtest.h>
 
@@ -103,6 +104,46 @@ TEST_F(AnalysisRunTest, RejectsMissingRunsDirectoryWhenListingRuns)
     std::filesystem::remove_all(project_.runs_directory);
 
     EXPECT_THROW((void)list_analysis_runs(project_), std::invalid_argument);
+}
+
+TEST_F(AnalysisRunTest, IdentifiesRunWithMatchingSummaryAndResultAsCompleted)
+{
+    const AnalysisRun run = prepare_analysis_run(project_);
+    std::ofstream(run.result_file) << "VTU result";
+    output::write_analysis_summary(run.summary_file,
+                                   output::AnalysisSummary{.analysis_type = "q4-plane-stress",
+                                                           .input_path = run.input_file,
+                                                           .result_path = run.result_file,
+                                                           .node_count = 4,
+                                                           .element_count = 1,
+                                                           .solver_iterations = 1,
+                                                           .residual_norm = 0.0});
+
+    EXPECT_TRUE(is_analysis_run_completed(run));
+}
+
+TEST_F(AnalysisRunTest, DoesNotIdentifyPreparedRunWithoutOutputsAsCompleted)
+{
+    const AnalysisRun run = prepare_analysis_run(project_);
+
+    EXPECT_FALSE(is_analysis_run_completed(run));
+}
+
+TEST_F(AnalysisRunTest, DoesNotIdentifyRunWithMismatchedSummaryAsCompleted)
+{
+    const AnalysisRun run = prepare_analysis_run(project_);
+    std::ofstream(run.result_file) << "VTU result";
+    output::write_analysis_summary(
+        run.summary_file,
+        output::AnalysisSummary{.analysis_type = "q4-plane-stress",
+                                .input_path = run.input_file,
+                                .result_path = run.run_directory / "results/other.vtu",
+                                .node_count = 4,
+                                .element_count = 1,
+                                .solver_iterations = 1,
+                                .residual_norm = 0.0});
+
+    EXPECT_FALSE(is_analysis_run_completed(run));
 }
 
 TEST_F(AnalysisRunTest, RejectsMissingAuthoritativeInput)
