@@ -41,6 +41,7 @@ constexpr int open_result_id = wxID_HIGHEST + 6;
 constexpr int open_project_id = wxID_HIGHEST + 7;
 constexpr int cancel_analysis_id = wxID_HIGHEST + 8;
 constexpr int run_history_id = wxID_HIGHEST + 9;
+constexpr int open_run_folder_id = wxID_HIGHEST + 10;
 } // namespace
 
 MainFrame::MainFrame()
@@ -74,6 +75,7 @@ void MainFrame::create_menu_bar()
     analysis_menu->Append(run_analysis_id, "&Run Analysis\tF5");
     analysis_menu->Append(cancel_analysis_id, "&Cancel Analysis");
     analysis_menu->Append(open_result_id, "&Open Result...\tCtrl+R");
+    analysis_menu->Append(open_run_folder_id, "Open Run &Folder");
     menu_bar->Append(analysis_menu, "&Analysis");
     menu_bar->Append(help_menu, "&Help");
     SetMenuBar(menu_bar);
@@ -81,6 +83,7 @@ void MainFrame::create_menu_bar()
     menu_bar->Enable(run_analysis_id, false);
     menu_bar->Enable(cancel_analysis_id, false);
     menu_bar->Enable(open_result_id, false);
+    menu_bar->Enable(open_run_folder_id, false);
 
     Bind(wxEVT_MENU, &MainFrame::open_project, this, open_project_id);
     Bind(wxEVT_MENU, &MainFrame::choose_abaqus_input, this, open_input_id);
@@ -88,6 +91,7 @@ void MainFrame::create_menu_bar()
     Bind(wxEVT_MENU, &MainFrame::run_analysis, this, run_analysis_id);
     Bind(wxEVT_MENU, &MainFrame::cancel_analysis, this, cancel_analysis_id);
     Bind(wxEVT_MENU, &MainFrame::open_result, this, open_result_id);
+    Bind(wxEVT_MENU, &MainFrame::open_run_folder, this, open_run_folder_id);
     Bind(wxEVT_END_PROCESS, &MainFrame::analysis_finished, this, solver_process_id);
     Bind(wxEVT_TIMER, &MainFrame::poll_analysis_progress, this, progress_timer_id);
     Bind(wxEVT_CLOSE_WINDOW, &MainFrame::close_window, this);
@@ -170,6 +174,9 @@ void MainFrame::create_content()
     open_result_button_ = new wxButton(panel, open_result_id, "Open Result");
     open_result_button_->Disable();
     open_result_button_->Bind(wxEVT_BUTTON, &MainFrame::open_result, this);
+    open_run_folder_button_ = new wxButton(panel, open_run_folder_id, "Open Run Folder");
+    open_run_folder_button_->Disable();
+    open_run_folder_button_->Bind(wxEVT_BUTTON, &MainFrame::open_run_folder, this);
 
     auto *close_button = new wxButton(panel, wxID_CLOSE, "Close");
     close_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { Close(); });
@@ -185,6 +192,7 @@ void MainFrame::create_content()
     cancel_button_->Disable();
     cancel_button_->Bind(wxEVT_BUTTON, &MainFrame::cancel_analysis, this);
     bottom_buttons->Add(cancel_button_, 0, wxRIGHT, 10);
+    bottom_buttons->Add(open_run_folder_button_, 0, wxRIGHT, 10);
     bottom_buttons->Add(open_result_button_, 0, wxRIGHT, 10);
     bottom_buttons->Add(close_button, 0);
     layout->Add(bottom_buttons, 0, wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 28);
@@ -247,9 +255,11 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     create_project_button_->Enable();
     run_button_->Disable();
     open_result_button_->Disable();
+    open_run_folder_button_->Disable();
     GetMenuBar()->Enable(create_project_id, true);
     GetMenuBar()->Enable(run_analysis_id, false);
     GetMenuBar()->Enable(open_result_id, false);
+    GetMenuBar()->Enable(open_run_folder_id, false);
     SetStatusText("ABAQUS input selected");
 }
 
@@ -311,9 +321,11 @@ void MainFrame::activate_project(project::ProjectFile project)
     create_project_button_->Disable();
     run_button_->Enable();
     open_result_button_->Disable();
+    open_run_folder_button_->Disable();
     GetMenuBar()->Enable(create_project_id, false);
     GetMenuBar()->Enable(run_analysis_id, true);
     GetMenuBar()->Enable(open_result_id, false);
+    GetMenuBar()->Enable(open_run_folder_id, false);
     refresh_run_history();
 }
 
@@ -371,6 +383,8 @@ void MainFrame::select_history_run(wxCommandEvent &event)
     active_run_ = history_runs_[static_cast<std::size_t>(selection)];
     completed_summary_.reset();
     run_path_->SetValue(wxString{active_run_->run_directory.wstring()});
+    open_run_folder_button_->Enable();
+    GetMenuBar()->Enable(open_run_folder_id, true);
     open_result_button_->Disable();
     GetMenuBar()->Enable(open_result_id, false);
 
@@ -454,6 +468,7 @@ void MainFrame::run_analysis(wxCommandEvent &)
         progress_protocol_error_.clear();
         cancellation_progress_received_ = false;
         run_path_->SetValue(wxString{active_run_->run_directory.wstring()});
+        open_run_folder_button_->Enable();
         progress_text_->SetLabel("Progress: starting solver");
         summary_text_->SetLabel("Summary: unavailable");
         run_button_->Disable();
@@ -466,12 +481,16 @@ void MainFrame::run_analysis(wxCommandEvent &)
         GetMenuBar()->Enable(run_analysis_id, false);
         GetMenuBar()->Enable(cancel_analysis_id, true);
         GetMenuBar()->Enable(open_result_id, false);
+        GetMenuBar()->Enable(open_run_folder_id, true);
         progress_timer_.Start(100);
         SetStatusText("Analysis running");
     }
     catch (const std::exception &exception)
     {
         active_run_.reset();
+        run_history_choice_->SetSelection(wxNOT_FOUND);
+        open_run_folder_button_->Disable();
+        GetMenuBar()->Enable(open_run_folder_id, false);
         SetStatusText("Analysis could not start");
         wxMessageBox(wxString::FromUTF8(exception.what()), "Could not run analysis",
                      wxOK | wxICON_ERROR, this);
@@ -688,6 +707,20 @@ void MainFrame::open_result(wxCommandEvent &)
         wxMessageBox("Windows could not open the VTU result. Install ParaView and associate .vtu "
                      "files with it, then try again.",
                      "Could not open result", wxOK | wxICON_ERROR, this);
+    }
+}
+
+void MainFrame::open_run_folder(wxCommandEvent &)
+{
+    if (!active_run_ || !std::filesystem::is_directory(active_run_->run_directory))
+    {
+        return;
+    }
+
+    if (!wxLaunchDefaultApplication(wxString{active_run_->run_directory.wstring()}))
+    {
+        wxMessageBox("Windows could not open the selected analysis run directory.",
+                     "Could not open run folder", wxOK | wxICON_ERROR, this);
     }
 }
 

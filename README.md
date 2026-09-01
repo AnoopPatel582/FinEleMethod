@@ -20,7 +20,8 @@ and the VTU result can be opened with the Windows-associated application. The
 project area also reports the number of prepared analysis runs and the latest
 run identifier. Its run selector lists the numbered history and displays the
 directory of a selected run. Selecting a completed run validates and restores
-its summary and makes its existing VTU result available to open again.
+its summary and makes its existing VTU result available to open again. The
+selected run directory can also be opened directly in Windows Explorer.
 
 The project-storage layer can create a new file-based project, copy its
 authoritative ABAQUS model into `input/`, create an initially empty `runs/`

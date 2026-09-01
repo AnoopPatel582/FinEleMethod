@@ -43,6 +43,7 @@ class MainFrame final : public wxFrame
     void poll_analysis_progress(wxTimerEvent &event);
     void analysis_finished(wxProcessEvent &event);
     void open_result(wxCommandEvent &event);
+    void open_run_folder(wxCommandEvent &event);
     void close_window(wxCloseEvent &event);
     void read_process_output();
     void consume_progress_lines(bool include_incomplete_line);
@@ -59,6 +60,7 @@ class MainFrame final : public wxFrame
     wxButton *run_button_{};
     wxButton *cancel_button_{};
     wxButton *open_result_button_{};
+    wxButton *open_run_folder_button_{};
     std::filesystem::path selected_input_file_;
     std::optional<project::ProjectFile> active_project_;
     std::optional<project::AnalysisRun> active_run_;
