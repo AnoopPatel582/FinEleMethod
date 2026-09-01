@@ -44,6 +44,7 @@ add_executable(FinEleMethodTests
     input/abaqus_h8_model_parser_test.cpp
     input/abaqus_input_file_test.cpp
     input/abaqus_material_parser_test.cpp
+    input/abaqus_model_summary_test.cpp
     input/abaqus_node_parser_test.cpp
     input/abaqus_node_set_parser_test.cpp
     input/abaqus_q4_model_parser_test.cpp

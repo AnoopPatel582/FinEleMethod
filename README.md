@@ -58,6 +58,7 @@ cancellation separately from solver failure.
   recovery.
 - ASCII `.vtu` output for ParaView.
 - Optional versioned JSON analysis summaries for application integration.
+- Reusable validated model summaries for Q4 and H8 workbench inspection.
 
 ## Prerequisites
 
