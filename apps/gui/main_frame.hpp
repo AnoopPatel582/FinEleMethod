@@ -32,6 +32,7 @@ class MainFrame final : public wxFrame
   private:
     void create_menu_bar();
     void create_content();
+    void display_model_summary(const std::filesystem::path &input_file);
     void open_project(wxCommandEvent &event);
     void choose_abaqus_input(wxCommandEvent &event);
     void create_project(wxCommandEvent &event);
@@ -50,6 +51,7 @@ class MainFrame final : public wxFrame
     void consume_progress_lines(bool include_incomplete_line);
 
     wxTextCtrl *input_path_{};
+    wxStaticText *model_summary_text_{};
     wxTextCtrl *project_path_{};
     wxTextCtrl *run_path_{};
     wxStaticText *progress_text_{};

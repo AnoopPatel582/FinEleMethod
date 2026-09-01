@@ -1,6 +1,8 @@
 #include "main_frame.hpp"
 
 #include "finelemethod/core/exit_code.hpp"
+#include "finelemethod/input/abaqus_input_file.hpp"
+#include "finelemethod/input/abaqus_model_summary.hpp"
 #include "finelemethod/output/analysis_progress.hpp"
 #include "finelemethod/project/cancellation_flag.hpp"
 
@@ -133,6 +135,8 @@ void MainFrame::create_content()
     input_row->Add(input_path_, 1, wxEXPAND | wxRIGHT, 10);
     input_row->Add(browse_button_, 0);
     input_box->Add(input_row, 0, wxEXPAND | wxALL, 10);
+    model_summary_text_ = new wxStaticText(panel, wxID_ANY, "Model: not inspected");
+    input_box->Add(model_summary_text_, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
     auto *project_box = new wxStaticBoxSizer(wxVERTICAL, panel, "FinEleMethod project");
     auto *project_row = new wxBoxSizer(wxHORIZONTAL);
@@ -210,6 +214,35 @@ void MainFrame::create_content()
     panel->SetSizer(layout);
 }
 
+void MainFrame::display_model_summary(const std::filesystem::path &input_file)
+{
+    const input::AbaqusModelSummary summary =
+        input::summarize_abaqus_model(input::read_abaqus_input_file(input_file));
+    wxString analysis_type;
+    switch (summary.analysis_type)
+    {
+    case input::AbaqusAnalysisType::q4_plane_stress:
+        analysis_type = "Q4 plane stress";
+        break;
+    case input::AbaqusAnalysisType::q4_plane_strain:
+        analysis_type = "Q4 plane strain";
+        break;
+    case input::AbaqusAnalysisType::h8_three_dimensional:
+        analysis_type = "H8 three-dimensional";
+        break;
+    }
+
+    model_summary_text_->SetLabel(
+        wxString::Format("Model: %s | Nodes: %llu | Elements: %llu | Materials: %llu\n"
+                         "Constraints: %llu | Point loads: %llu | Pressure loads: %llu",
+                         analysis_type.c_str(), static_cast<unsigned long long>(summary.node_count),
+                         static_cast<unsigned long long>(summary.element_count),
+                         static_cast<unsigned long long>(summary.material_count),
+                         static_cast<unsigned long long>(summary.prescribed_displacement_count),
+                         static_cast<unsigned long long>(summary.point_load_count),
+                         static_cast<unsigned long long>(summary.pressure_load_count)));
+}
+
 void MainFrame::open_project(wxCommandEvent &)
 {
     if (solver_process_ != nullptr)
@@ -249,7 +282,20 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
         return;
     }
 
-    selected_input_file_ = std::filesystem::path{dialog.GetPath().ToStdWstring()};
+    const std::filesystem::path selected_input{dialog.GetPath().ToStdWstring()};
+    try
+    {
+        display_model_summary(selected_input);
+    }
+    catch (const std::exception &exception)
+    {
+        SetStatusText("ABAQUS model inspection failed");
+        wxMessageBox(wxString::FromUTF8(exception.what()), "Could not inspect ABAQUS model",
+                     wxOK | wxICON_ERROR, this);
+        return;
+    }
+
+    selected_input_file_ = selected_input;
     active_project_.reset();
     active_run_.reset();
     completed_summary_.reset();
@@ -321,6 +367,7 @@ void MainFrame::create_project(wxCommandEvent &)
 
 void MainFrame::activate_project(project::ProjectFile project)
 {
+    display_model_summary(project.input_file);
     selected_input_file_ = project.input_file;
     active_project_ = std::move(project);
     active_run_.reset();
