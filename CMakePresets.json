@@ -21,6 +21,12 @@
       "displayName": "Windows MSVC Debug",
       "configurePreset": "windows-msvc",
       "configuration": "Debug"
+    },
+    {
+      "name": "windows-msvc-release",
+      "displayName": "Windows MSVC Release",
+      "configurePreset": "windows-msvc",
+      "configuration": "Release"
     }
   ],
   "testPresets": [
@@ -29,6 +35,15 @@
       "displayName": "Windows MSVC Debug Tests",
       "configurePreset": "windows-msvc",
       "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "windows-msvc-release",
+      "displayName": "Windows MSVC Release Tests",
+      "configurePreset": "windows-msvc",
+      "configuration": "Release",
       "output": {
         "outputOnFailure": true
       }

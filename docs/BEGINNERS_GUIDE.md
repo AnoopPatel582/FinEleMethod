@@ -103,6 +103,15 @@ Confirm that the program starts:
 .\out\build\windows-msvc\Debug\FinEleMethod.exe --help
 ```
 
+For an optimized build intended for demonstrations or later packaging, run:
+
+```powershell
+cmake --build --preset windows-msvc-release
+```
+
+The Release command-line solver and workbench are created in
+`out\build\windows-msvc\Release\`.
+
 ## 6. Run the automated tests
 
 Run:

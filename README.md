@@ -88,6 +88,13 @@ Validate and inspect a supported ABAQUS model without solving it:
 .\out\build\windows-msvc\Debug\FinEleMethod.exe --inspect .\examples\abaqus\q4_tension.inp
 ```
 
+Create optimized Windows binaries with the Release preset:
+
+```powershell
+cmake --build --preset windows-msvc-release
+ctest --preset windows-msvc-release
+```
+
 If Visual Studio or vcpkg is installed elsewhere, set `VCPKG_ROOT` to the
 directory containing `vcpkg.exe` and the `scripts` directory.
 
