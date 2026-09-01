@@ -14,6 +14,10 @@ GUI application boundary while the solver remains an independent command-line
 process. The current shell can select an existing ABAQUS `.inp` model and display
 its path in preparation for analysis execution.
 
+The project-storage layer can create a new file-based project, copy its
+authoritative ABAQUS model into `input/`, create an initially empty `runs/`
+directory, and write the versioned `<ProjectName>.json` project file.
+
 ## Current capabilities
 
 - C++20 command-line executable built with MSVC and CMake.

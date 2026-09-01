@@ -78,6 +78,7 @@ add_executable(FinEleMethodTests
     postprocessing/h8_results_test.cpp
     postprocessing/q4_plane_strain_results_test.cpp
     postprocessing/q4_plane_stress_results_test.cpp
+    project/project_file_test.cpp
     solver/abaqus_q4_analysis_test.cpp
     solver/abaqus_q4_multiple_material_analysis_test.cpp
     solver/abaqus_h8_analysis_test.cpp
