@@ -21,6 +21,8 @@ and the VTU result can be opened with the Windows-associated application.
 The project-storage layer can create a new file-based project, copy its
 authoritative ABAQUS model into `input/`, create an initially empty `runs/`
 directory, and write the versioned `<ProjectName>.json` project file.
+Existing project files can be reopened after their schema, identity, relative
+input path, authoritative model, and run directory are validated.
 Each prepared analysis receives the next numbered directory (`run-0001`,
 `run-0002`, and so on), an immutable model snapshot, a validated request, and a
 dedicated results directory.

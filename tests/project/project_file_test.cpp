@@ -50,6 +50,59 @@ TEST_F(ProjectFileTest, CreatesProjectAndImportsAbaqusInput)
     EXPECT_EQ(document.at("schemaVersion"), 1);
     EXPECT_EQ(document.at("name"), "BracketStudy");
     EXPECT_EQ(document.at("inputFile"), "input/source-model.inp");
+
+    const ProjectFile reopened = read_project_file(project.project_file);
+    EXPECT_EQ(reopened.name, project.name);
+    EXPECT_EQ(reopened.project_directory, project.project_directory);
+    EXPECT_EQ(reopened.project_file, project.project_file);
+    EXPECT_EQ(reopened.input_file, project.input_file);
+    EXPECT_EQ(reopened.runs_directory, project.runs_directory);
+}
+
+TEST_F(ProjectFileTest, ReaderRejectsMalformedOrUnsupportedProject)
+{
+    const auto directory = root_ / "BrokenProject";
+    std::filesystem::create_directory(directory);
+    const auto path = directory / "BrokenProject.json";
+
+    std::ofstream(path) << "{ invalid";
+    EXPECT_THROW((void)read_project_file(path), std::invalid_argument);
+
+    std::ofstream(path, std::ios::trunc) << R"({"schemaVersion":2})";
+    EXPECT_THROW((void)read_project_file(path), std::invalid_argument);
+}
+
+TEST_F(ProjectFileTest, ReaderRejectsInputPathOutsideProject)
+{
+    const auto directory = root_ / "UnsafeProject";
+    std::filesystem::create_directories(directory / "runs");
+    const auto path = directory / "UnsafeProject.json";
+    std::ofstream(path) << R"({
+  "schemaVersion": 1,
+  "name": "UnsafeProject",
+  "inputFile": "../source-model.inp"
+})";
+
+    EXPECT_THROW((void)read_project_file(path), std::invalid_argument);
+}
+
+TEST_F(ProjectFileTest, ReaderRejectsMissingProjectStructure)
+{
+    const auto directory = root_ / "IncompleteProject";
+    std::filesystem::create_directory(directory);
+    const auto path = directory / "IncompleteProject.json";
+    std::ofstream(path) << R"({
+  "schemaVersion": 1,
+  "name": "IncompleteProject",
+  "inputFile": "input/model.inp"
+})";
+
+    EXPECT_THROW((void)read_project_file(path), std::invalid_argument);
+}
+
+TEST_F(ProjectFileTest, ReaderReportsMissingProjectFile)
+{
+    EXPECT_THROW((void)read_project_file(root_ / "Missing.json"), std::runtime_error);
 }
 
 TEST_F(ProjectFileTest, RefusesToOverwriteExistingProjectDirectory)

@@ -19,4 +19,7 @@ struct ProjectFile
 [[nodiscard]] ProjectFile create_project(const std::filesystem::path &parent_directory,
                                          const std::string &project_name,
                                          const std::filesystem::path &abaqus_input_file);
+
+// Reads and validates an existing protocol-version 1 FinEleMethod project.
+[[nodiscard]] ProjectFile read_project_file(const std::filesystem::path &project_file);
 } // namespace finelemethod::project
