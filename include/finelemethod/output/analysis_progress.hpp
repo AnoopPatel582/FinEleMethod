@@ -2,6 +2,7 @@
 
 #include <iosfwd>
 #include <string>
+#include <string_view>
 
 namespace finelemethod::output
 {
@@ -23,4 +24,7 @@ struct AnalysisProgressEvent
 
 // Writes one complete protocol-versioned JSON object followed by a newline.
 void write_analysis_progress_json_line(std::ostream &stream, const AnalysisProgressEvent &event);
+
+// Parses and validates one complete protocol-versioned JSON Lines record.
+[[nodiscard]] AnalysisProgressEvent parse_analysis_progress_json_line(std::string_view line);
 } // namespace finelemethod::output

@@ -59,6 +59,53 @@ TEST(AnalysisProgress, SerializesEveryLifecycleState)
     }
 }
 
+TEST(AnalysisProgress, ParsesEveryLifecycleState)
+{
+    const std::array states{
+        AnalysisState::preparing, AnalysisState::executing, AnalysisState::writing_results,
+        AnalysisState::completed, AnalysisState::failed,    AnalysisState::cancelled,
+    };
+
+    for (const AnalysisState state : states)
+    {
+        std::ostringstream stream;
+        write_analysis_progress_json_line(stream, AnalysisProgressEvent{state, "Status message"});
+
+        const AnalysisProgressEvent event = parse_analysis_progress_json_line(stream.str());
+
+        EXPECT_EQ(event.state, state);
+        EXPECT_EQ(event.message, "Status message");
+    }
+}
+
+TEST(AnalysisProgress, ParserRejectsMalformedJson)
+{
+    EXPECT_THROW((void)parse_analysis_progress_json_line("{invalid"), std::invalid_argument);
+}
+
+TEST(AnalysisProgress, ParserRejectsUnsupportedVersionAndEventType)
+{
+    EXPECT_THROW(
+        (void)parse_analysis_progress_json_line(
+            R"({"protocolVersion":2,"event":"analysis-progress","state":"executing","message":"Solving"})"),
+        std::invalid_argument);
+    EXPECT_THROW(
+        (void)parse_analysis_progress_json_line(
+            R"({"protocolVersion":1,"event":"other","state":"executing","message":"Solving"})"),
+        std::invalid_argument);
+}
+
+TEST(AnalysisProgress, ParserRejectsUnknownStateAndMissingMessage)
+{
+    EXPECT_THROW(
+        (void)parse_analysis_progress_json_line(
+            R"({"protocolVersion":1,"event":"analysis-progress","state":"waiting","message":"Waiting"})"),
+        std::invalid_argument);
+    EXPECT_THROW((void)parse_analysis_progress_json_line(
+                     R"({"protocolVersion":1,"event":"analysis-progress","state":"executing"})"),
+                 std::invalid_argument);
+}
+
 TEST(AnalysisProgress, ReportsAnOutputStreamFailure)
 {
     std::ostringstream stream;

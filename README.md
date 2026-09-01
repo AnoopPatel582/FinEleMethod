@@ -175,7 +175,9 @@ final residual norm.
 
 Add `--json-progress` after the other ABAQUS options to make standard output a
 JSON Lines stream for application integration. Each line reports a versioned
-analysis lifecycle event; human-readable errors remain on standard error.
+analysis lifecycle event; human-readable errors remain on standard error. The
+integration layer validates each incoming record before using its state or
+message.
 
 The GUI integration layer can write the same validated `analysis-request.json`
 used by the CLI. Its version-1 format is:
