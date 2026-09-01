@@ -34,6 +34,7 @@ class MainFrame final : public wxFrame
     void choose_abaqus_input(wxCommandEvent &event);
     void create_project(wxCommandEvent &event);
     void activate_project(project::ProjectFile project);
+    void refresh_run_history();
     void run_analysis(wxCommandEvent &event);
     void cancel_analysis(wxCommandEvent &event);
     void poll_analysis_progress(wxTimerEvent &event);
@@ -48,6 +49,7 @@ class MainFrame final : public wxFrame
     wxTextCtrl *run_path_{};
     wxStaticText *progress_text_{};
     wxStaticText *summary_text_{};
+    wxStaticText *run_history_text_{};
     wxButton *create_project_button_{};
     wxButton *browse_button_{};
     wxButton *run_button_{};

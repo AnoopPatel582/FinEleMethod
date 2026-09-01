@@ -16,7 +16,9 @@ its path, create or reopen a file-based FinEleMethod project, and launch the
 command-line solver asynchronously for one analysis at a time. Validated
 solver lifecycle messages are displayed while the analysis is running. After a
 validated completion summary is received, model and solver statistics are shown
-and the VTU result can be opened with the Windows-associated application.
+and the VTU result can be opened with the Windows-associated application. The
+project area also reports the number of prepared analysis runs and the latest
+run identifier.
 
 The project-storage layer can create a new file-based project, copy its
 authoritative ABAQUS model into `input/`, create an initially empty `runs/`

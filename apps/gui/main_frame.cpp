@@ -134,6 +134,8 @@ void MainFrame::create_content()
     project_row->Add(project_path_, 1, wxEXPAND | wxRIGHT, 10);
     project_row->Add(create_project_button_, 0);
     project_box->Add(project_row, 0, wxEXPAND | wxALL, 10);
+    run_history_text_ = new wxStaticText(panel, wxID_ANY, "Run history: no project open");
+    project_box->Add(run_history_text_, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
     auto *solver_box = new wxStaticBoxSizer(wxVERTICAL, panel, "Solver status");
     solver_box->Add(new wxStaticText(panel, wxID_ANY, "Command-line solver engine: ready"), 0,
@@ -232,6 +234,7 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     run_path_->SetValue("No analysis run prepared");
     progress_text_->SetLabel("Progress: idle");
     summary_text_->SetLabel("Summary: unavailable");
+    run_history_text_->SetLabel("Run history: no project open");
     create_project_button_->Enable();
     run_button_->Disable();
     open_result_button_->Disable();
@@ -302,6 +305,27 @@ void MainFrame::activate_project(project::ProjectFile project)
     GetMenuBar()->Enable(create_project_id, false);
     GetMenuBar()->Enable(run_analysis_id, true);
     GetMenuBar()->Enable(open_result_id, false);
+    refresh_run_history();
+}
+
+void MainFrame::refresh_run_history()
+{
+    if (!active_project_)
+    {
+        run_history_text_->SetLabel("Run history: no project open");
+        return;
+    }
+
+    const std::vector<project::AnalysisRun> runs = project::list_analysis_runs(*active_project_);
+    if (runs.empty())
+    {
+        run_history_text_->SetLabel("Run history: no analyses prepared");
+        return;
+    }
+
+    run_history_text_->SetLabel(wxString::Format(
+        "Run history: %llu prepared | Latest: %s", static_cast<unsigned long long>(runs.size()),
+        wxString{runs.back().run_directory.filename().wstring()}.c_str()));
 }
 
 void MainFrame::run_analysis(wxCommandEvent &)
@@ -326,6 +350,7 @@ void MainFrame::run_analysis(wxCommandEvent &)
     try
     {
         active_run_ = project::prepare_analysis_run(*active_project_);
+        refresh_run_history();
         completed_summary_.reset();
 
         std::vector<std::wstring> arguments{solver_executable.wstring(), L"--request",
