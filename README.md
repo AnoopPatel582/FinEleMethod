@@ -11,7 +11,8 @@ models and write ParaView results.
 
 A native wxWidgets Windows workbench shell is also available. It establishes the
 GUI application boundary while the solver remains an independent command-line
-process.
+process. The current shell can select an existing ABAQUS `.inp` model and display
+its path in preparation for analysis execution.
 
 ## Current capabilities
 

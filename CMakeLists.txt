@@ -123,6 +123,8 @@ target_link_libraries(FinEleMethod PRIVATE FinEleMethod::Cli)
 
 add_executable(FinEleMethodGui WIN32
     apps/gui/main.cpp
+    apps/gui/main_frame.cpp
+    apps/gui/main_frame.hpp
 )
 
 target_compile_features(FinEleMethodGui PRIVATE cxx_std_20)
