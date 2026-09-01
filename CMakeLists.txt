@@ -5,6 +5,7 @@ project(FinEleMethod LANGUAGES CXX)
 include(CTest)
 
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(wxWidgets CONFIG REQUIRED)
 
 add_library(FinEleMethodCore STATIC
     src/assembly/coo_assembly.cpp
@@ -120,10 +121,18 @@ add_executable(FinEleMethod
 target_compile_features(FinEleMethod PRIVATE cxx_std_20)
 target_link_libraries(FinEleMethod PRIVATE FinEleMethod::Cli)
 
+add_executable(FinEleMethodGui WIN32
+    apps/gui/main.cpp
+)
+
+target_compile_features(FinEleMethodGui PRIVATE cxx_std_20)
+target_link_libraries(FinEleMethodGui PRIVATE wx::core wx::base)
+
 if(MSVC)
     target_compile_options(FinEleMethodCore PRIVATE /W4 /permissive-)
     target_compile_options(FinEleMethodCli PRIVATE /W4 /permissive-)
     target_compile_options(FinEleMethod PRIVATE /W4 /permissive-)
+    target_compile_options(FinEleMethodGui PRIVATE /W4 /permissive-)
 endif()
 
 if(BUILD_TESTING)

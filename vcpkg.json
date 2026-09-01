@@ -4,6 +4,10 @@
   "dependencies": [
     "gtest",
     "nlohmann-json",
-    "spdlog"
+    "spdlog",
+    {
+      "name": "wxwidgets",
+      "default-features": false
+    }
   ]
 }

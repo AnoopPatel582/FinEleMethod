@@ -9,6 +9,10 @@ The project is under active development. Its command-line engine can currently
 solve supported ABAQUS Q4 plane-stress, Q4 plane-strain, and H8 three-dimensional
 models and write ParaView results.
 
+A native wxWidgets Windows workbench shell is also available. It establishes the
+GUI application boundary while the solver remains an independent command-line
+process.
+
 ## Current capabilities
 
 - C++20 command-line executable built with MSVC and CMake.
@@ -66,6 +70,12 @@ ctest --preset windows-msvc-debug
 
 ```powershell
 .\out\build\windows-msvc\Debug\FinEleMethod.exe --help
+```
+
+Launch the current Windows workbench shell with:
+
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethodGui.exe
 ```
 
 Run the supplied Q4 uniaxial-tension verification model from the repository
