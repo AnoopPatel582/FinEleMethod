@@ -127,7 +127,8 @@ solutions where appropriate.
 - Results and a summary are written to files in the run directory.
 - The protocol includes a `protocolVersion` for compatibility management.
 - The initial analysis-summary contract uses `protocolVersion` `1`.
-- Cancellation uses a cancellation-flag mechanism.
+- Cancellation uses a run-local `cancellation-requested.flag` mechanism shared
+  by the GUI and command-line solver.
 - Run lifecycle states will distinguish preparation, execution, completion,
   failure, and cancellation.
 - Stable process exit codes:
