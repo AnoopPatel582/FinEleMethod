@@ -12,7 +12,8 @@ models and write ParaView results.
 A native wxWidgets Windows workbench shell is also available. It establishes the
 GUI application boundary while the solver remains an independent command-line
 process. The current shell can select an existing ABAQUS `.inp` model and display
-its path, then create a file-based FinEleMethod project from that model.
+its path, create a file-based FinEleMethod project from that model, and launch
+the command-line solver asynchronously for one analysis at a time.
 
 The project-storage layer can create a new file-based project, copy its
 authoritative ABAQUS model into `input/`, create an initially empty `runs/`

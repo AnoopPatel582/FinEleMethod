@@ -131,6 +131,7 @@ add_executable(FinEleMethodGui WIN32
 
 target_compile_features(FinEleMethodGui PRIVATE cxx_std_20)
 target_link_libraries(FinEleMethodGui PRIVATE FinEleMethod::Core wx::core wx::base)
+add_dependencies(FinEleMethodGui FinEleMethod)
 
 if(MSVC)
     target_compile_options(FinEleMethodCore PRIVATE /W4 /permissive-)

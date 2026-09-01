@@ -1,7 +1,5 @@
 #include "main_frame.hpp"
 
-#include "finelemethod/project/project_file.hpp"
-
 #include <wx/button.h>
 #include <wx/dirdlg.h>
 #include <wx/filedlg.h>
@@ -9,13 +7,18 @@
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
 #include <wx/panel.h>
+#include <wx/process.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
 #include <wx/stattext.h>
+#include <wx/stdpaths.h>
 #include <wx/textctrl.h>
 #include <wx/textdlg.h>
 
 #include <exception>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace finelemethod::gui
 {
@@ -23,12 +26,14 @@ namespace
 {
 constexpr int open_input_id = wxID_HIGHEST + 1;
 constexpr int create_project_id = wxID_HIGHEST + 2;
+constexpr int run_analysis_id = wxID_HIGHEST + 3;
+constexpr int solver_process_id = wxID_HIGHEST + 4;
 } // namespace
 
 MainFrame::MainFrame()
-    : wxFrame(nullptr, wxID_ANY, "FinEleMethod", wxDefaultPosition, wxSize(900, 600))
+    : wxFrame(nullptr, wxID_ANY, "FinEleMethod", wxDefaultPosition, wxSize(900, 680))
 {
-    SetMinSize(wxSize(720, 480));
+    SetMinSize(wxSize(720, 560));
     create_menu_bar();
     create_content();
     CreateStatusBar();
@@ -49,13 +54,20 @@ void MainFrame::create_menu_bar()
 
     auto *menu_bar = new wxMenuBar;
     menu_bar->Append(file_menu, "&File");
+    auto *analysis_menu = new wxMenu;
+    analysis_menu->Append(run_analysis_id, "&Run Analysis\tF5");
+    menu_bar->Append(analysis_menu, "&Analysis");
     menu_bar->Append(help_menu, "&Help");
     SetMenuBar(menu_bar);
     menu_bar->Enable(create_project_id, false);
+    menu_bar->Enable(run_analysis_id, false);
 
     Bind(wxEVT_MENU, &MainFrame::choose_abaqus_input, this, open_input_id);
     Bind(wxEVT_MENU, &MainFrame::create_project, this, create_project_id);
-    Bind(wxEVT_MENU, [this](wxCommandEvent &) { Close(true); }, wxID_EXIT);
+    Bind(wxEVT_MENU, &MainFrame::run_analysis, this, run_analysis_id);
+    Bind(wxEVT_END_PROCESS, &MainFrame::analysis_finished, this, solver_process_id);
+    Bind(wxEVT_CLOSE_WINDOW, &MainFrame::close_window, this);
+    Bind(wxEVT_MENU, [this](wxCommandEvent &) { Close(); }, wxID_EXIT);
     Bind(
         wxEVT_MENU,
         [this](wxCommandEvent &) {
@@ -108,13 +120,21 @@ void MainFrame::create_content()
         new wxStaticText(panel, wxID_ANY,
                          "Supported analyses: Q4 plane stress, Q4 plane strain, and H8 3D"),
         0, wxBOTTOM, 8);
-    solver_box->Add(
-        new wxStaticText(panel, wxID_ANY,
-                         "Select an ABAQUS input file to prepare a future analysis run."),
-        0);
+    solver_box->Add(new wxStaticText(panel, wxID_ANY,
+                                     "Create a project, then run its authoritative ABAQUS model."),
+                    0, wxBOTTOM, 10);
+    auto *run_row = new wxBoxSizer(wxHORIZONTAL);
+    run_path_ = new wxTextCtrl(panel, wxID_ANY, "No analysis run prepared", wxDefaultPosition,
+                               wxDefaultSize, wxTE_READONLY);
+    run_button_ = new wxButton(panel, run_analysis_id, "Run Analysis");
+    run_button_->Disable();
+    run_button_->Bind(wxEVT_BUTTON, &MainFrame::run_analysis, this);
+    run_row->Add(run_path_, 1, wxEXPAND | wxRIGHT, 10);
+    run_row->Add(run_button_, 0);
+    solver_box->Add(run_row, 0, wxEXPAND);
 
     auto *close_button = new wxButton(panel, wxID_CLOSE, "Close");
-    close_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { Close(true); });
+    close_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { Close(); });
 
     layout->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, 28);
     layout->Add(subtitle, 0, wxLEFT | wxRIGHT | wxTOP, 28);
@@ -138,10 +158,15 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     }
 
     selected_input_file_ = std::filesystem::path{dialog.GetPath().ToStdWstring()};
+    active_project_.reset();
+    active_run_.reset();
     input_path_->SetValue(dialog.GetPath());
     project_path_->SetValue("No project created");
+    run_path_->SetValue("No analysis run prepared");
     create_project_button_->Enable();
+    run_button_->Disable();
     GetMenuBar()->Enable(create_project_id, true);
+    GetMenuBar()->Enable(run_analysis_id, false);
     SetStatusText("ABAQUS input selected");
 }
 
@@ -177,9 +202,14 @@ void MainFrame::create_project(wxCommandEvent &)
 
         project_path_->SetValue(wxString{project.project_file.wstring()});
         selected_input_file_ = project.input_file;
+        active_project_ = project;
+        active_run_.reset();
         input_path_->SetValue(wxString{project.input_file.wstring()});
+        run_path_->SetValue("No analysis run prepared");
         create_project_button_->Disable();
+        run_button_->Enable();
         GetMenuBar()->Enable(create_project_id, false);
+        GetMenuBar()->Enable(run_analysis_id, true);
         SetStatusText("Project created");
         wxMessageBox("Project created successfully.\n\n" +
                          wxString{project.project_directory.wstring()},
@@ -191,5 +221,104 @@ void MainFrame::create_project(wxCommandEvent &)
         wxMessageBox(wxString::FromUTF8(exception.what()), "Could not create project",
                      wxOK | wxICON_ERROR, this);
     }
+}
+
+void MainFrame::run_analysis(wxCommandEvent &)
+{
+    if (!active_project_ || solver_process_ != nullptr)
+    {
+        return;
+    }
+
+    const std::filesystem::path gui_executable{
+        wxStandardPaths::Get().GetExecutablePath().ToStdWstring()};
+    const std::filesystem::path solver_executable =
+        gui_executable.parent_path() / "FinEleMethod.exe";
+    if (!std::filesystem::is_regular_file(solver_executable))
+    {
+        wxMessageBox("The command-line solver was not found beside the workbench.\n\n" +
+                         wxString{solver_executable.wstring()},
+                     "Solver not found", wxOK | wxICON_ERROR, this);
+        return;
+    }
+
+    try
+    {
+        active_run_ = project::prepare_analysis_run(*active_project_);
+
+        std::vector<std::wstring> arguments{solver_executable.wstring(), L"--request",
+                                            active_run_->request_file.wstring()};
+        std::vector<const wchar_t *> argument_pointers;
+        argument_pointers.reserve(arguments.size() + 1);
+        for (const auto &argument : arguments)
+        {
+            argument_pointers.push_back(argument.c_str());
+        }
+        argument_pointers.push_back(nullptr);
+
+        auto *process = new wxProcess(this, solver_process_id);
+        const long process_id =
+            wxExecute(argument_pointers.data(), wxEXEC_ASYNC | wxEXEC_HIDE_CONSOLE, process);
+        if (process_id == 0)
+        {
+            delete process;
+            throw std::runtime_error("Windows could not start the command-line solver.");
+        }
+
+        solver_process_ = process;
+        run_path_->SetValue(wxString{active_run_->run_directory.wstring()});
+        run_button_->Disable();
+        GetMenuBar()->Enable(run_analysis_id, false);
+        SetStatusText("Analysis running");
+    }
+    catch (const std::exception &exception)
+    {
+        active_run_.reset();
+        SetStatusText("Analysis could not start");
+        wxMessageBox(wxString::FromUTF8(exception.what()), "Could not run analysis",
+                     wxOK | wxICON_ERROR, this);
+    }
+}
+
+void MainFrame::analysis_finished(wxProcessEvent &event)
+{
+    delete solver_process_;
+    solver_process_ = nullptr;
+    run_button_->Enable(active_project_.has_value());
+    GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
+
+    if (event.GetExitCode() == 0 && active_run_ &&
+        std::filesystem::is_regular_file(active_run_->result_file))
+    {
+        SetStatusText("Analysis completed");
+        wxMessageBox("Analysis completed successfully.\n\nResult:\n" +
+                         wxString{active_run_->result_file.wstring()},
+                     "FinEleMethod Analysis", wxOK | wxICON_INFORMATION, this);
+        return;
+    }
+
+    SetStatusText("Analysis failed");
+    wxMessageBox(wxString::Format("The solver exited with code %d.\n\nRun directory:\n",
+                                  event.GetExitCode()) +
+                     (active_run_ ? wxString{active_run_->run_directory.wstring()}
+                                  : wxString{"Unavailable"}),
+                 "Analysis failed", wxOK | wxICON_ERROR, this);
+}
+
+void MainFrame::close_window(wxCloseEvent &event)
+{
+    if (solver_process_ != nullptr && event.CanVeto())
+    {
+        wxMessageBox("Wait for the active analysis to finish before closing FinEleMethod.",
+                     "Analysis running", wxOK | wxICON_WARNING, this);
+        event.Veto();
+        return;
+    }
+    if (solver_process_ != nullptr)
+    {
+        solver_process_->Detach();
+        solver_process_ = nullptr;
+    }
+    event.Skip();
 }
 } // namespace finelemethod::gui
