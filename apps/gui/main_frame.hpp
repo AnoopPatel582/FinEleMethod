@@ -30,8 +30,10 @@ class MainFrame final : public wxFrame
   private:
     void create_menu_bar();
     void create_content();
+    void open_project(wxCommandEvent &event);
     void choose_abaqus_input(wxCommandEvent &event);
     void create_project(wxCommandEvent &event);
+    void activate_project(project::ProjectFile project);
     void run_analysis(wxCommandEvent &event);
     void poll_analysis_progress(wxTimerEvent &event);
     void analysis_finished(wxProcessEvent &event);
@@ -46,6 +48,7 @@ class MainFrame final : public wxFrame
     wxStaticText *progress_text_{};
     wxStaticText *summary_text_{};
     wxButton *create_project_button_{};
+    wxButton *browse_button_{};
     wxButton *run_button_{};
     wxButton *open_result_button_{};
     std::filesystem::path selected_input_file_;

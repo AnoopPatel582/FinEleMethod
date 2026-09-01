@@ -22,6 +22,7 @@
 #include <exception>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace finelemethod::gui
@@ -34,6 +35,7 @@ constexpr int run_analysis_id = wxID_HIGHEST + 3;
 constexpr int solver_process_id = wxID_HIGHEST + 4;
 constexpr int progress_timer_id = wxID_HIGHEST + 5;
 constexpr int open_result_id = wxID_HIGHEST + 6;
+constexpr int open_project_id = wxID_HIGHEST + 7;
 } // namespace
 
 MainFrame::MainFrame()
@@ -51,6 +53,8 @@ MainFrame::MainFrame()
 void MainFrame::create_menu_bar()
 {
     auto *file_menu = new wxMenu;
+    file_menu->Append(open_project_id, "&Open Project...\tCtrl+Shift+O");
+    file_menu->AppendSeparator();
     file_menu->Append(open_input_id, "&Open ABAQUS Input...\tCtrl+O");
     file_menu->Append(create_project_id, "&Create Project...\tCtrl+Shift+N");
     file_menu->AppendSeparator();
@@ -71,6 +75,7 @@ void MainFrame::create_menu_bar()
     menu_bar->Enable(run_analysis_id, false);
     menu_bar->Enable(open_result_id, false);
 
+    Bind(wxEVT_MENU, &MainFrame::open_project, this, open_project_id);
     Bind(wxEVT_MENU, &MainFrame::choose_abaqus_input, this, open_input_id);
     Bind(wxEVT_MENU, &MainFrame::create_project, this, create_project_id);
     Bind(wxEVT_MENU, &MainFrame::run_analysis, this, run_analysis_id);
@@ -107,10 +112,10 @@ void MainFrame::create_content()
     auto *input_row = new wxBoxSizer(wxHORIZONTAL);
     input_path_ = new wxTextCtrl(panel, wxID_ANY, "No input file selected", wxDefaultPosition,
                                  wxDefaultSize, wxTE_READONLY);
-    auto *browse_button = new wxButton(panel, open_input_id, "Browse...");
-    browse_button->Bind(wxEVT_BUTTON, &MainFrame::choose_abaqus_input, this);
+    browse_button_ = new wxButton(panel, open_input_id, "Browse...");
+    browse_button_->Bind(wxEVT_BUTTON, &MainFrame::choose_abaqus_input, this);
     input_row->Add(input_path_, 1, wxEXPAND | wxRIGHT, 10);
-    input_row->Add(browse_button, 0);
+    input_row->Add(browse_button_, 0);
     input_box->Add(input_row, 0, wxEXPAND | wxALL, 10);
 
     auto *project_box = new wxStaticBoxSizer(wxVERTICAL, panel, "FinEleMethod project");
@@ -167,6 +172,35 @@ void MainFrame::create_content()
     layout->Add(bottom_buttons, 0, wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 28);
 
     panel->SetSizer(layout);
+}
+
+void MainFrame::open_project(wxCommandEvent &)
+{
+    if (solver_process_ != nullptr)
+    {
+        return;
+    }
+
+    wxFileDialog dialog(this, "Open FinEleMethod project", wxEmptyString, wxEmptyString,
+                        "FinEleMethod project files (*.json)|*.json",
+                        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    if (dialog.ShowModal() != wxID_OK)
+    {
+        return;
+    }
+
+    try
+    {
+        activate_project(
+            project::read_project_file(std::filesystem::path{dialog.GetPath().ToStdWstring()}));
+        SetStatusText("Project opened");
+    }
+    catch (const std::exception &exception)
+    {
+        SetStatusText("Project could not be opened");
+        wxMessageBox(wxString::FromUTF8(exception.what()), "Could not open project",
+                     wxOK | wxICON_ERROR, this);
+    }
 }
 
 void MainFrame::choose_abaqus_input(wxCommandEvent &)
@@ -227,21 +261,7 @@ void MainFrame::create_project(wxCommandEvent &)
             std::filesystem::path{directory_dialog.GetPath().ToStdWstring()},
             name_dialog.GetValue().ToStdString(), selected_input_file_);
 
-        project_path_->SetValue(wxString{project.project_file.wstring()});
-        selected_input_file_ = project.input_file;
-        active_project_ = project;
-        active_run_.reset();
-        completed_summary_.reset();
-        input_path_->SetValue(wxString{project.input_file.wstring()});
-        run_path_->SetValue("No analysis run prepared");
-        progress_text_->SetLabel("Progress: ready");
-        summary_text_->SetLabel("Summary: unavailable");
-        create_project_button_->Disable();
-        run_button_->Enable();
-        open_result_button_->Disable();
-        GetMenuBar()->Enable(create_project_id, false);
-        GetMenuBar()->Enable(run_analysis_id, true);
-        GetMenuBar()->Enable(open_result_id, false);
+        activate_project(project);
         SetStatusText("Project created");
         wxMessageBox("Project created successfully.\n\n" +
                          wxString{project.project_directory.wstring()},
@@ -253,6 +273,25 @@ void MainFrame::create_project(wxCommandEvent &)
         wxMessageBox(wxString::FromUTF8(exception.what()), "Could not create project",
                      wxOK | wxICON_ERROR, this);
     }
+}
+
+void MainFrame::activate_project(project::ProjectFile project)
+{
+    selected_input_file_ = project.input_file;
+    active_project_ = std::move(project);
+    active_run_.reset();
+    completed_summary_.reset();
+    input_path_->SetValue(wxString{active_project_->input_file.wstring()});
+    project_path_->SetValue(wxString{active_project_->project_file.wstring()});
+    run_path_->SetValue("No analysis run prepared");
+    progress_text_->SetLabel("Progress: ready");
+    summary_text_->SetLabel("Summary: unavailable");
+    create_project_button_->Disable();
+    run_button_->Enable();
+    open_result_button_->Disable();
+    GetMenuBar()->Enable(create_project_id, false);
+    GetMenuBar()->Enable(run_analysis_id, true);
+    GetMenuBar()->Enable(open_result_id, false);
 }
 
 void MainFrame::run_analysis(wxCommandEvent &)
@@ -308,6 +347,9 @@ void MainFrame::run_analysis(wxCommandEvent &)
         summary_text_->SetLabel("Summary: unavailable");
         run_button_->Disable();
         open_result_button_->Disable();
+        browse_button_->Disable();
+        GetMenuBar()->Enable(open_project_id, false);
+        GetMenuBar()->Enable(open_input_id, false);
         GetMenuBar()->Enable(run_analysis_id, false);
         GetMenuBar()->Enable(open_result_id, false);
         progress_timer_.Start(100);
@@ -408,6 +450,9 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     delete solver_process_;
     solver_process_ = nullptr;
     run_button_->Enable(active_project_.has_value());
+    browse_button_->Enable();
+    GetMenuBar()->Enable(open_project_id, true);
+    GetMenuBar()->Enable(open_input_id, true);
     GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
 
     if (event.GetExitCode() == 0 && progress_protocol_error_.empty() && active_run_)
