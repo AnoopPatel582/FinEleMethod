@@ -169,8 +169,8 @@ Add `--json-progress` after the other ABAQUS options to make standard output a
 JSON Lines stream for application integration. Each line reports a versioned
 analysis lifecycle event; human-readable errors remain on standard error.
 
-The future GUI can execute the same workflow using an `analysis-request.json`
-file. Its version-1 format is:
+The GUI integration layer can write the same validated `analysis-request.json`
+used by the CLI. Its version-1 format is:
 
 ```json
 {

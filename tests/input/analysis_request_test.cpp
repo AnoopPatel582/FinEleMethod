@@ -49,6 +49,48 @@ TEST_F(AnalysisRequestTest, ReadsVersionOneRelativePaths)
     EXPECT_EQ(request.summary_file, std::filesystem::path("analysis-summary.json"));
 }
 
+TEST_F(AnalysisRequestTest, WritesVersionOneRequestThatCanBeReadBack)
+{
+    const AnalysisRequest expected{
+        .input_file = "input/model.inp",
+        .result_file = "results/model.vtu",
+        .summary_file = "results/analysis-summary.json",
+    };
+
+    write_analysis_request(path_, expected);
+    const AnalysisRequest actual = read_analysis_request(path_);
+
+    EXPECT_EQ(actual.input_file, expected.input_file);
+    EXPECT_EQ(actual.result_file, expected.result_file);
+    EXPECT_EQ(actual.summary_file, expected.summary_file);
+}
+
+TEST_F(AnalysisRequestTest, WriterRejectsAbsolutePaths)
+{
+    const AnalysisRequest request{
+        .input_file = "C:/models/model.inp",
+        .result_file = "results/model.vtu",
+        .summary_file = "results/analysis-summary.json",
+    };
+
+    EXPECT_THROW(write_analysis_request(path_, request), std::invalid_argument);
+    EXPECT_FALSE(std::filesystem::exists(path_));
+}
+
+TEST_F(AnalysisRequestTest, WriterReportsUnwritableDestination)
+{
+    const AnalysisRequest request{
+        .input_file = "input/model.inp",
+        .result_file = "results/model.vtu",
+        .summary_file = "results/analysis-summary.json",
+    };
+    const auto missing_directory = path_.parent_path() / "finelemethod-missing-request-directory";
+    std::filesystem::remove_all(missing_directory);
+
+    EXPECT_THROW(write_analysis_request(missing_directory / "analysis-request.json", request),
+                 std::runtime_error);
+}
+
 TEST_F(AnalysisRequestTest, RejectsInvalidJson)
 {
     write("{ invalid json }");

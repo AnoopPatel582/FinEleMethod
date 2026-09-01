@@ -11,17 +11,9 @@ namespace finelemethod::input
 {
 namespace
 {
-std::filesystem::path read_relative_path(const nlohmann::json &document,
-                                         const std::string_view field_name)
+std::filesystem::path validate_relative_path(const std::filesystem::path &path,
+                                             const std::string_view field_name)
 {
-    const auto field = document.find(field_name);
-    if (field == document.end() || !field->is_string())
-    {
-        throw std::invalid_argument("Analysis request requires string field '" +
-                                    std::string(field_name) + "'.");
-    }
-
-    const std::filesystem::path path{field->get<std::string>()};
     if (path.empty())
     {
         throw std::invalid_argument("Analysis request field '" + std::string(field_name) +
@@ -42,6 +34,19 @@ std::filesystem::path read_relative_path(const nlohmann::json &document,
     }
 
     return path;
+}
+
+std::filesystem::path read_relative_path(const nlohmann::json &document,
+                                         const std::string_view field_name)
+{
+    const auto field = document.find(field_name);
+    if (field == document.end() || !field->is_string())
+    {
+        throw std::invalid_argument("Analysis request requires string field '" +
+                                    std::string(field_name) + "'.");
+    }
+
+    return validate_relative_path(std::filesystem::path{field->get<std::string>()}, field_name);
 }
 } // namespace
 
@@ -84,5 +89,30 @@ AnalysisRequest read_analysis_request(const std::filesystem::path &path)
         .result_file = read_relative_path(document, "resultFile"),
         .summary_file = read_relative_path(document, "summaryFile"),
     };
+}
+
+void write_analysis_request(const std::filesystem::path &path, const AnalysisRequest &request)
+{
+    const auto input_file = validate_relative_path(request.input_file, "inputFile");
+    const auto result_file = validate_relative_path(request.result_file, "resultFile");
+    const auto summary_file = validate_relative_path(request.summary_file, "summaryFile");
+
+    const nlohmann::json document{
+        {"protocolVersion", 1},
+        {"inputFile", input_file.generic_string()},
+        {"resultFile", result_file.generic_string()},
+        {"summaryFile", summary_file.generic_string()},
+    };
+
+    std::ofstream stream(path);
+    if (!stream)
+    {
+        throw std::runtime_error("could not write analysis request file: " + path.string());
+    }
+    stream << document.dump(2) << '\n';
+    if (!stream)
+    {
+        throw std::runtime_error("could not write analysis request file: " + path.string());
+    }
 }
 } // namespace finelemethod::input
