@@ -18,4 +18,7 @@ struct AnalysisSummary
 };
 
 void write_analysis_summary(const std::filesystem::path &path, const AnalysisSummary &summary);
+
+// Reads and validates a completed protocol-version 1 analysis summary.
+[[nodiscard]] AnalysisSummary read_analysis_summary(const std::filesystem::path &path);
 } // namespace finelemethod::output

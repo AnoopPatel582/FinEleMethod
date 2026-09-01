@@ -38,7 +38,70 @@ TEST(AnalysisSummary, WritesVersionedCompletedAnalysisDocument)
     EXPECT_DOUBLE_EQ(document.at("residualNorm"), 1.25e-12);
 
     stream.close();
+    const AnalysisSummary actual = read_analysis_summary(path);
+    EXPECT_EQ(actual.analysis_type, summary.analysis_type);
+    EXPECT_EQ(actual.input_path, summary.input_path);
+    EXPECT_EQ(actual.result_path, summary.result_path);
+    EXPECT_EQ(actual.node_count, summary.node_count);
+    EXPECT_EQ(actual.element_count, summary.element_count);
+    EXPECT_EQ(actual.solver_iterations, summary.solver_iterations);
+    EXPECT_DOUBLE_EQ(actual.residual_norm, summary.residual_norm);
+
     std::filesystem::remove(path);
+}
+
+TEST(AnalysisSummary, ReaderRejectsMalformedOrIncompatibleDocument)
+{
+    const auto path = std::filesystem::temp_directory_path() / "finelemethod-summary-invalid.json";
+
+    std::ofstream(path) << "{ invalid";
+    EXPECT_THROW((void)read_analysis_summary(path), std::invalid_argument);
+
+    std::ofstream(path, std::ios::trunc) << R"({"protocolVersion":2,"status":"completed"})";
+    EXPECT_THROW((void)read_analysis_summary(path), std::invalid_argument);
+
+    std::filesystem::remove(path);
+}
+
+TEST(AnalysisSummary, ReaderRejectsIncompleteOrFailedSummary)
+{
+    const auto path = std::filesystem::temp_directory_path() / "finelemethod-summary-invalid.json";
+
+    std::ofstream(path) << R"({
+  "protocolVersion": 1,
+  "status": "failed",
+  "analysisType": "q4-plane-stress",
+  "inputFile": "model.inp",
+  "resultFile": "model.vtu",
+  "nodeCount": 4,
+  "elementCount": 1,
+  "solverIterations": 3,
+  "residualNorm": 0.0
+})";
+    EXPECT_THROW((void)read_analysis_summary(path), std::invalid_argument);
+
+    std::ofstream(path, std::ios::trunc) << R"({
+  "protocolVersion": 1,
+  "status": "completed",
+  "analysisType": "q4-plane-stress",
+  "inputFile": "model.inp",
+  "resultFile": "model.vtu",
+  "nodeCount": -1,
+  "elementCount": 1,
+  "solverIterations": 3,
+  "residualNorm": 0.0
+})";
+    EXPECT_THROW((void)read_analysis_summary(path), std::invalid_argument);
+
+    std::filesystem::remove(path);
+}
+
+TEST(AnalysisSummary, ReaderReportsMissingFile)
+{
+    const auto path = std::filesystem::temp_directory_path() / "finelemethod-summary-missing.json";
+    std::filesystem::remove(path);
+
+    EXPECT_THROW((void)read_analysis_summary(path), std::runtime_error);
 }
 
 TEST(AnalysisSummary, RejectsAnUnwritableDestination)

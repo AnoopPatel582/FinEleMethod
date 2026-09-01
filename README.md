@@ -172,7 +172,8 @@ is needed by another application:
 
 The JSON document uses `protocolVersion` `1` and records the completion status,
 analysis type, input and result paths, model sizes, solver iteration count, and
-final residual norm.
+final residual norm. Application integrations validate this summary before
+accepting a run as successfully completed.
 
 Add `--json-progress` after the other ABAQUS options to make standard output a
 JSON Lines stream for application integration. Each line reports a versioned
