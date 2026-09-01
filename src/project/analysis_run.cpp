@@ -46,7 +46,46 @@ std::string run_directory_name(const std::uint64_t number)
     name << run_prefix << std::setfill('0') << std::setw(4) << number;
     return name.str();
 }
+
+AnalysisRun read_analysis_run(const std::filesystem::path &run_directory,
+                              const std::uint64_t number)
+{
+    const auto request_file = run_directory / "analysis-request.json";
+    const input::AnalysisRequest request = input::read_analysis_request(request_file);
+    return AnalysisRun{
+        .number = number,
+        .run_directory = run_directory,
+        .request_file = request_file,
+        .input_file = run_directory / request.input_file,
+        .result_file = run_directory / request.result_file,
+        .summary_file = run_directory / request.summary_file,
+    };
+}
 } // namespace
+
+std::vector<AnalysisRun> list_analysis_runs(const ProjectFile &project)
+{
+    if (!std::filesystem::is_directory(project.runs_directory))
+    {
+        throw std::invalid_argument("Project runs directory does not exist: " +
+                                    project.runs_directory.string());
+    }
+
+    std::vector<AnalysisRun> runs;
+    for (const auto &entry : std::filesystem::directory_iterator(project.runs_directory))
+    {
+        if (entry.is_directory())
+        {
+            const std::uint64_t number = run_number(entry.path());
+            if (number != 0)
+            {
+                runs.push_back(read_analysis_run(entry.path(), number));
+            }
+        }
+    }
+    std::ranges::sort(runs, {}, &AnalysisRun::number);
+    return runs;
+}
 
 AnalysisRun prepare_analysis_run(const ProjectFile &project)
 {

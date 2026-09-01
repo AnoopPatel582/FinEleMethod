@@ -76,6 +76,35 @@ TEST_F(AnalysisRunTest, IgnoresUnrelatedDirectoriesWhenChoosingNextNumber)
     EXPECT_EQ(run.run_directory.filename(), "run-0001");
 }
 
+TEST_F(AnalysisRunTest, ListsPreparedRunsInAscendingNumberOrder)
+{
+    const AnalysisRun first = prepare_analysis_run(project_);
+    const AnalysisRun second = prepare_analysis_run(project_);
+
+    const std::vector<AnalysisRun> runs = list_analysis_runs(project_);
+
+    ASSERT_EQ(runs.size(), 2);
+    EXPECT_EQ(runs[0].number, first.number);
+    EXPECT_EQ(runs[0].input_file, first.input_file);
+    EXPECT_EQ(runs[1].number, second.number);
+    EXPECT_EQ(runs[1].summary_file, second.summary_file);
+}
+
+TEST_F(AnalysisRunTest, IgnoresUnrelatedEntriesWhenListingRuns)
+{
+    std::filesystem::create_directory(project_.runs_directory / "notes");
+    std::ofstream(project_.runs_directory / "run-0007") << "not a directory";
+
+    EXPECT_TRUE(list_analysis_runs(project_).empty());
+}
+
+TEST_F(AnalysisRunTest, RejectsMissingRunsDirectoryWhenListingRuns)
+{
+    std::filesystem::remove_all(project_.runs_directory);
+
+    EXPECT_THROW((void)list_analysis_runs(project_), std::invalid_argument);
+}
+
 TEST_F(AnalysisRunTest, RejectsMissingAuthoritativeInput)
 {
     std::filesystem::remove(project_.input_file);
