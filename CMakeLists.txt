@@ -135,6 +135,14 @@ target_compile_features(FinEleMethodGui PRIVATE cxx_std_20)
 target_link_libraries(FinEleMethodGui PRIVATE FinEleMethod::Core wx::core wx::base)
 add_dependencies(FinEleMethodGui FinEleMethod)
 
+install(
+    TARGETS FinEleMethod FinEleMethodGui
+    RUNTIME DESTINATION .
+)
+install(FILES $<TARGET_RUNTIME_DLLS:FinEleMethodGui> DESTINATION .)
+install(FILES README.md docs/BEGINNERS_GUIDE.md DESTINATION docs)
+install(DIRECTORY examples/abaqus DESTINATION examples)
+
 if(MSVC)
     target_compile_options(FinEleMethodCore PRIVATE /W4 /permissive-)
     target_compile_options(FinEleMethodCli PRIVATE /W4 /permissive-)

@@ -95,6 +95,19 @@ cmake --build --preset windows-msvc-release
 ctest --preset windows-msvc-release
 ```
 
+Stage a distributable application folder after the Release build:
+
+```powershell
+cmake --install .\out\build\windows-msvc `
+  --config Release `
+  --prefix .\out\install\windows-msvc-release
+```
+
+The staged folder contains the command-line solver, workbench, required
+third-party runtime DLLs, documentation, and ABAQUS examples. It intentionally
+excludes test binaries and development libraries. The Microsoft Visual C++
+Runtime prerequisite will be handled by the future installer.
+
 If Visual Studio or vcpkg is installed elsewhere, set `VCPKG_ROOT` to the
 directory containing `vcpkg.exe` and the `scripts` directory.
 

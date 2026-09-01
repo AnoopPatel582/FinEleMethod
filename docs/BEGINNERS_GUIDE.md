@@ -112,6 +112,19 @@ cmake --build --preset windows-msvc-release
 The Release command-line solver and workbench are created in
 `out\build\windows-msvc\Release\`.
 
+To collect the application and its runtime files into a clean folder, run:
+
+```powershell
+cmake --install .\out\build\windows-msvc `
+  --config Release `
+  --prefix .\out\install\windows-msvc-release
+```
+
+The staged application is then available under
+`out\install\windows-msvc-release\`. This development-stage folder assumes the
+Microsoft Visual C++ Runtime is installed; the future installer will manage that
+prerequisite.
+
 ## 6. Run the automated tests
 
 Run:
