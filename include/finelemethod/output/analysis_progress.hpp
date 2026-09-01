@@ -22,7 +22,7 @@ struct AnalysisProgressEvent
     std::string message;
 };
 
-// Writes one complete protocol-versioned JSON object followed by a newline.
+// Writes and flushes one complete protocol-versioned JSON object followed by a newline.
 void write_analysis_progress_json_line(std::ostream &stream, const AnalysisProgressEvent &event);
 
 // Parses and validates one complete protocol-versioned JSON Lines record.

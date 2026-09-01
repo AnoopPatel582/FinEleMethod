@@ -11,6 +11,18 @@ namespace finelemethod::output
 {
 namespace
 {
+class FlushTrackingBuffer final : public std::stringbuf
+{
+  public:
+    int sync() override
+    {
+        ++flush_count;
+        return std::stringbuf::sync();
+    }
+
+    int flush_count{};
+};
+
 TEST(AnalysisProgress, WritesOneVersionedJsonObjectPerLine)
 {
     std::ostringstream stream;
@@ -39,6 +51,17 @@ TEST(AnalysisProgress, WritesOneVersionedJsonObjectPerLine)
     EXPECT_EQ(second.at("event"), "analysis-progress");
     EXPECT_EQ(second.at("state"), "executing");
     EXPECT_EQ(second.at("message"), "Solving global system.");
+}
+
+TEST(AnalysisProgress, FlushesEachRecordForRealtimeConsumers)
+{
+    FlushTrackingBuffer buffer;
+    std::ostream stream(&buffer);
+
+    write_analysis_progress_json_line(
+        stream, AnalysisProgressEvent{AnalysisState::executing, "Solving model."});
+
+    EXPECT_EQ(buffer.flush_count, 1);
 }
 
 TEST(AnalysisProgress, SerializesEveryLifecycleState)

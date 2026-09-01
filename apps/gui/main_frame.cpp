@@ -1,5 +1,7 @@
 #include "main_frame.hpp"
 
+#include "finelemethod/output/analysis_progress.hpp"
+
 #include <wx/button.h>
 #include <wx/dirdlg.h>
 #include <wx/filedlg.h>
@@ -12,6 +14,7 @@
 #include <wx/statbox.h>
 #include <wx/stattext.h>
 #include <wx/stdpaths.h>
+#include <wx/stream.h>
 #include <wx/textctrl.h>
 #include <wx/textdlg.h>
 
@@ -28,10 +31,12 @@ constexpr int open_input_id = wxID_HIGHEST + 1;
 constexpr int create_project_id = wxID_HIGHEST + 2;
 constexpr int run_analysis_id = wxID_HIGHEST + 3;
 constexpr int solver_process_id = wxID_HIGHEST + 4;
+constexpr int progress_timer_id = wxID_HIGHEST + 5;
 } // namespace
 
 MainFrame::MainFrame()
-    : wxFrame(nullptr, wxID_ANY, "FinEleMethod", wxDefaultPosition, wxSize(900, 680))
+    : wxFrame(nullptr, wxID_ANY, "FinEleMethod", wxDefaultPosition, wxSize(900, 680)),
+      progress_timer_(this, progress_timer_id)
 {
     SetMinSize(wxSize(720, 560));
     create_menu_bar();
@@ -66,6 +71,7 @@ void MainFrame::create_menu_bar()
     Bind(wxEVT_MENU, &MainFrame::create_project, this, create_project_id);
     Bind(wxEVT_MENU, &MainFrame::run_analysis, this, run_analysis_id);
     Bind(wxEVT_END_PROCESS, &MainFrame::analysis_finished, this, solver_process_id);
+    Bind(wxEVT_TIMER, &MainFrame::poll_analysis_progress, this, progress_timer_id);
     Bind(wxEVT_CLOSE_WINDOW, &MainFrame::close_window, this);
     Bind(wxEVT_MENU, [this](wxCommandEvent &) { Close(); }, wxID_EXIT);
     Bind(
@@ -132,6 +138,8 @@ void MainFrame::create_content()
     run_row->Add(run_path_, 1, wxEXPAND | wxRIGHT, 10);
     run_row->Add(run_button_, 0);
     solver_box->Add(run_row, 0, wxEXPAND);
+    progress_text_ = new wxStaticText(panel, wxID_ANY, "Progress: idle");
+    solver_box->Add(progress_text_, 0, wxTOP, 10);
 
     auto *close_button = new wxButton(panel, wxID_CLOSE, "Close");
     close_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { Close(); });
@@ -163,6 +171,7 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     input_path_->SetValue(dialog.GetPath());
     project_path_->SetValue("No project created");
     run_path_->SetValue("No analysis run prepared");
+    progress_text_->SetLabel("Progress: idle");
     create_project_button_->Enable();
     run_button_->Disable();
     GetMenuBar()->Enable(create_project_id, true);
@@ -206,6 +215,7 @@ void MainFrame::create_project(wxCommandEvent &)
         active_run_.reset();
         input_path_->SetValue(wxString{project.input_file.wstring()});
         run_path_->SetValue("No analysis run prepared");
+        progress_text_->SetLabel("Progress: ready");
         create_project_button_->Disable();
         run_button_->Enable();
         GetMenuBar()->Enable(create_project_id, false);
@@ -257,6 +267,7 @@ void MainFrame::run_analysis(wxCommandEvent &)
         argument_pointers.push_back(nullptr);
 
         auto *process = new wxProcess(this, solver_process_id);
+        process->Redirect();
         const long process_id =
             wxExecute(argument_pointers.data(), wxEXEC_ASYNC | wxEXEC_HIDE_CONSOLE, process);
         if (process_id == 0)
@@ -266,9 +277,14 @@ void MainFrame::run_analysis(wxCommandEvent &)
         }
 
         solver_process_ = process;
+        standard_output_buffer_.clear();
+        standard_error_buffer_.clear();
+        progress_protocol_error_.clear();
         run_path_->SetValue(wxString{active_run_->run_directory.wstring()});
+        progress_text_->SetLabel("Progress: starting solver");
         run_button_->Disable();
         GetMenuBar()->Enable(run_analysis_id, false);
+        progress_timer_.Start(100);
         SetStatusText("Analysis running");
     }
     catch (const std::exception &exception)
@@ -280,14 +296,95 @@ void MainFrame::run_analysis(wxCommandEvent &)
     }
 }
 
+void MainFrame::poll_analysis_progress(wxTimerEvent &)
+{
+    read_process_output();
+}
+
+void MainFrame::read_process_output()
+{
+    if (solver_process_ == nullptr)
+    {
+        return;
+    }
+
+    const auto read_available = [](wxInputStream *stream, const auto is_available,
+                                   std::string &buffer) {
+        char bytes[4096];
+        while (is_available())
+        {
+            stream->Read(bytes, sizeof(bytes));
+            const std::size_t count = stream->LastRead();
+            if (count == 0)
+            {
+                break;
+            }
+            buffer.append(bytes, count);
+        }
+    };
+
+    read_available(
+        solver_process_->GetInputStream(), [this] { return solver_process_->IsInputAvailable(); },
+        standard_output_buffer_);
+    read_available(
+        solver_process_->GetErrorStream(), [this] { return solver_process_->IsErrorAvailable(); },
+        standard_error_buffer_);
+    consume_progress_lines(false);
+}
+
+void MainFrame::consume_progress_lines(const bool include_incomplete_line)
+{
+    while (true)
+    {
+        const std::size_t newline = standard_output_buffer_.find('\n');
+        if (newline == std::string::npos && !include_incomplete_line)
+        {
+            return;
+        }
+        if (standard_output_buffer_.empty())
+        {
+            return;
+        }
+
+        const std::size_t length =
+            newline == std::string::npos ? standard_output_buffer_.size() : newline;
+        std::string line = standard_output_buffer_.substr(0, length);
+        standard_output_buffer_.erase(0, length + (newline == std::string::npos ? 0 : 1));
+        if (!line.empty() && line.back() == '\r')
+        {
+            line.pop_back();
+        }
+        if (line.empty())
+        {
+            continue;
+        }
+
+        try
+        {
+            const output::AnalysisProgressEvent event =
+                output::parse_analysis_progress_json_line(line);
+            progress_text_->SetLabel("Progress: " + wxString::FromUTF8(event.message));
+            SetStatusText(wxString::FromUTF8(event.message));
+        }
+        catch (const std::exception &exception)
+        {
+            progress_protocol_error_ = exception.what();
+            progress_text_->SetLabel("Progress: incompatible solver output");
+        }
+    }
+}
+
 void MainFrame::analysis_finished(wxProcessEvent &event)
 {
+    progress_timer_.Stop();
+    read_process_output();
+    consume_progress_lines(true);
     delete solver_process_;
     solver_process_ = nullptr;
     run_button_->Enable(active_project_.has_value());
     GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
 
-    if (event.GetExitCode() == 0 && active_run_ &&
+    if (event.GetExitCode() == 0 && progress_protocol_error_.empty() && active_run_ &&
         std::filesystem::is_regular_file(active_run_->result_file))
     {
         SetStatusText("Analysis completed");
@@ -298,8 +395,19 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     }
 
     SetStatusText("Analysis failed");
-    wxMessageBox(wxString::Format("The solver exited with code %d.\n\nRun directory:\n",
-                                  event.GetExitCode()) +
+    progress_text_->SetLabel("Progress: failed");
+    wxString details;
+    if (!progress_protocol_error_.empty())
+    {
+        details =
+            "Progress protocol error: " + wxString::FromUTF8(progress_protocol_error_) + "\n\n";
+    }
+    if (!standard_error_buffer_.empty())
+    {
+        details += "Solver message: " + wxString::FromUTF8(standard_error_buffer_) + "\n\n";
+    }
+    wxMessageBox(wxString::Format("The solver exited with code %d.\n\n", event.GetExitCode()) +
+                     details + "Run directory:\n" +
                      (active_run_ ? wxString{active_run_->run_directory.wstring()}
                                   : wxString{"Unavailable"}),
                  "Analysis failed", wxOK | wxICON_ERROR, this);
@@ -316,6 +424,7 @@ void MainFrame::close_window(wxCloseEvent &event)
     }
     if (solver_process_ != nullptr)
     {
+        progress_timer_.Stop();
         solver_process_->Detach();
         solver_process_ = nullptr;
     }

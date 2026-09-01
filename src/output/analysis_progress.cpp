@@ -70,7 +70,7 @@ void write_analysis_progress_json_line(std::ostream &stream, const AnalysisProgr
         {"message", event.message},
     };
 
-    stream << document.dump() << '\n';
+    stream << document.dump() << '\n' << std::flush;
     if (!stream)
     {
         throw std::runtime_error("could not write analysis progress event");
