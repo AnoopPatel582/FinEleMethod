@@ -101,7 +101,9 @@ solutions where appropriate.
 - An imported ABAQUS `.inp` file is copied into the project's input directory.
 - The copied `.inp` file is initially the authoritative model source.
 - The initial GUI may inspect imported model data; model editing is later work.
-- Each analysis creates a numbered, immutable run directory.
+- Each analysis creates a numbered, immutable run directory named `run-0001`,
+  `run-0002`, and so on. It contains a snapshot of the authoritative model,
+  `analysis-request.json`, and a `results/` directory.
 
 ## 9. Command-line and GUI relationship
 

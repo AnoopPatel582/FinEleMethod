@@ -17,6 +17,9 @@ its path, then create a file-based FinEleMethod project from that model.
 The project-storage layer can create a new file-based project, copy its
 authoritative ABAQUS model into `input/`, create an initially empty `runs/`
 directory, and write the versioned `<ProjectName>.json` project file.
+Each prepared analysis receives the next numbered directory (`run-0001`,
+`run-0002`, and so on), an immutable model snapshot, a validated request, and a
+dedicated results directory.
 
 ## Current capabilities
 

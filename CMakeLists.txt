@@ -78,6 +78,7 @@ add_library(FinEleMethodCore STATIC
     src/postprocessing/h8_results.cpp
     src/postprocessing/q4_plane_strain_results.cpp
     src/postprocessing/q4_plane_stress_results.cpp
+    src/project/analysis_run.cpp
     src/project/project_file.cpp
     src/solver/abaqus_q4_analysis.cpp
     src/solver/abaqus_h8_analysis.cpp
