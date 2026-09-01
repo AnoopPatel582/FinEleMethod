@@ -5,6 +5,7 @@
 #include "finelemethod/examples/q4_tension_example.hpp"
 #include "finelemethod/input/abaqus_element_parser.hpp"
 #include "finelemethod/input/abaqus_input_file.hpp"
+#include "finelemethod/input/abaqus_model_summary.hpp"
 #include "finelemethod/input/abaqus_parse_error.hpp"
 #include "finelemethod/input/analysis_request.hpp"
 #include "finelemethod/model/dof_map.hpp"
@@ -33,6 +34,7 @@ void write_help(std::ostream &stream)
     stream << application_name() << '\n'
            << "Usage:\n"
            << "  FinEleMethod --help\n"
+           << "  FinEleMethod --inspect <model.inp>\n"
            << "  FinEleMethod --request <analysis-request.json>\n"
            << "  FinEleMethod --input <model.inp> --output <result.vtu> "
               "[--summary <summary.json>] [--json-progress]\n"
@@ -40,6 +42,7 @@ void write_help(std::ostream &stream)
            << "  FinEleMethod --example h8-compression --output <file.vtu>\n\n"
            << "Options:\n"
            << "  -h, --help  Show this help message.\n"
+           << "  --inspect <model.inp>  Validate and summarize a supported ABAQUS model.\n"
            << "  --request <file.json>  Run a versioned analysis request.\n"
            << "  --input <model.inp>   Read and solve an ABAQUS CPS4, CPE4, or C3D8 model.\n"
            << "  --example q4-tension  Run the built-in Q4 uniaxial-tension example.\n"
@@ -47,6 +50,20 @@ void write_help(std::ostream &stream)
            << "  --output <file.vtu>   Write analysis results to an ASCII VTU file.\n";
     stream << "  --summary <file.json>  Write a versioned analysis summary.\n"
            << "  --json-progress       Write versioned JSON Lines progress to stdout.\n";
+}
+
+std::string_view analysis_type_name(const input::AbaqusAnalysisType analysis_type)
+{
+    switch (analysis_type)
+    {
+    case input::AbaqusAnalysisType::q4_plane_stress:
+        return "Q4 plane stress";
+    case input::AbaqusAnalysisType::q4_plane_strain:
+        return "Q4 plane strain";
+    case input::AbaqusAnalysisType::h8_three_dimensional:
+        return "H8 three-dimensional";
+    }
+    throw std::invalid_argument("Unsupported ABAQUS analysis type.");
 }
 } // namespace
 
@@ -64,6 +81,50 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
     {
         write_help(output);
         return ExitCode::Success;
+    }
+
+    if (arguments.size() == 2 && arguments[0] == "--inspect")
+    {
+        const std::filesystem::path input_path{std::string(arguments[1])};
+        std::string input_text;
+        try
+        {
+            input_text = input::read_abaqus_input_file(input_path);
+        }
+        catch (const std::exception &exception)
+        {
+            error << "Input-file error: " << exception.what() << '\n';
+            return ExitCode::InputParsingError;
+        }
+
+        try
+        {
+            const input::AbaqusModelSummary summary = input::summarize_abaqus_model(input_text);
+            output << "Validated ABAQUS model.\n"
+                   << "Analysis type: " << analysis_type_name(summary.analysis_type) << '\n'
+                   << "Nodes: " << summary.node_count << '\n'
+                   << "Elements: " << summary.element_count << '\n'
+                   << "Materials: " << summary.material_count << '\n'
+                   << "Displacement constraints: " << summary.prescribed_displacement_count << '\n'
+                   << "Point loads: " << summary.point_load_count << '\n'
+                   << "Pressure loads: " << summary.pressure_load_count << '\n';
+            return ExitCode::Success;
+        }
+        catch (const input::AbaqusParseError &exception)
+        {
+            error << "Input-parsing error: " << exception.what() << '\n';
+            return ExitCode::InputParsingError;
+        }
+        catch (const std::invalid_argument &exception)
+        {
+            error << "Model validation error: " << exception.what() << '\n';
+            return ExitCode::ModelValidationError;
+        }
+        catch (const std::exception &exception)
+        {
+            error << "Unexpected internal error: " << exception.what() << '\n';
+            return ExitCode::UnexpectedInternalError;
+        }
     }
 
     if (arguments.size() == 2 && arguments[0] == "--request")

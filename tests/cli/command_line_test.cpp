@@ -118,6 +118,44 @@ TEST(CommandLine, UnknownOptionWritesUsageError)
     EXPECT_NE(error.str().find("unknown command-line argument"), std::string::npos);
 }
 
+TEST(CommandLine, InspectValidModelReportsSummaryWithoutCreatingResults)
+{
+    const auto input_path =
+        std::filesystem::temp_directory_path() / "finelemethod_cli_inspect_test.inp";
+    std::ofstream(input_path) << valid_abaqus_input;
+    const std::string input_text = input_path.string();
+    const std::array<std::string_view, 2> arguments{"--inspect", input_text};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::Success);
+    EXPECT_TRUE(error.str().empty());
+    EXPECT_NE(output.str().find("Analysis type: Q4 plane stress"), std::string::npos);
+    EXPECT_NE(output.str().find("Nodes: 4"), std::string::npos);
+    EXPECT_NE(output.str().find("Elements: 1"), std::string::npos);
+    EXPECT_NE(output.str().find("Displacement constraints: 3"), std::string::npos);
+    std::filesystem::remove(input_path);
+}
+
+TEST(CommandLine, InspectMissingModelReportsInputError)
+{
+    const auto input_path =
+        std::filesystem::temp_directory_path() / "finelemethod_missing_inspect_test.inp";
+    std::filesystem::remove(input_path);
+    const std::string input_text = input_path.string();
+    const std::array<std::string_view, 2> arguments{"--inspect", input_text};
+    std::ostringstream output;
+    std::ostringstream error;
+
+    const auto exit_code = finelemethod::cli::run(arguments, output, error);
+
+    EXPECT_EQ(exit_code, finelemethod::ExitCode::InputParsingError);
+    EXPECT_TRUE(output.str().empty());
+    EXPECT_NE(error.str().find("Input-file error"), std::string::npos);
+}
+
 TEST(CommandLine, AnalysisRequestRunsModelWithJsonProgress)
 {
     const auto directory = std::filesystem::temp_directory_path() / "finelemethod_cli_request_test";

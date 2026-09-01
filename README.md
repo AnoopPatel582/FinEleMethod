@@ -82,6 +82,12 @@ $env:VCPKG_ROOT = "C:\Program Files\Microsoft Visual Studio\18\Community\VC\vcpk
 cmake --preset windows-msvc
 ```
 
+Validate and inspect a supported ABAQUS model without solving it:
+
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethod.exe --inspect .\examples\abaqus\q4_tension.inp
+```
+
 If Visual Studio or vcpkg is installed elsewhere, set `VCPKG_ROOT` to the
 directory containing `vcpkg.exe` and the `scripts` directory.
 
