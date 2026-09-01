@@ -42,6 +42,7 @@ constexpr int open_project_id = wxID_HIGHEST + 7;
 constexpr int cancel_analysis_id = wxID_HIGHEST + 8;
 constexpr int run_history_id = wxID_HIGHEST + 9;
 constexpr int open_run_folder_id = wxID_HIGHEST + 10;
+constexpr int refresh_run_history_id = wxID_HIGHEST + 11;
 } // namespace
 
 MainFrame::MainFrame()
@@ -76,6 +77,7 @@ void MainFrame::create_menu_bar()
     analysis_menu->Append(cancel_analysis_id, "&Cancel Analysis");
     analysis_menu->Append(open_result_id, "&Open Result...\tCtrl+R");
     analysis_menu->Append(open_run_folder_id, "Open Run &Folder");
+    analysis_menu->Append(refresh_run_history_id, "&Refresh Run History\tF6");
     menu_bar->Append(analysis_menu, "&Analysis");
     menu_bar->Append(help_menu, "&Help");
     SetMenuBar(menu_bar);
@@ -84,6 +86,7 @@ void MainFrame::create_menu_bar()
     menu_bar->Enable(cancel_analysis_id, false);
     menu_bar->Enable(open_result_id, false);
     menu_bar->Enable(open_run_folder_id, false);
+    menu_bar->Enable(refresh_run_history_id, false);
 
     Bind(wxEVT_MENU, &MainFrame::open_project, this, open_project_id);
     Bind(wxEVT_MENU, &MainFrame::choose_abaqus_input, this, open_input_id);
@@ -92,6 +95,7 @@ void MainFrame::create_menu_bar()
     Bind(wxEVT_MENU, &MainFrame::cancel_analysis, this, cancel_analysis_id);
     Bind(wxEVT_MENU, &MainFrame::open_result, this, open_result_id);
     Bind(wxEVT_MENU, &MainFrame::open_run_folder, this, open_run_folder_id);
+    Bind(wxEVT_MENU, &MainFrame::refresh_run_history_command, this, refresh_run_history_id);
     Bind(wxEVT_END_PROCESS, &MainFrame::analysis_finished, this, solver_process_id);
     Bind(wxEVT_TIMER, &MainFrame::poll_analysis_progress, this, progress_timer_id);
     Bind(wxEVT_CLOSE_WINDOW, &MainFrame::close_window, this);
@@ -142,10 +146,16 @@ void MainFrame::create_content()
     project_box->Add(project_row, 0, wxEXPAND | wxALL, 10);
     run_history_text_ = new wxStaticText(panel, wxID_ANY, "Run history: no project open");
     project_box->Add(run_history_text_, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+    auto *run_history_row = new wxBoxSizer(wxHORIZONTAL);
     run_history_choice_ = new wxChoice(panel, run_history_id);
     run_history_choice_->Disable();
     run_history_choice_->Bind(wxEVT_CHOICE, &MainFrame::select_history_run, this);
-    project_box->Add(run_history_choice_, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
+    refresh_run_history_button_ = new wxButton(panel, refresh_run_history_id, "Refresh");
+    refresh_run_history_button_->Disable();
+    refresh_run_history_button_->Bind(wxEVT_BUTTON, &MainFrame::refresh_run_history_command, this);
+    run_history_row->Add(run_history_choice_, 1, wxEXPAND | wxRIGHT, 10);
+    run_history_row->Add(refresh_run_history_button_, 0);
+    project_box->Add(run_history_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
     auto *solver_box = new wxStaticBoxSizer(wxVERTICAL, panel, "Solver status");
     solver_box->Add(new wxStaticText(panel, wxID_ANY, "Command-line solver engine: ready"), 0,
@@ -252,6 +262,7 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     history_runs_.clear();
     run_history_choice_->Clear();
     run_history_choice_->Disable();
+    refresh_run_history_button_->Disable();
     create_project_button_->Enable();
     run_button_->Disable();
     open_result_button_->Disable();
@@ -260,6 +271,7 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     GetMenuBar()->Enable(run_analysis_id, false);
     GetMenuBar()->Enable(open_result_id, false);
     GetMenuBar()->Enable(open_run_folder_id, false);
+    GetMenuBar()->Enable(refresh_run_history_id, false);
     SetStatusText("ABAQUS input selected");
 }
 
@@ -326,6 +338,8 @@ void MainFrame::activate_project(project::ProjectFile project)
     GetMenuBar()->Enable(run_analysis_id, true);
     GetMenuBar()->Enable(open_result_id, false);
     GetMenuBar()->Enable(open_run_folder_id, false);
+    refresh_run_history_button_->Enable();
+    GetMenuBar()->Enable(refresh_run_history_id, true);
     refresh_run_history();
 }
 
@@ -371,6 +385,26 @@ void MainFrame::refresh_run_history()
                 break;
             }
         }
+    }
+}
+
+void MainFrame::refresh_run_history_command(wxCommandEvent &)
+{
+    if (!active_project_ || solver_process_ != nullptr)
+    {
+        return;
+    }
+
+    try
+    {
+        refresh_run_history();
+        SetStatusText("Analysis run history refreshed");
+    }
+    catch (const std::exception &exception)
+    {
+        SetStatusText("Could not refresh analysis run history");
+        wxMessageBox(wxString::FromUTF8(exception.what()), "Could not refresh run history",
+                     wxOK | wxICON_ERROR, this);
     }
 }
 
@@ -479,12 +513,14 @@ void MainFrame::run_analysis(wxCommandEvent &)
         open_result_button_->Disable();
         browse_button_->Disable();
         run_history_choice_->Disable();
+        refresh_run_history_button_->Disable();
         GetMenuBar()->Enable(open_project_id, false);
         GetMenuBar()->Enable(open_input_id, false);
         GetMenuBar()->Enable(run_analysis_id, false);
         GetMenuBar()->Enable(cancel_analysis_id, true);
         GetMenuBar()->Enable(open_result_id, false);
         GetMenuBar()->Enable(open_run_folder_id, true);
+        GetMenuBar()->Enable(refresh_run_history_id, false);
         progress_timer_.Start(100);
         SetStatusText("Analysis running");
     }
@@ -616,10 +652,12 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     cancel_button_->Disable();
     browse_button_->Enable();
     run_history_choice_->Enable(!history_runs_.empty());
+    refresh_run_history_button_->Enable(active_project_.has_value());
     GetMenuBar()->Enable(open_project_id, true);
     GetMenuBar()->Enable(open_input_id, true);
     GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
     GetMenuBar()->Enable(cancel_analysis_id, false);
+    GetMenuBar()->Enable(refresh_run_history_id, active_project_.has_value());
 
     if (event.GetExitCode() == static_cast<int>(ExitCode::Cancelled) &&
         progress_protocol_error_.empty() && cancellation_progress_received_)

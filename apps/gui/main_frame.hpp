@@ -37,6 +37,7 @@ class MainFrame final : public wxFrame
     void create_project(wxCommandEvent &event);
     void activate_project(project::ProjectFile project);
     void refresh_run_history();
+    void refresh_run_history_command(wxCommandEvent &event);
     void select_history_run(wxCommandEvent &event);
     void run_analysis(wxCommandEvent &event);
     void cancel_analysis(wxCommandEvent &event);
@@ -55,6 +56,7 @@ class MainFrame final : public wxFrame
     wxStaticText *summary_text_{};
     wxStaticText *run_history_text_{};
     wxChoice *run_history_choice_{};
+    wxButton *refresh_run_history_button_{};
     wxButton *create_project_button_{};
     wxButton *browse_button_{};
     wxButton *run_button_{};
