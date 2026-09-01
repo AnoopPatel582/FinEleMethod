@@ -17,6 +17,7 @@
 #include <wx/stream.h>
 #include <wx/textctrl.h>
 #include <wx/textdlg.h>
+#include <wx/utils.h>
 
 #include <exception>
 #include <stdexcept>
@@ -32,6 +33,7 @@ constexpr int create_project_id = wxID_HIGHEST + 2;
 constexpr int run_analysis_id = wxID_HIGHEST + 3;
 constexpr int solver_process_id = wxID_HIGHEST + 4;
 constexpr int progress_timer_id = wxID_HIGHEST + 5;
+constexpr int open_result_id = wxID_HIGHEST + 6;
 } // namespace
 
 MainFrame::MainFrame()
@@ -61,15 +63,18 @@ void MainFrame::create_menu_bar()
     menu_bar->Append(file_menu, "&File");
     auto *analysis_menu = new wxMenu;
     analysis_menu->Append(run_analysis_id, "&Run Analysis\tF5");
+    analysis_menu->Append(open_result_id, "&Open Result...\tCtrl+R");
     menu_bar->Append(analysis_menu, "&Analysis");
     menu_bar->Append(help_menu, "&Help");
     SetMenuBar(menu_bar);
     menu_bar->Enable(create_project_id, false);
     menu_bar->Enable(run_analysis_id, false);
+    menu_bar->Enable(open_result_id, false);
 
     Bind(wxEVT_MENU, &MainFrame::choose_abaqus_input, this, open_input_id);
     Bind(wxEVT_MENU, &MainFrame::create_project, this, create_project_id);
     Bind(wxEVT_MENU, &MainFrame::run_analysis, this, run_analysis_id);
+    Bind(wxEVT_MENU, &MainFrame::open_result, this, open_result_id);
     Bind(wxEVT_END_PROCESS, &MainFrame::analysis_finished, this, solver_process_id);
     Bind(wxEVT_TIMER, &MainFrame::poll_analysis_progress, this, progress_timer_id);
     Bind(wxEVT_CLOSE_WINDOW, &MainFrame::close_window, this);
@@ -140,6 +145,12 @@ void MainFrame::create_content()
     solver_box->Add(run_row, 0, wxEXPAND);
     progress_text_ = new wxStaticText(panel, wxID_ANY, "Progress: idle");
     solver_box->Add(progress_text_, 0, wxTOP, 10);
+    summary_text_ = new wxStaticText(panel, wxID_ANY, "Summary: unavailable");
+    solver_box->Add(summary_text_, 0, wxTOP, 8);
+
+    open_result_button_ = new wxButton(panel, open_result_id, "Open Result");
+    open_result_button_->Disable();
+    open_result_button_->Bind(wxEVT_BUTTON, &MainFrame::open_result, this);
 
     auto *close_button = new wxButton(panel, wxID_CLOSE, "Close");
     close_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { Close(); });
@@ -150,7 +161,10 @@ void MainFrame::create_content()
     layout->Add(project_box, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, 28);
     layout->Add(solver_box, 0, wxEXPAND | wxALL, 28);
     layout->AddStretchSpacer();
-    layout->Add(close_button, 0, wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 28);
+    auto *bottom_buttons = new wxBoxSizer(wxHORIZONTAL);
+    bottom_buttons->Add(open_result_button_, 0, wxRIGHT, 10);
+    bottom_buttons->Add(close_button, 0);
+    layout->Add(bottom_buttons, 0, wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 28);
 
     panel->SetSizer(layout);
 }
@@ -168,14 +182,18 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     selected_input_file_ = std::filesystem::path{dialog.GetPath().ToStdWstring()};
     active_project_.reset();
     active_run_.reset();
+    completed_summary_.reset();
     input_path_->SetValue(dialog.GetPath());
     project_path_->SetValue("No project created");
     run_path_->SetValue("No analysis run prepared");
     progress_text_->SetLabel("Progress: idle");
+    summary_text_->SetLabel("Summary: unavailable");
     create_project_button_->Enable();
     run_button_->Disable();
+    open_result_button_->Disable();
     GetMenuBar()->Enable(create_project_id, true);
     GetMenuBar()->Enable(run_analysis_id, false);
+    GetMenuBar()->Enable(open_result_id, false);
     SetStatusText("ABAQUS input selected");
 }
 
@@ -213,13 +231,17 @@ void MainFrame::create_project(wxCommandEvent &)
         selected_input_file_ = project.input_file;
         active_project_ = project;
         active_run_.reset();
+        completed_summary_.reset();
         input_path_->SetValue(wxString{project.input_file.wstring()});
         run_path_->SetValue("No analysis run prepared");
         progress_text_->SetLabel("Progress: ready");
+        summary_text_->SetLabel("Summary: unavailable");
         create_project_button_->Disable();
         run_button_->Enable();
+        open_result_button_->Disable();
         GetMenuBar()->Enable(create_project_id, false);
         GetMenuBar()->Enable(run_analysis_id, true);
+        GetMenuBar()->Enable(open_result_id, false);
         SetStatusText("Project created");
         wxMessageBox("Project created successfully.\n\n" +
                          wxString{project.project_directory.wstring()},
@@ -255,6 +277,7 @@ void MainFrame::run_analysis(wxCommandEvent &)
     try
     {
         active_run_ = project::prepare_analysis_run(*active_project_);
+        completed_summary_.reset();
 
         std::vector<std::wstring> arguments{solver_executable.wstring(), L"--request",
                                             active_run_->request_file.wstring()};
@@ -282,8 +305,11 @@ void MainFrame::run_analysis(wxCommandEvent &)
         progress_protocol_error_.clear();
         run_path_->SetValue(wxString{active_run_->run_directory.wstring()});
         progress_text_->SetLabel("Progress: starting solver");
+        summary_text_->SetLabel("Summary: unavailable");
         run_button_->Disable();
+        open_result_button_->Disable();
         GetMenuBar()->Enable(run_analysis_id, false);
+        GetMenuBar()->Enable(open_result_id, false);
         progress_timer_.Start(100);
         SetStatusText("Analysis running");
     }
@@ -384,16 +410,48 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     run_button_->Enable(active_project_.has_value());
     GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
 
-    if (event.GetExitCode() == 0 && progress_protocol_error_.empty() && active_run_ &&
-        std::filesystem::is_regular_file(active_run_->result_file))
+    if (event.GetExitCode() == 0 && progress_protocol_error_.empty() && active_run_)
     {
-        SetStatusText("Analysis completed");
-        wxMessageBox("Analysis completed successfully.\n\nResult:\n" +
-                         wxString{active_run_->result_file.wstring()},
-                     "FinEleMethod Analysis", wxOK | wxICON_INFORMATION, this);
-        return;
+        try
+        {
+            const output::AnalysisSummary summary =
+                output::read_analysis_summary(active_run_->summary_file);
+            if (summary.input_path.lexically_normal() !=
+                    active_run_->input_file.lexically_normal() ||
+                summary.result_path.lexically_normal() !=
+                    active_run_->result_file.lexically_normal())
+            {
+                throw std::runtime_error("Analysis summary paths do not match the active run.");
+            }
+            if (!std::filesystem::is_regular_file(active_run_->result_file))
+            {
+                throw std::runtime_error("The completed analysis result file is missing.");
+            }
+
+            completed_summary_ = summary;
+            summary_text_->SetLabel(wxString::Format(
+                "Summary: %s | Nodes: %llu | Elements: %llu | Iterations: %llu | Residual: %.3e",
+                wxString::FromUTF8(summary.analysis_type).c_str(),
+                static_cast<unsigned long long>(summary.node_count),
+                static_cast<unsigned long long>(summary.element_count),
+                static_cast<unsigned long long>(summary.solver_iterations), summary.residual_norm));
+            open_result_button_->Enable();
+            GetMenuBar()->Enable(open_result_id, true);
+            SetStatusText("Analysis completed");
+            wxMessageBox("Analysis completed successfully.\n\nResult:\n" +
+                             wxString{active_run_->result_file.wstring()},
+                         "FinEleMethod Analysis", wxOK | wxICON_INFORMATION, this);
+            return;
+        }
+        catch (const std::exception &exception)
+        {
+            progress_protocol_error_ = exception.what();
+        }
     }
 
+    completed_summary_.reset();
+    open_result_button_->Disable();
+    GetMenuBar()->Enable(open_result_id, false);
     SetStatusText("Analysis failed");
     progress_text_->SetLabel("Progress: failed");
     wxString details;
@@ -411,6 +469,22 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
                      (active_run_ ? wxString{active_run_->run_directory.wstring()}
                                   : wxString{"Unavailable"}),
                  "Analysis failed", wxOK | wxICON_ERROR, this);
+}
+
+void MainFrame::open_result(wxCommandEvent &)
+{
+    if (!active_run_ || !completed_summary_ ||
+        !std::filesystem::is_regular_file(active_run_->result_file))
+    {
+        return;
+    }
+
+    if (!wxLaunchDefaultApplication(wxString{active_run_->result_file.wstring()}))
+    {
+        wxMessageBox("Windows could not open the VTU result. Install ParaView and associate .vtu "
+                     "files with it, then try again.",
+                     "Could not open result", wxOK | wxICON_ERROR, this);
+    }
 }
 
 void MainFrame::close_window(wxCloseEvent &event)

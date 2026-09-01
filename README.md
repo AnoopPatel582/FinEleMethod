@@ -14,7 +14,9 @@ GUI application boundary while the solver remains an independent command-line
 process. The current shell can select an existing ABAQUS `.inp` model and display
 its path, create a file-based FinEleMethod project from that model, and launch
 the command-line solver asynchronously for one analysis at a time. Validated
-solver lifecycle messages are displayed while the analysis is running.
+solver lifecycle messages are displayed while the analysis is running. After a
+validated completion summary is received, model and solver statistics are shown
+and the VTU result can be opened with the Windows-associated application.
 
 The project-storage layer can create a new file-based project, copy its
 authoritative ABAQUS model into `input/`, create an initially empty `runs/`
