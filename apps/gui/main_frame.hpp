@@ -35,6 +35,7 @@ class MainFrame final : public wxFrame
     void create_project(wxCommandEvent &event);
     void activate_project(project::ProjectFile project);
     void run_analysis(wxCommandEvent &event);
+    void cancel_analysis(wxCommandEvent &event);
     void poll_analysis_progress(wxTimerEvent &event);
     void analysis_finished(wxProcessEvent &event);
     void open_result(wxCommandEvent &event);
@@ -50,6 +51,7 @@ class MainFrame final : public wxFrame
     wxButton *create_project_button_{};
     wxButton *browse_button_{};
     wxButton *run_button_{};
+    wxButton *cancel_button_{};
     wxButton *open_result_button_{};
     std::filesystem::path selected_input_file_;
     std::optional<project::ProjectFile> active_project_;
@@ -60,5 +62,6 @@ class MainFrame final : public wxFrame
     std::string standard_output_buffer_;
     std::string standard_error_buffer_;
     std::string progress_protocol_error_;
+    bool cancellation_progress_received_{};
 };
 } // namespace finelemethod::gui

@@ -1,6 +1,8 @@
 #include "main_frame.hpp"
 
+#include "finelemethod/core/exit_code.hpp"
 #include "finelemethod/output/analysis_progress.hpp"
+#include "finelemethod/project/cancellation_flag.hpp"
 
 #include <wx/button.h>
 #include <wx/dirdlg.h>
@@ -36,6 +38,7 @@ constexpr int solver_process_id = wxID_HIGHEST + 4;
 constexpr int progress_timer_id = wxID_HIGHEST + 5;
 constexpr int open_result_id = wxID_HIGHEST + 6;
 constexpr int open_project_id = wxID_HIGHEST + 7;
+constexpr int cancel_analysis_id = wxID_HIGHEST + 8;
 } // namespace
 
 MainFrame::MainFrame()
@@ -67,18 +70,21 @@ void MainFrame::create_menu_bar()
     menu_bar->Append(file_menu, "&File");
     auto *analysis_menu = new wxMenu;
     analysis_menu->Append(run_analysis_id, "&Run Analysis\tF5");
+    analysis_menu->Append(cancel_analysis_id, "&Cancel Analysis");
     analysis_menu->Append(open_result_id, "&Open Result...\tCtrl+R");
     menu_bar->Append(analysis_menu, "&Analysis");
     menu_bar->Append(help_menu, "&Help");
     SetMenuBar(menu_bar);
     menu_bar->Enable(create_project_id, false);
     menu_bar->Enable(run_analysis_id, false);
+    menu_bar->Enable(cancel_analysis_id, false);
     menu_bar->Enable(open_result_id, false);
 
     Bind(wxEVT_MENU, &MainFrame::open_project, this, open_project_id);
     Bind(wxEVT_MENU, &MainFrame::choose_abaqus_input, this, open_input_id);
     Bind(wxEVT_MENU, &MainFrame::create_project, this, create_project_id);
     Bind(wxEVT_MENU, &MainFrame::run_analysis, this, run_analysis_id);
+    Bind(wxEVT_MENU, &MainFrame::cancel_analysis, this, cancel_analysis_id);
     Bind(wxEVT_MENU, &MainFrame::open_result, this, open_result_id);
     Bind(wxEVT_END_PROCESS, &MainFrame::analysis_finished, this, solver_process_id);
     Bind(wxEVT_TIMER, &MainFrame::poll_analysis_progress, this, progress_timer_id);
@@ -167,6 +173,10 @@ void MainFrame::create_content()
     layout->Add(solver_box, 0, wxEXPAND | wxALL, 28);
     layout->AddStretchSpacer();
     auto *bottom_buttons = new wxBoxSizer(wxHORIZONTAL);
+    cancel_button_ = new wxButton(panel, cancel_analysis_id, "Cancel Analysis");
+    cancel_button_->Disable();
+    cancel_button_->Bind(wxEVT_BUTTON, &MainFrame::cancel_analysis, this);
+    bottom_buttons->Add(cancel_button_, 0, wxRIGHT, 10);
     bottom_buttons->Add(open_result_button_, 0, wxRIGHT, 10);
     bottom_buttons->Add(close_button, 0);
     layout->Add(bottom_buttons, 0, wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 28);
@@ -342,15 +352,18 @@ void MainFrame::run_analysis(wxCommandEvent &)
         standard_output_buffer_.clear();
         standard_error_buffer_.clear();
         progress_protocol_error_.clear();
+        cancellation_progress_received_ = false;
         run_path_->SetValue(wxString{active_run_->run_directory.wstring()});
         progress_text_->SetLabel("Progress: starting solver");
         summary_text_->SetLabel("Summary: unavailable");
         run_button_->Disable();
+        cancel_button_->Enable();
         open_result_button_->Disable();
         browse_button_->Disable();
         GetMenuBar()->Enable(open_project_id, false);
         GetMenuBar()->Enable(open_input_id, false);
         GetMenuBar()->Enable(run_analysis_id, false);
+        GetMenuBar()->Enable(cancel_analysis_id, true);
         GetMenuBar()->Enable(open_result_id, false);
         progress_timer_.Start(100);
         SetStatusText("Analysis running");
@@ -360,6 +373,28 @@ void MainFrame::run_analysis(wxCommandEvent &)
         active_run_.reset();
         SetStatusText("Analysis could not start");
         wxMessageBox(wxString::FromUTF8(exception.what()), "Could not run analysis",
+                     wxOK | wxICON_ERROR, this);
+    }
+}
+
+void MainFrame::cancel_analysis(wxCommandEvent &)
+{
+    if (solver_process_ == nullptr || !active_run_)
+    {
+        return;
+    }
+
+    try
+    {
+        project::request_analysis_cancellation(active_run_->run_directory);
+        cancel_button_->Disable();
+        GetMenuBar()->Enable(cancel_analysis_id, false);
+        progress_text_->SetLabel("Progress: cancellation requested");
+        SetStatusText("Cancellation requested");
+    }
+    catch (const std::exception &exception)
+    {
+        wxMessageBox(wxString::FromUTF8(exception.what()), "Could not request cancellation",
                      wxOK | wxICON_ERROR, this);
     }
 }
@@ -431,6 +466,10 @@ void MainFrame::consume_progress_lines(const bool include_incomplete_line)
         {
             const output::AnalysisProgressEvent event =
                 output::parse_analysis_progress_json_line(line);
+            if (event.state == output::AnalysisState::cancelled)
+            {
+                cancellation_progress_received_ = true;
+            }
             progress_text_->SetLabel("Progress: " + wxString::FromUTF8(event.message));
             SetStatusText(wxString::FromUTF8(event.message));
         }
@@ -450,10 +489,28 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     delete solver_process_;
     solver_process_ = nullptr;
     run_button_->Enable(active_project_.has_value());
+    cancel_button_->Disable();
     browse_button_->Enable();
     GetMenuBar()->Enable(open_project_id, true);
     GetMenuBar()->Enable(open_input_id, true);
     GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
+    GetMenuBar()->Enable(cancel_analysis_id, false);
+
+    if (event.GetExitCode() == static_cast<int>(ExitCode::Cancelled) &&
+        progress_protocol_error_.empty() && cancellation_progress_received_)
+    {
+        completed_summary_.reset();
+        open_result_button_->Disable();
+        GetMenuBar()->Enable(open_result_id, false);
+        SetStatusText("Analysis cancelled");
+        progress_text_->SetLabel("Progress: cancelled");
+        summary_text_->SetLabel("Summary: analysis cancelled");
+        wxMessageBox("The analysis was cancelled cooperatively.\n\nRun directory:\n" +
+                         (active_run_ ? wxString{active_run_->run_directory.wstring()}
+                                      : wxString{"Unavailable"}),
+                     "Analysis cancelled", wxOK | wxICON_INFORMATION, this);
+        return;
+    }
 
     if (event.GetExitCode() == 0 && progress_protocol_error_.empty() && active_run_)
     {

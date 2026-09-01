@@ -30,6 +30,8 @@ Cooperative analysis cancellation uses a run-local
 `cancellation-requested.flag` rather than forcibly terminating the solver. In
 request mode, the CLI checks this flag at safe lifecycle boundaries, reports the
 `cancelled` state, and exits with code `6` without writing completion outputs.
+The workbench exposes the same mechanism through **Cancel Analysis** and reports
+cancellation separately from solver failure.
 
 ## Current capabilities
 
