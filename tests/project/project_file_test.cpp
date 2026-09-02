@@ -102,6 +102,36 @@ TEST_F(ProjectFileTest, SaveRejectsProjectFilePathThatDoesNotMatchItsName)
     EXPECT_THROW(save_project_file(project), std::invalid_argument);
 }
 
+TEST_F(ProjectFileTest, WritesReadsAndRemovesSeparateAutosave)
+{
+    const ProjectFile project = create_project(root_, "AutosavedProject", input_file_);
+    const std::filesystem::path autosave = project_autosave_path(project);
+    EXPECT_EQ(autosave, project.project_directory / "AutosavedProject.autosave.json");
+
+    write_project_autosave(project);
+
+    ASSERT_TRUE(std::filesystem::is_regular_file(autosave));
+    EXPECT_FALSE(std::filesystem::exists(project.project_file.string() + ".bak"));
+    const ProjectFile recovered = read_project_autosave(project);
+    EXPECT_EQ(recovered.name, project.name);
+    EXPECT_EQ(recovered.project_file, project.project_file);
+    EXPECT_EQ(recovered.input_file, project.input_file);
+
+    write_project_autosave(project);
+    EXPECT_FALSE(std::filesystem::exists(autosave.string() + ".bak"));
+    remove_project_autosave(project);
+    EXPECT_FALSE(std::filesystem::exists(autosave));
+    remove_project_autosave(project);
+}
+
+TEST_F(ProjectFileTest, AutosaveReaderRejectsMalformedSnapshot)
+{
+    const ProjectFile project = create_project(root_, "BrokenAutosave", input_file_);
+    std::ofstream(project_autosave_path(project)) << "{ invalid";
+
+    EXPECT_THROW((void)read_project_autosave(project), std::invalid_argument);
+}
+
 TEST_F(ProjectFileTest, ReaderRejectsInputPathOutsideProject)
 {
     const auto directory = root_ / "UnsafeProject";

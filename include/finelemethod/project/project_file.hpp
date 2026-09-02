@@ -23,6 +23,14 @@ struct ProjectFile
 // Atomically writes the project JSON and retains the previous file as .bak.
 void save_project_file(const ProjectFile &project);
 
+// Returns the separate autosave path beside the authoritative project file.
+[[nodiscard]] std::filesystem::path project_autosave_path(const ProjectFile &project);
+
+// Atomically writes, validates, and removes the separate autosave snapshot.
+void write_project_autosave(const ProjectFile &project);
+[[nodiscard]] ProjectFile read_project_autosave(const ProjectFile &project);
+void remove_project_autosave(const ProjectFile &project);
+
 // Reads and validates an existing protocol-version 1 FinEleMethod project.
 [[nodiscard]] ProjectFile read_project_file(const std::filesystem::path &project_file);
 } // namespace finelemethod::project

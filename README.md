@@ -33,6 +33,10 @@ authoritative ABAQUS model into `input/`, create an initially empty `runs/`
 directory, and write the versioned `<ProjectName>.json` project file.
 Existing project files can be reopened after their schema, identity, relative
 input path, authoritative model, and run directory are validated.
+Project saves atomically replace the authoritative JSON while retaining its
+previous contents as `<ProjectName>.json.bak`. Autosave snapshots use the
+separate `<ProjectName>.autosave.json` file and can be validated or removed
+without changing either authoritative file.
 Each prepared analysis receives the next numbered directory (`run-0001`,
 `run-0002`, and so on), an immutable model snapshot, a validated request, and a
 dedicated results directory. The project layer can rediscover these runs in

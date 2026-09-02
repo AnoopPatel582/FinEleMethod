@@ -127,6 +127,38 @@ void replace_project_file_with_backup(const std::filesystem::path &path,
         throw windows_file_error("Could not atomically save project file", error_code);
     }
 }
+
+void replace_file_without_backup(const std::filesystem::path &path, const nlohmann::json &document)
+{
+    const std::filesystem::path temporary_path = write_temporary_project_file(path, document);
+    if (!MoveFileExW(temporary_path.c_str(), path.c_str(),
+                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+    {
+        const DWORD error_code = GetLastError();
+        std::filesystem::remove(temporary_path);
+        throw windows_file_error("Could not atomically write autosave file", error_code);
+    }
+}
+
+std::filesystem::path validate_project_for_save(const ProjectFile &project)
+{
+    validate_project_name(project.name);
+    if (project.project_file != project.project_directory / (project.name + ".json"))
+    {
+        throw std::invalid_argument("Project file path does not match the project name.");
+    }
+    if (!std::filesystem::is_regular_file(project.project_file))
+    {
+        throw std::invalid_argument("Project file does not exist: " +
+                                    project.project_file.string());
+    }
+
+    const std::filesystem::path relative_input =
+        project.input_file.lexically_relative(project.project_directory);
+    const nlohmann::json document = project_document(project.name, relative_input);
+    (void)read_relative_input_path(document);
+    return relative_input;
+}
 } // namespace
 
 ProjectFile create_project(const std::filesystem::path &parent_directory,
@@ -190,30 +222,20 @@ ProjectFile create_project(const std::filesystem::path &parent_directory,
 
 void save_project_file(const ProjectFile &project)
 {
-    validate_project_name(project.name);
-    if (project.project_file != project.project_directory / (project.name + ".json"))
-    {
-        throw std::invalid_argument("Project file path does not match the project name.");
-    }
-    if (!std::filesystem::is_regular_file(project.project_file))
-    {
-        throw std::invalid_argument("Project file does not exist: " +
-                                    project.project_file.string());
-    }
-
-    const std::filesystem::path relative_input =
-        project.input_file.lexically_relative(project.project_directory);
-    const nlohmann::json document = project_document(project.name, relative_input);
-    (void)read_relative_input_path(document);
-    replace_project_file_with_backup(project.project_file, document);
+    const std::filesystem::path relative_input = validate_project_for_save(project);
+    replace_project_file_with_backup(project.project_file,
+                                     project_document(project.name, relative_input));
 }
 
-ProjectFile read_project_file(const std::filesystem::path &project_file)
+namespace
 {
-    std::ifstream stream(project_file);
+ProjectFile read_project_document(const std::filesystem::path &document_file,
+                                  const std::filesystem::path &project_file)
+{
+    std::ifstream stream(document_file);
     if (!stream)
     {
-        throw std::runtime_error("Could not open project file: " + project_file.string());
+        throw std::runtime_error("Could not open project file: " + document_file.string());
     }
 
     nlohmann::json document;
@@ -271,5 +293,40 @@ ProjectFile read_project_file(const std::filesystem::path &project_file)
         .input_file = input_file,
         .runs_directory = runs_directory,
     };
+}
+} // namespace
+
+std::filesystem::path project_autosave_path(const ProjectFile &project)
+{
+    return project.project_directory / (project.name + ".autosave.json");
+}
+
+void write_project_autosave(const ProjectFile &project)
+{
+    const std::filesystem::path relative_input = validate_project_for_save(project);
+    replace_file_without_backup(project_autosave_path(project),
+                                project_document(project.name, relative_input));
+}
+
+ProjectFile read_project_autosave(const ProjectFile &project)
+{
+    (void)validate_project_for_save(project);
+    return read_project_document(project_autosave_path(project), project.project_file);
+}
+
+void remove_project_autosave(const ProjectFile &project)
+{
+    (void)validate_project_for_save(project);
+    std::error_code error;
+    std::filesystem::remove(project_autosave_path(project), error);
+    if (error)
+    {
+        throw std::runtime_error("Could not remove project autosave: " + error.message());
+    }
+}
+
+ProjectFile read_project_file(const std::filesystem::path &project_file)
+{
+    return read_project_document(project_file, project_file);
 }
 } // namespace finelemethod::project
