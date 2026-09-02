@@ -110,6 +110,10 @@ transitive dependencies such as `z.dll` are not omitted. It intentionally
 excludes test binaries and development libraries. The Microsoft Visual C++
 Runtime prerequisite will be handled by the future installer.
 
+Windows CI repeats this staging workflow and verifies the complete DLL set,
+command-line model inspection, and workbench startup with development paths
+removed from the process environment.
+
 If Visual Studio or vcpkg is installed elsewhere, set `VCPKG_ROOT` to the
 directory containing `vcpkg.exe` and the `scripts` directory.
 

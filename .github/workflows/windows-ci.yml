@@ -36,3 +36,19 @@ jobs:
 
       - name: Test
         run: ctest --preset windows-msvc-debug
+
+      - name: Build Release applications
+        run: cmake --build --preset windows-msvc-release --target FinEleMethodGui
+
+      - name: Stage Release application
+        run: >-
+          cmake --install .\out\build\windows-msvc
+          --config Release
+          --prefix .\out\install\windows-msvc-release-ci
+
+      - name: Verify staged application
+        shell: pwsh
+        run: >-
+          .\cmake\VerifyStagedApplication.ps1
+          -StageDirectory .\out\install\windows-msvc-release-ci
+          -ReleaseDirectory .\out\build\windows-msvc\Release
