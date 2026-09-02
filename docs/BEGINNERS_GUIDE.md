@@ -137,6 +137,12 @@ GitHub Actions also creates this verified ZIP automatically. Open a successful
 **Windows CI** workflow run and download `FinEleMethod-windows-x64.zip` from its
 **Artifacts** section.
 
+Before committing C++ changes, check their formatting with:
+
+```powershell
+.\cmake\CheckFormatting.ps1
+```
+
 ## 6. Run the automated tests
 
 Run:

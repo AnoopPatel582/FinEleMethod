@@ -114,6 +114,12 @@ Windows CI repeats this staging workflow and verifies the complete DLL set,
 command-line model inspection, and workbench startup with development paths
 removed from the process environment.
 
+Check every tracked C++ source and header against `.clang-format`:
+
+```powershell
+.\cmake\CheckFormatting.ps1
+```
+
 Create a ZIP archive from the verified staged folder:
 
 ```powershell

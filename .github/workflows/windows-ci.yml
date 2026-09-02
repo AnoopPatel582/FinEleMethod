@@ -22,6 +22,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Check C++ formatting
+        shell: pwsh
+        run: .\cmake\CheckFormatting.ps1
+
       - name: Fetch pinned vcpkg baseline
         shell: pwsh
         run: |
