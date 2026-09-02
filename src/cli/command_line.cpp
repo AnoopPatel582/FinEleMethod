@@ -13,6 +13,7 @@
 #include "finelemethod/output/analysis_summary.hpp"
 #include "finelemethod/output/h8_analysis_vtu.hpp"
 #include "finelemethod/output/q4_analysis_vtu.hpp"
+#include "finelemethod/project/analysis_run.hpp"
 #include "finelemethod/project/cancellation_flag.hpp"
 #include "finelemethod/solver/abaqus_h8_analysis.hpp"
 #include "finelemethod/solver/abaqus_q4_analysis.hpp"
@@ -191,10 +192,14 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                 : std::nullopt;
         const auto write_progress = [&](const output::AnalysisState state,
                                         const std::string_view message) {
+            const output::AnalysisProgressEvent event{state, std::string(message)};
+            if (cancellation_directory)
+            {
+                project::write_analysis_run_state(*cancellation_directory, event);
+            }
             if (has_json_progress)
             {
-                output::write_analysis_progress_json_line(
-                    output, output::AnalysisProgressEvent{state, std::string(message)});
+                output::write_analysis_progress_json_line(output, event);
             }
         };
         const auto cancellation_requested = [&] {

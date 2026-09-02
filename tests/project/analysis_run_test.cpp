@@ -43,11 +43,47 @@ TEST_F(AnalysisRunTest, CreatesFirstRunSnapshotAndRequest)
     EXPECT_EQ(run.run_directory.filename(), "run-0001");
     EXPECT_TRUE(std::filesystem::is_regular_file(run.input_file));
     EXPECT_TRUE(std::filesystem::is_directory(run.result_file.parent_path()));
+    EXPECT_EQ(run.state_file, run.run_directory / "analysis-state.json");
+
+    const output::AnalysisProgressEvent state = read_analysis_run_state(run);
+    EXPECT_EQ(state.state, output::AnalysisState::preparing);
+    EXPECT_EQ(state.message, "Analysis run prepared.");
 
     const input::AnalysisRequest request = input::read_analysis_request(run.request_file);
     EXPECT_EQ(request.input_file, std::filesystem::path("input/source-model.inp"));
     EXPECT_EQ(request.result_file, std::filesystem::path("results/source-model.vtu"));
     EXPECT_EQ(request.summary_file, std::filesystem::path("results/analysis-summary.json"));
+}
+
+TEST_F(AnalysisRunTest, PersistsAndReplacesVersionedLifecycleState)
+{
+    const AnalysisRun run = prepare_analysis_run(project_);
+
+    write_analysis_run_state(
+        run.run_directory,
+        output::AnalysisProgressEvent{output::AnalysisState::executing, "Solving model."});
+    output::AnalysisProgressEvent state = read_analysis_run_state(run);
+    EXPECT_EQ(state.state, output::AnalysisState::executing);
+    EXPECT_EQ(state.message, "Solving model.");
+
+    write_analysis_run_state(
+        run.run_directory,
+        output::AnalysisProgressEvent{output::AnalysisState::completed, "Analysis completed."});
+    state = read_analysis_run_state(run);
+    EXPECT_EQ(state.state, output::AnalysisState::completed);
+    EXPECT_EQ(state.message, "Analysis completed.");
+    EXPECT_FALSE(std::filesystem::exists(run.state_file.string() + ".tmp"));
+}
+
+TEST_F(AnalysisRunTest, RejectsMalformedOrUnsupportedLifecycleState)
+{
+    const AnalysisRun run = prepare_analysis_run(project_);
+    std::ofstream(run.state_file, std::ios::trunc) << "{ invalid";
+    EXPECT_THROW((void)read_analysis_run_state(run), std::invalid_argument);
+
+    std::ofstream(run.state_file, std::ios::trunc)
+        << R"({"schemaVersion":2,"state":"completed","message":"done"})";
+    EXPECT_THROW((void)read_analysis_run_state(run), std::invalid_argument);
 }
 
 TEST_F(AnalysisRunTest, CreatesMonotonicallyNumberedRunsWithoutChangingEarlierSnapshot)

@@ -200,7 +200,13 @@ TEST(CommandLine, AnalysisRequestRunsModelWithJsonProgress)
     EXPECT_EQ(summary.at("protocolVersion"), 1);
     EXPECT_EQ(summary.at("status"), "completed");
 
+    std::ifstream state_file(directory / "analysis-state.json");
+    const auto state = nlohmann::json::parse(state_file);
+    EXPECT_EQ(state.at("schemaVersion"), 1);
+    EXPECT_EQ(state.at("state"), "completed");
+
     summary_file.close();
+    state_file.close();
     std::filesystem::remove_all(directory);
 }
 
@@ -262,6 +268,11 @@ TEST(CommandLine, AnalysisRequestHonorsPreexistingCancellationFlag)
     EXPECT_EQ(events[1].at("state"), "cancelled");
     EXPECT_FALSE(std::filesystem::exists(result_path));
     EXPECT_FALSE(std::filesystem::exists(summary_path));
+
+    std::ifstream state_file(directory / "analysis-state.json");
+    const auto state = nlohmann::json::parse(state_file);
+    EXPECT_EQ(state.at("state"), "cancelled");
+    state_file.close();
 
     std::filesystem::remove_all(directory);
 }

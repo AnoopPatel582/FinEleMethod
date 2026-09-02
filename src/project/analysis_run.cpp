@@ -3,8 +3,14 @@
 #include "finelemethod/input/analysis_request.hpp"
 #include "finelemethod/output/analysis_summary.hpp"
 
+#include <nlohmann/json.hpp>
+
+#define NOMINMAX
+#include <Windows.h>
+
 #include <algorithm>
 #include <charconv>
+#include <fstream>
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -17,6 +23,7 @@ namespace finelemethod::project
 namespace
 {
 constexpr std::string_view run_prefix = "run-";
+constexpr std::string_view state_filename = "analysis-state.json";
 
 std::uint64_t run_number(const std::filesystem::path &directory)
 {
@@ -60,6 +67,7 @@ AnalysisRun read_analysis_run(const std::filesystem::path &run_directory,
         .input_file = run_directory / request.input_file,
         .result_file = run_directory / request.result_file,
         .summary_file = run_directory / request.summary_file,
+        .state_file = run_directory / state_filename,
     };
 }
 } // namespace
@@ -101,6 +109,82 @@ bool is_analysis_run_completed(const AnalysisRun &run)
     {
         return false;
     }
+}
+
+void write_analysis_run_state(const std::filesystem::path &run_directory,
+                              const output::AnalysisProgressEvent &event)
+{
+    if (!std::filesystem::is_directory(run_directory))
+    {
+        throw std::invalid_argument("Analysis run directory does not exist: " +
+                                    run_directory.string());
+    }
+
+    const std::filesystem::path state_file = run_directory / state_filename;
+    const std::filesystem::path temporary_file{state_file.string() + ".tmp"};
+    const nlohmann::json document{
+        {"schemaVersion", 1},
+        {"state", output::analysis_state_name(event.state)},
+        {"message", event.message},
+    };
+    {
+        std::ofstream stream(temporary_file, std::ios::trunc);
+        if (!stream)
+        {
+            throw std::runtime_error("Could not write temporary analysis state: " +
+                                     temporary_file.string());
+        }
+        stream << document.dump(2) << '\n';
+        if (!stream)
+        {
+            throw std::runtime_error("Could not write temporary analysis state: " +
+                                     temporary_file.string());
+        }
+    }
+
+    if (!MoveFileExW(temporary_file.c_str(), state_file.c_str(),
+                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+    {
+        const std::error_code error(static_cast<int>(GetLastError()), std::system_category());
+        std::filesystem::remove(temporary_file);
+        throw std::runtime_error("Could not atomically write analysis state: " + error.message());
+    }
+}
+
+output::AnalysisProgressEvent read_analysis_run_state(const AnalysisRun &run)
+{
+    std::ifstream stream(run.state_file);
+    if (!stream)
+    {
+        throw std::runtime_error("Could not open analysis state: " + run.state_file.string());
+    }
+
+    nlohmann::json document;
+    try
+    {
+        stream >> document;
+    }
+    catch (const nlohmann::json::parse_error &exception)
+    {
+        throw std::invalid_argument("Analysis state is not valid JSON: " +
+                                    std::string(exception.what()));
+    }
+    if (!document.is_object() || !document.contains("schemaVersion") ||
+        !document.at("schemaVersion").is_number_integer() ||
+        document.at("schemaVersion").get<int>() != 1)
+    {
+        throw std::invalid_argument("Unsupported analysis state schemaVersion.");
+    }
+    if (!document.contains("state") || !document.at("state").is_string() ||
+        !document.contains("message") || !document.at("message").is_string())
+    {
+        throw std::invalid_argument("Analysis state requires string state and message fields.");
+    }
+
+    return output::AnalysisProgressEvent{
+        .state = output::parse_analysis_state(document.at("state").get<std::string_view>()),
+        .message = document.at("message").get<std::string>(),
+    };
 }
 
 AnalysisRun prepare_analysis_run(const ProjectFile &project)
@@ -164,6 +248,9 @@ AnalysisRun prepare_analysis_run(const ProjectFile &project)
                 .result_file = std::filesystem::path{"results"} / result_file.filename(),
                 .summary_file = std::filesystem::path{"results"} / summary_file.filename(),
             });
+        write_analysis_run_state(run_directory,
+                                 output::AnalysisProgressEvent{output::AnalysisState::preparing,
+                                                               "Analysis run prepared."});
     }
     catch (...)
     {
@@ -179,6 +266,7 @@ AnalysisRun prepare_analysis_run(const ProjectFile &project)
         .input_file = input_file,
         .result_file = result_file,
         .summary_file = summary_file,
+        .state_file = run_directory / state_filename,
     };
 }
 } // namespace finelemethod::project

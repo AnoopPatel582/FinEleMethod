@@ -415,8 +415,24 @@ void MainFrame::refresh_run_history()
         wxString{history_runs_.back().run_directory.filename().wstring()}.c_str()));
     for (const project::AnalysisRun &run : history_runs_)
     {
-        const wxString status =
-            project::is_analysis_run_completed(run) ? "completed" : "not completed";
+        wxString status;
+        try
+        {
+            const output::AnalysisProgressEvent state = project::read_analysis_run_state(run);
+            if (state.state == output::AnalysisState::completed &&
+                !project::is_analysis_run_completed(run))
+            {
+                status = "not completed";
+            }
+            else
+            {
+                status = wxString::FromUTF8(output::analysis_state_name(state.state).data());
+            }
+        }
+        catch (const std::exception &)
+        {
+            status = project::is_analysis_run_completed(run) ? "completed" : "not completed";
+        }
         run_history_choice_->Append(wxString{run.run_directory.filename().wstring()} + " (" +
                                     status + ")");
     }

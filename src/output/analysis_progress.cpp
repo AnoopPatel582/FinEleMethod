@@ -8,9 +8,7 @@
 
 namespace finelemethod::output
 {
-namespace
-{
-std::string_view state_name(const AnalysisState state)
+std::string_view analysis_state_name(const AnalysisState state)
 {
     switch (state)
     {
@@ -31,7 +29,7 @@ std::string_view state_name(const AnalysisState state)
     throw std::invalid_argument("Unknown analysis progress state.");
 }
 
-AnalysisState parse_state(const std::string_view name)
+AnalysisState parse_analysis_state(const std::string_view name)
 {
     if (name == "preparing")
     {
@@ -59,14 +57,13 @@ AnalysisState parse_state(const std::string_view name)
     }
     throw std::invalid_argument("Unknown analysis progress state: " + std::string(name));
 }
-} // namespace
 
 void write_analysis_progress_json_line(std::ostream &stream, const AnalysisProgressEvent &event)
 {
     const nlohmann::json document{
         {"protocolVersion", 1},
         {"event", "analysis-progress"},
-        {"state", state_name(event.state)},
+        {"state", analysis_state_name(event.state)},
         {"message", event.message},
     };
 
@@ -115,7 +112,7 @@ AnalysisProgressEvent parse_analysis_progress_json_line(const std::string_view l
     }
 
     return AnalysisProgressEvent{
-        .state = parse_state(document.at("state").get<std::string_view>()),
+        .state = parse_analysis_state(document.at("state").get<std::string_view>()),
         .message = document.at("message").get<std::string>(),
     };
 }

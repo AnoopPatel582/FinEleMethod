@@ -39,7 +39,9 @@ separate `<ProjectName>.autosave.json` file and can be validated or removed
 without changing either authoritative file.
 Each prepared analysis receives the next numbered directory (`run-0001`,
 `run-0002`, and so on), an immutable model snapshot, a validated request, and a
-dedicated results directory. The project layer can rediscover these runs in
+dedicated results directory. Its versioned `analysis-state.json` atomically
+records the latest preparing, executing, result-writing, completed, failed, or
+cancelled lifecycle event. The project layer can rediscover these runs in
 ascending numerical order, providing the storage foundation for workbench run
 history.
 Cooperative analysis cancellation uses a run-local
