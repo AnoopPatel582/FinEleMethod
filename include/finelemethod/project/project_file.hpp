@@ -29,6 +29,9 @@ void save_project_file(const ProjectFile &project);
 // Atomically writes, validates, and removes the separate autosave snapshot.
 void write_project_autosave(const ProjectFile &project);
 [[nodiscard]] ProjectFile read_project_autosave(const ProjectFile &project);
+// Reads a snapshot without parsing the possibly damaged authoritative JSON.
+// The snapshot identity, input path, and on-disk project structure are validated.
+[[nodiscard]] ProjectFile read_project_autosave(const std::filesystem::path &project_file);
 void remove_project_autosave(const ProjectFile &project);
 
 // Reads and validates an existing protocol-version 1 FinEleMethod project.

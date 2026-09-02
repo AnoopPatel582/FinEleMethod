@@ -163,6 +163,43 @@ TEST_F(ProjectFileTest, AutosaveReaderRejectsMalformedSnapshot)
     EXPECT_THROW((void)read_project_autosave(project), std::invalid_argument);
 }
 
+TEST_F(ProjectFileTest, RecoversSnapshotWhenAuthoritativeJsonIsCorruptWithoutWritingFiles)
+{
+    const ProjectFile project = create_project(root_, "Recovery", input_file_);
+    write_project_autosave(project);
+    std::ofstream(project.project_file, std::ios::trunc) << "{ invalid";
+
+    const auto recovered = read_project_autosave(project.project_file);
+    EXPECT_EQ(recovered.input_file, project.input_file);
+    EXPECT_EQ(recovered.project_file, project.project_file);
+    EXPECT_THROW((void)read_project_file(project.project_file), std::invalid_argument);
+    EXPECT_TRUE(std::filesystem::exists(project_autosave_path(project)));
+    EXPECT_FALSE(std::filesystem::exists(project.project_file.string() + ".bak"));
+}
+
+TEST_F(ProjectFileTest, PathBasedRecoveryRejectsMismatchedIdentityAndEscapingInput)
+{
+    const ProjectFile project = create_project(root_, "Recovery", input_file_);
+    const auto snapshot = project_autosave_path(project);
+    std::ofstream(snapshot)
+        << R"({"schemaVersion":1,"name":"Other","inputFile":"input/source-model.inp"})";
+    EXPECT_THROW((void)read_project_autosave(project.project_file), std::invalid_argument);
+    std::ofstream(snapshot, std::ios::trunc)
+        << R"({"schemaVersion":1,"name":"Recovery","inputFile":"../source-model.inp"})";
+    EXPECT_THROW((void)read_project_autosave(project.project_file), std::invalid_argument);
+    EXPECT_EQ(read_project_file(project.project_file).name, "Recovery");
+}
+
+TEST_F(ProjectFileTest, PathBasedRecoveryRejectsMissingSnapshotAndMissingInput)
+{
+    const ProjectFile project = create_project(root_, "Recovery", input_file_);
+    EXPECT_THROW((void)read_project_autosave(project.project_file), std::runtime_error);
+    write_project_autosave(project);
+    std::filesystem::remove(project.input_file);
+    EXPECT_THROW((void)read_project_autosave(project.project_file), std::invalid_argument);
+    EXPECT_THROW((void)read_project_autosave(root_ / "Recovery.txt"), std::invalid_argument);
+}
+
 TEST_F(ProjectFileTest, ReaderRejectsInputPathOutsideProject)
 {
     const auto directory = root_ / "UnsafeProject";

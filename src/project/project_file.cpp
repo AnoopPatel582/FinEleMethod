@@ -320,8 +320,23 @@ void write_project_autosave(const ProjectFile &project)
 
 ProjectFile read_project_autosave(const ProjectFile &project)
 {
-    (void)validate_project_for_save(project);
-    return read_project_document(project_autosave_path(project), project.project_file);
+    if (project.project_file != project.project_directory / (project.name + ".json"))
+    {
+        throw std::invalid_argument("Project file path does not match the project name.");
+    }
+    return read_project_autosave(project.project_file);
+}
+
+ProjectFile read_project_autosave(const std::filesystem::path &project_file)
+{
+    if (project_file.extension() != ".json")
+    {
+        throw std::invalid_argument("Project file must have the .json extension.");
+    }
+    const std::string name = project_file.stem().string();
+    validate_project_name(name);
+    const auto autosave = project_file.parent_path() / (name + ".autosave.json");
+    return read_project_document(autosave, project_file);
 }
 
 void remove_project_autosave(const ProjectFile &project)
