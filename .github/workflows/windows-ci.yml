@@ -52,6 +52,12 @@ jobs:
         shell: pwsh
         run: .\cmake\CheckClangTidy.ps1
 
+      - name: Configure MSVC native analysis
+        run: cmake --preset windows-msvc-analysis
+
+      - name: Run MSVC native analysis
+        run: cmake --build --preset windows-msvc-analysis
+
       - name: Build
         run: cmake --build --preset windows-msvc-debug
 

@@ -13,6 +13,16 @@
       "architecture": "x64",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+    },
+    {
+      "name": "windows-msvc-analysis",
+      "displayName": "Windows MSVC x64 Native Analysis",
+      "inherits": "windows-msvc",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF",
+        "FINELEMETHOD_ENABLE_MSVC_ANALYSIS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -27,6 +37,12 @@
       "displayName": "Windows MSVC Release",
       "configurePreset": "windows-msvc",
       "configuration": "Release"
+    },
+    {
+      "name": "windows-msvc-analysis",
+      "displayName": "Windows MSVC Native Analysis",
+      "configurePreset": "windows-msvc-analysis",
+      "configuration": "Debug"
     }
   ],
   "testPresets": [

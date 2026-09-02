@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.25)
 
 project(FinEleMethod LANGUAGES CXX)
 
+option(
+    FINELEMETHOD_ENABLE_MSVC_ANALYSIS
+    "Run MSVC native code analysis and treat its findings as errors"
+    OFF
+)
+
 include(CTest)
 
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -152,6 +158,15 @@ if(MSVC)
     target_compile_options(FinEleMethodCli PRIVATE /W4 /permissive-)
     target_compile_options(FinEleMethod PRIVATE /W4 /permissive-)
     target_compile_options(FinEleMethodGui PRIVATE /W4 /permissive-)
+
+    if(FINELEMETHOD_ENABLE_MSVC_ANALYSIS)
+        foreach(target FinEleMethodCore FinEleMethodCli FinEleMethod FinEleMethodGui)
+            target_compile_options(${target} PRIVATE /analyze /WX)
+        endforeach()
+        # wxWidgets 3.3.3 triggers these analyzer warnings in wx/datetime.h.
+        # Suppress only those third-party findings for the GUI target.
+        target_compile_options(FinEleMethodGui PRIVATE /wd6235 /wd6240)
+    endif()
 endif()
 
 if(BUILD_TESTING)

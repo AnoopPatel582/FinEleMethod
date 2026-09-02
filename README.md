@@ -136,6 +136,13 @@ all production source files:
 .\cmake\CheckClangTidy.ps1
 ```
 
+Run MSVC native code analysis as an independent warning-as-error build:
+
+```powershell
+cmake --preset windows-msvc-analysis
+cmake --build --preset windows-msvc-analysis
+```
+
 Create a ZIP archive from the verified staged folder:
 
 ```powershell
