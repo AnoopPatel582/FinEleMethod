@@ -133,6 +133,10 @@ To create a ZIP from the staged application, run:
   -OutputFile .\out\package\FinEleMethod-windows-x64.zip
 ```
 
+GitHub Actions also creates this verified ZIP automatically. Open a successful
+**Windows CI** workflow run and download `FinEleMethod-windows-x64.zip` from its
+**Artifacts** section.
+
 ## 6. Run the automated tests
 
 Run:

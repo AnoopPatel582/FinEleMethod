@@ -125,6 +125,9 @@ Create a ZIP archive from the verified staged folder:
 The version-neutral archive name is temporary until the first formal release
 version is selected.
 
+After a successful Windows CI run, the same verified ZIP is available in the
+workflow run's **Artifacts** section as `FinEleMethod-windows-x64.zip`.
+
 If Visual Studio or vcpkg is installed elsewhere, set `VCPKG_ROOT` to the
 directory containing `vcpkg.exe` and the `scripts` directory.
 

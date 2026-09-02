@@ -52,3 +52,28 @@ jobs:
           .\cmake\VerifyStagedApplication.ps1
           -StageDirectory .\out\install\windows-msvc-release-ci
           -ReleaseDirectory .\out\build\windows-msvc\Release
+
+      - name: Create Windows ZIP archive
+        shell: pwsh
+        run: >-
+          .\cmake\CreateWindowsArchive.ps1
+          -StageDirectory .\out\install\windows-msvc-release-ci
+          -OutputFile .\out\package\FinEleMethod-windows-x64.zip
+
+      - name: Verify extracted Windows ZIP archive
+        shell: pwsh
+        run: |
+          $archiveStage = Join-Path $env:RUNNER_TEMP "FinEleMethod-archive-verification"
+          Expand-Archive `
+            -LiteralPath .\out\package\FinEleMethod-windows-x64.zip `
+            -DestinationPath $archiveStage
+          .\cmake\VerifyStagedApplication.ps1 `
+            -StageDirectory $archiveStage `
+            -ReleaseDirectory .\out\build\windows-msvc\Release
+
+      - name: Upload Windows ZIP archive
+        uses: actions/upload-artifact@v7
+        with:
+          path: out/package/FinEleMethod-windows-x64.zip
+          if-no-files-found: error
+          archive: false
