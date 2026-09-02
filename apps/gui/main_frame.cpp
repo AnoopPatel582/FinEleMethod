@@ -6,6 +6,7 @@
 #include "finelemethod/output/analysis_progress.hpp"
 #include "finelemethod/project/cancellation_flag.hpp"
 
+#include <wx/arrstr.h>
 #include <wx/button.h>
 #include <wx/choice.h>
 #include <wx/dirdlg.h>
@@ -508,28 +509,20 @@ void MainFrame::activate_project(project::ProjectFile project)
 
 void MainFrame::refresh_run_history()
 {
-    history_runs_.clear();
-    run_history_choice_->Clear();
     if (!active_project_)
     {
+        history_runs_.clear();
+        run_history_choice_->Clear();
         run_history_text_->SetLabel("Run history: no project open");
         run_history_choice_->Disable();
         return;
     }
 
-    history_runs_ = project::list_analysis_runs(*active_project_);
-    if (history_runs_.empty())
-    {
-        run_history_text_->SetLabel("Run history: no analyses prepared");
-        run_history_choice_->Disable();
-        return;
-    }
-
-    run_history_text_->SetLabel(wxString::Format(
-        "Run history: %llu prepared | Latest: %s",
-        static_cast<unsigned long long>(history_runs_.size()),
-        wxString{history_runs_.back().run_directory.filename().wstring()}.c_str()));
-    for (const project::AnalysisRun &run : history_runs_)
+    // Complete disk reads before replacing the current selection and labels.
+    // A failed refresh must leave the last successfully loaded history intact.
+    auto refreshed_runs = project::list_analysis_runs(*active_project_);
+    wxArrayString refreshed_labels;
+    for (const project::AnalysisRun &run : refreshed_runs)
     {
         wxString status;
         try
@@ -550,9 +543,21 @@ void MainFrame::refresh_run_history()
         {
             status = project::is_analysis_run_completed(run) ? "completed" : "not completed";
         }
-        run_history_choice_->Append(wxString{run.run_directory.filename().wstring()} + " (" +
-                                    status + ")");
+        refreshed_labels.Add(wxString{run.run_directory.filename().wstring()} + " (" + status +
+                             ")");
     }
+    history_runs_ = std::move(refreshed_runs);
+    run_history_choice_->Set(refreshed_labels);
+    if (history_runs_.empty())
+    {
+        run_history_text_->SetLabel("Run history: no analyses prepared");
+        run_history_choice_->Disable();
+        return;
+    }
+    run_history_text_->SetLabel(wxString::Format(
+        "Run history: %llu prepared | Latest: %s",
+        static_cast<unsigned long long>(history_runs_.size()),
+        wxString{history_runs_.back().run_directory.filename().wstring()}.c_str()));
     run_history_choice_->Enable(solver_process_ == nullptr);
     run_history_choice_->SetSelection(wxNOT_FOUND);
     if (active_run_)

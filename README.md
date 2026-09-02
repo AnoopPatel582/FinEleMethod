@@ -27,6 +27,8 @@ summary and referenced VTU result pass validation; all other runs are labelled
 `not completed` without inferring a more specific cause.
 The history can be refreshed from the workbench or Analysis menu to discover
 run directories and completed outputs changed outside the application.
+If reading the refreshed history fails, the last successfully loaded list and
+selection remain available; the workbench reports the refresh error.
 An open project can be saved through **File → Save Project** or `Ctrl+S`; this
 uses the atomic project save, retains one backup, and removes a superseded
 autosave snapshot.
