@@ -453,7 +453,8 @@ void MainFrame::refresh_run_history()
             }
             else
             {
-                status = wxString::FromUTF8(output::analysis_state_name(state.state).data());
+                const std::string_view state_name = output::analysis_state_name(state.state);
+                status = wxString::FromUTF8(state_name.data(), state_name.size());
             }
         }
         catch (const std::exception &)

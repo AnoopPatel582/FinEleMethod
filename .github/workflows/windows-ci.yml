@@ -48,6 +48,10 @@ jobs:
       - name: Configure
         run: cmake --preset windows-msvc
 
+      - name: Run clang-tidy
+        shell: pwsh
+        run: .\cmake\CheckClangTidy.ps1
+
       - name: Build
         run: cmake --build --preset windows-msvc-debug
 

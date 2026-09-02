@@ -1,7 +1,6 @@
 #include "finelemethod/model/q4_element_collection.hpp"
 
 #include <stdexcept>
-#include <utility>
 
 namespace finelemethod::model
 {
@@ -29,7 +28,7 @@ void Q4ElementCollection::add(Q4Element element)
     }
 
     const size_type index = elements_.size();
-    elements_.push_back(std::move(element));
+    elements_.push_back(element);
 
     try
     {

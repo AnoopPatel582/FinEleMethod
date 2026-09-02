@@ -1,7 +1,6 @@
 #include "finelemethod/model/node_collection.hpp"
 
 #include <stdexcept>
-#include <utility>
 
 namespace finelemethod::model
 {
@@ -29,7 +28,7 @@ void NodeCollection::add(Node node)
     }
 
     const size_type index = nodes_.size();
-    nodes_.push_back(std::move(node));
+    nodes_.push_back(node);
 
     try
     {

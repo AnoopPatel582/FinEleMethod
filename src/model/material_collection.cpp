@@ -1,7 +1,6 @@
 #include "finelemethod/model/material_collection.hpp"
 
 #include <stdexcept>
-#include <utility>
 
 namespace finelemethod::model
 {
@@ -29,7 +28,7 @@ void MaterialCollection::add(IsotropicElasticMaterial material)
     }
 
     const size_type index = materials_.size();
-    materials_.push_back(std::move(material));
+    materials_.push_back(material);
 
     try
     {

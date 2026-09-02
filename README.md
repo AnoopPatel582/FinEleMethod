@@ -129,6 +129,13 @@ Check every tracked C++ source and header against `.clang-format`:
 .\cmake\CheckFormatting.ps1
 ```
 
+After configuring the MSVC build, run the approved static analysis rules across
+all production source files:
+
+```powershell
+.\cmake\CheckClangTidy.ps1
+```
+
 Create a ZIP archive from the verified staged folder:
 
 ```powershell
