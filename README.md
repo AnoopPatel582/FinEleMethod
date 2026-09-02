@@ -36,6 +36,10 @@ validating the open project. Replacing an existing snapshot requires confirmatio
 **File → Recover Project Autosave...** validates that snapshot independently of
 the main JSON and loads it only after confirmation. **Save Project** then commits
 the recovered metadata and retains the previous main JSON as a backup.
+Select the `.autosave.json` directly if the main JSON is missing; saving recreates
+the main JSON without replacing any existing backup. If the save succeeds but
+snapshot cleanup fails, the workbench reports a cleanup warning rather than a
+save failure. A failed save leaves the snapshot untouched.
 Snapshots do not copy or restore ABAQUS model contents or result files. This is
 an explicit snapshot workflow, not timed autosaving of model edits.
 

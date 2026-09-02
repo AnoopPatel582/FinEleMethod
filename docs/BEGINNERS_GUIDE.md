@@ -35,6 +35,10 @@ To recover project metadata:
    An existing main JSON is kept as `.json.bak`; a missing main JSON is recreated
    without replacing any existing backup. The autosave is then removed.
 
+If saving succeeds but autosave cleanup fails, the workbench reports **Project
+saved with a cleanup warning**. Your main JSON has been saved; the old snapshot
+may remain. A save failure does not remove the snapshot.
+
 Cancel leaves the files unchanged. Invalid snapshots are rejected. Recovery
 does not restore missing or modified model contents or analysis results, so
 keep separate backups of those files. Periodic autosave and model editing are

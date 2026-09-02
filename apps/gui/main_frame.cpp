@@ -292,9 +292,19 @@ void MainFrame::save_project(wxCommandEvent &)
 
     try
     {
-        project::save_project_file(*active_project_);
-        project::remove_project_autosave(*active_project_);
-        SetStatusText("Project saved");
+        const auto cleanup_warning = project::save_project_and_cleanup_autosave(*active_project_);
+        if (cleanup_warning)
+        {
+            SetStatusText("Project saved; recovery snapshot cleanup failed");
+            wxMessageBox("The project was saved successfully, but the recovery snapshot could "
+                         "not be removed.\n\n" +
+                             wxString::FromUTF8(*cleanup_warning),
+                         "Project saved with a cleanup warning", wxOK | wxICON_WARNING, this);
+        }
+        else
+        {
+            SetStatusText("Project saved");
+        }
     }
     catch (const std::exception &exception)
     {

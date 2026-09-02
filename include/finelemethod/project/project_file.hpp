@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 #include <string>
 
 namespace finelemethod::project
@@ -37,6 +38,11 @@ void write_project_autosave(const ProjectFile &project);
 // <ProjectName>.json is missing. The snapshot must match its filename identity.
 [[nodiscard]] ProjectFile read_project_autosave_file(const std::filesystem::path &autosave_file);
 void remove_project_autosave(const ProjectFile &project);
+
+// Throws if saving fails (leaving the snapshot untouched). After a successful
+// save, returns a cleanup warning if removal failed, or nullopt on full success.
+[[nodiscard]] std::optional<std::string> save_project_and_cleanup_autosave(
+    const ProjectFile &project);
 
 // Reads and validates an existing protocol-version 1 FinEleMethod project.
 [[nodiscard]] ProjectFile read_project_file(const std::filesystem::path &project_file);

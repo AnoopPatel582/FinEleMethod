@@ -283,6 +283,41 @@ TEST_F(ProjectFileTest, SelectedSnapshotRejectsWrongSuffixAndRenamedIdentity)
     EXPECT_EQ(read_project_file(project.project_file).name, project.name);
 }
 
+TEST_F(ProjectFileTest, SaveAndCleanupRemovesSnapshotOnlyAfterSuccessfulSave)
+{
+    const ProjectFile project = create_project(root_, "SaveCleanup", input_file_);
+    write_project_autosave(project);
+    EXPECT_FALSE(save_project_and_cleanup_autosave(project).has_value());
+    EXPECT_EQ(read_project_file(project.project_file).name, project.name);
+    EXPECT_FALSE(std::filesystem::exists(project_autosave_path(project)));
+    EXPECT_TRUE(std::filesystem::is_regular_file(project.project_file.string() + ".bak"));
+}
+
+TEST_F(ProjectFileTest, SaveFailureDoesNotRemoveRecoverySnapshot)
+{
+    ProjectFile project = create_project(root_, "FailedSave", input_file_);
+    write_project_autosave(project);
+    project.input_file = project.project_directory / "input" / "missing.inp";
+    EXPECT_THROW((void)save_project_and_cleanup_autosave(project), std::invalid_argument);
+    EXPECT_TRUE(std::filesystem::is_regular_file(project_autosave_path(project)));
+    EXPECT_EQ(read_project_file(project.project_file).name, project.name);
+    EXPECT_FALSE(std::filesystem::exists(project.project_file.string() + ".bak"));
+}
+
+TEST_F(ProjectFileTest, CleanupFailureReturnsWarningButKeepsSuccessfulSave)
+{
+    const ProjectFile project = create_project(root_, "CleanupWarning", input_file_);
+    const auto snapshot = project_autosave_path(project);
+    std::filesystem::create_directory(snapshot);
+    std::ofstream(snapshot / "keep.txt") << "do not remove";
+    const auto warning = save_project_and_cleanup_autosave(project);
+    ASSERT_TRUE(warning.has_value());
+    EXPECT_FALSE(warning->empty());
+    EXPECT_EQ(read_project_file(project.project_file).name, project.name);
+    EXPECT_TRUE(std::filesystem::is_regular_file(project.project_file.string() + ".bak"));
+    EXPECT_TRUE(std::filesystem::is_regular_file(snapshot / "keep.txt"));
+}
+
 TEST_F(ProjectFileTest, ReaderRejectsInputPathOutsideProject)
 {
     const auto directory = root_ / "UnsafeProject";

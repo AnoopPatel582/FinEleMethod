@@ -372,6 +372,20 @@ ProjectFile read_project_autosave_file(const std::filesystem::path &autosave_fil
     return read_project_autosave(project_file);
 }
 
+std::optional<std::string> save_project_and_cleanup_autosave(const ProjectFile &project)
+{
+    save_project_file(project);
+    try
+    {
+        remove_project_autosave(project);
+    }
+    catch (const std::exception &exception)
+    {
+        return std::string{exception.what()};
+    }
+    return std::nullopt;
+}
+
 ProjectFile read_project_file(const std::filesystem::path &project_file)
 {
     return read_project_document(project_file, project_file);
