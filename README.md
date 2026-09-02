@@ -208,6 +208,12 @@ cmake --build --preset windows-msvc-debug
 ctest --preset windows-msvc-debug
 ```
 
+GoogleTest discovery allows up to 60 seconds for the newly linked test executable
+to start and enumerate its tests on Windows CI. This replaces CMake's five-second
+default after a hosted-runner discovery timeout; it does not skip tests or relax
+their assertions. A discovery timeout is reported during the build, before the
+CTest execution step.
+
 ## Run
 
 ```powershell

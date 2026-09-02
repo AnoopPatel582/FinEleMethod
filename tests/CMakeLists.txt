@@ -116,7 +116,10 @@ if(MSVC)
 endif()
 
 include(GoogleTest)
-gtest_discover_tests(FinEleMethodTests)
+# Hosted Windows runners can take longer than CMake's five-second default to
+# start a newly linked Debug executable. This bounds test enumeration only;
+# it does not relax assertions or change test execution timeouts.
+gtest_discover_tests(FinEleMethodTests DISCOVERY_TIMEOUT 60)
 
 add_test(
     NAME CommandLineExample.Q4TensionInputRuns
