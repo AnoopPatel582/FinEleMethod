@@ -114,6 +114,17 @@ Windows CI repeats this staging workflow and verifies the complete DLL set,
 command-line model inspection, and workbench startup with development paths
 removed from the process environment.
 
+Create a ZIP archive from the verified staged folder:
+
+```powershell
+.\cmake\CreateWindowsArchive.ps1 `
+  -StageDirectory .\out\install\windows-msvc-release `
+  -OutputFile .\out\package\FinEleMethod-windows-x64.zip
+```
+
+The version-neutral archive name is temporary until the first formal release
+version is selected.
+
 If Visual Studio or vcpkg is installed elsewhere, set `VCPKG_ROOT` to the
 directory containing `vcpkg.exe` and the `scripts` directory.
 

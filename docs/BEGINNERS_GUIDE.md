@@ -125,6 +125,14 @@ The staged application is then available under
 Microsoft Visual C++ Runtime is installed; the future installer will manage that
 prerequisite.
 
+To create a ZIP from the staged application, run:
+
+```powershell
+.\cmake\CreateWindowsArchive.ps1 `
+  -StageDirectory .\out\install\windows-msvc-release `
+  -OutputFile .\out\package\FinEleMethod-windows-x64.zip
+```
+
 ## 6. Run the automated tests
 
 Run:
