@@ -216,6 +216,50 @@ TEST_F(ProjectFileTest, PathBasedRecoveryRejectsMissingSnapshotAndMissingInput)
     EXPECT_THROW((void)read_project_autosave(root_ / "Recovery.txt"), std::invalid_argument);
 }
 
+TEST_F(ProjectFileTest, RecoverySaveRecreatesMissingMainAndPreservesExistingBackup)
+{
+    const ProjectFile project = create_project(root_, "MissingMain", input_file_);
+    write_project_autosave(project);
+    const auto backup = std::filesystem::path{project.project_file.string() + ".bak"};
+    std::ofstream(backup) << "previous backup";
+    std::filesystem::remove(project.project_file);
+    const auto recovered = read_project_autosave(project.project_file);
+    save_project_file(recovered);
+
+    EXPECT_EQ(read_project_file(project.project_file).input_file, project.input_file);
+    EXPECT_TRUE(std::filesystem::exists(project_autosave_path(project)));
+    EXPECT_FALSE(std::filesystem::exists(project.project_file.string() + ".tmp"));
+    std::ifstream backup_stream(backup);
+    std::string backup_text;
+    std::getline(backup_stream, backup_text);
+    EXPECT_EQ(backup_text, "previous backup");
+}
+
+TEST_F(ProjectFileTest, RecoverySaveRejectsDirectoryAtMainFilePath)
+{
+    const ProjectFile project = create_project(root_, "DirectoryMain", input_file_);
+    write_project_autosave(project);
+    std::filesystem::remove(project.project_file);
+    std::filesystem::create_directory(project.project_file);
+    const auto recovered = read_project_autosave(project.project_file);
+    EXPECT_THROW(save_project_file(recovered), std::invalid_argument);
+    EXPECT_TRUE(std::filesystem::is_directory(project.project_file));
+    EXPECT_TRUE(std::filesystem::exists(project_autosave_path(project)));
+    EXPECT_FALSE(std::filesystem::exists(project.project_file.string() + ".tmp"));
+}
+
+TEST_F(ProjectFileTest, MissingMainRecoveryStillRejectsMissingInput)
+{
+    const ProjectFile project = create_project(root_, "Recovery", input_file_);
+    write_project_autosave(project);
+    std::filesystem::remove(project.project_file);
+    std::filesystem::remove(project.input_file);
+    EXPECT_THROW((void)read_project_autosave(project.project_file), std::invalid_argument);
+    EXPECT_THROW(save_project_file(project), std::invalid_argument);
+    EXPECT_FALSE(std::filesystem::exists(project.project_file));
+    EXPECT_TRUE(std::filesystem::exists(project_autosave_path(project)));
+}
+
 TEST_F(ProjectFileTest, ReaderRejectsInputPathOutsideProject)
 {
     const auto directory = root_ / "UnsafeProject";

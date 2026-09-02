@@ -21,6 +21,7 @@ struct ProjectFile
                                          const std::filesystem::path &abaqus_input_file);
 
 // Atomically writes the project JSON and retains the previous file as .bak.
+// Recreates a missing main JSON without replacing any existing .bak file.
 void save_project_file(const ProjectFile &project);
 
 // Returns the separate autosave path beside the authoritative project file.

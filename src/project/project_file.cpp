@@ -147,9 +147,10 @@ std::filesystem::path validate_project_for_save(const ProjectFile &project)
     {
         throw std::invalid_argument("Project file path does not match the project name.");
     }
-    if (!std::filesystem::is_regular_file(project.project_file))
+    if (std::filesystem::exists(project.project_file) &&
+        !std::filesystem::is_regular_file(project.project_file))
     {
-        throw std::invalid_argument("Project file does not exist: " +
+        throw std::invalid_argument("Project file path is not a regular file: " +
                                     project.project_file.string());
     }
 
@@ -233,8 +234,17 @@ ProjectFile create_project(const std::filesystem::path &parent_directory,
 void save_project_file(const ProjectFile &project)
 {
     const std::filesystem::path relative_input = validate_project_for_save(project);
-    replace_project_file_with_backup(project.project_file,
-                                     project_document(project.name, relative_input));
+    const auto document = project_document(project.name, relative_input);
+    if (std::filesystem::exists(project.project_file))
+    {
+        replace_project_file_with_backup(project.project_file, document);
+    }
+    else
+    {
+        // Recovery can recreate a missing main JSON. Do not replace a file that
+        // appears concurrently, and leave any previous backup untouched.
+        install_new_project_file(project.project_file, document);
+    }
 }
 
 namespace
