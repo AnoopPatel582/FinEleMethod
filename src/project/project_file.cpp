@@ -2,6 +2,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include <Windows.h>
+
 #include <cctype>
 #include <fstream>
 #include <stdexcept>
@@ -55,18 +57,22 @@ std::filesystem::path read_relative_input_path(const nlohmann::json &document)
     return path;
 }
 
-void write_new_project_file(const std::filesystem::path &path, const std::string &name,
-                            const std::filesystem::path &relative_input_file)
+nlohmann::json project_document(const std::string &name,
+                                const std::filesystem::path &relative_input_file)
 {
-    const nlohmann::json document{
+    return nlohmann::json{
         {"schemaVersion", 1},
         {"name", name},
         {"inputFile", relative_input_file.generic_string()},
     };
+}
 
+std::filesystem::path write_temporary_project_file(const std::filesystem::path &path,
+                                                   const nlohmann::json &document)
+{
     const auto temporary_path = std::filesystem::path{path.string() + ".tmp"};
     {
-        std::ofstream stream(temporary_path);
+        std::ofstream stream(temporary_path, std::ios::trunc);
         if (!stream)
         {
             throw std::runtime_error("Could not write temporary project file: " +
@@ -80,12 +86,45 @@ void write_new_project_file(const std::filesystem::path &path, const std::string
         }
     }
 
-    std::error_code error;
-    std::filesystem::rename(temporary_path, path, error);
-    if (error)
+    return temporary_path;
+}
+
+std::runtime_error windows_file_error(const std::string &operation, const DWORD error_code)
+{
+    const std::error_code error(static_cast<int>(error_code), std::system_category());
+    return std::runtime_error(operation + ": " + error.message());
+}
+
+void install_new_project_file(const std::filesystem::path &path, const nlohmann::json &document)
+{
+    const std::filesystem::path temporary_path = write_temporary_project_file(path, document);
+
+    if (!MoveFileExW(temporary_path.c_str(), path.c_str(), MOVEFILE_WRITE_THROUGH))
     {
+        const DWORD error_code = GetLastError();
         std::filesystem::remove(temporary_path);
-        throw std::runtime_error("Could not finalize project file: " + error.message());
+        throw windows_file_error("Could not finalize project file", error_code);
+    }
+}
+
+void replace_project_file_with_backup(const std::filesystem::path &path,
+                                      const nlohmann::json &document)
+{
+    const std::filesystem::path temporary_path = write_temporary_project_file(path, document);
+    const std::filesystem::path backup_path{path.string() + ".bak"};
+    if (!CopyFileW(path.c_str(), backup_path.c_str(), FALSE))
+    {
+        const DWORD error_code = GetLastError();
+        std::filesystem::remove(temporary_path);
+        throw windows_file_error("Could not write project backup", error_code);
+    }
+
+    if (!MoveFileExW(temporary_path.c_str(), path.c_str(),
+                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+    {
+        const DWORD error_code = GetLastError();
+        std::filesystem::remove(temporary_path);
+        throw windows_file_error("Could not atomically save project file", error_code);
     }
 }
 } // namespace
@@ -131,7 +170,7 @@ ProjectFile create_project(const std::filesystem::path &parent_directory,
         std::filesystem::create_directory(input_directory);
         std::filesystem::create_directory(runs_directory);
         std::filesystem::copy_file(abaqus_input_file, imported_input_file);
-        write_new_project_file(project_file, project_name, relative_input_file);
+        install_new_project_file(project_file, project_document(project_name, relative_input_file));
     }
     catch (...)
     {
@@ -147,6 +186,26 @@ ProjectFile create_project(const std::filesystem::path &parent_directory,
         .input_file = imported_input_file,
         .runs_directory = runs_directory,
     };
+}
+
+void save_project_file(const ProjectFile &project)
+{
+    validate_project_name(project.name);
+    if (project.project_file != project.project_directory / (project.name + ".json"))
+    {
+        throw std::invalid_argument("Project file path does not match the project name.");
+    }
+    if (!std::filesystem::is_regular_file(project.project_file))
+    {
+        throw std::invalid_argument("Project file does not exist: " +
+                                    project.project_file.string());
+    }
+
+    const std::filesystem::path relative_input =
+        project.input_file.lexically_relative(project.project_directory);
+    const nlohmann::json document = project_document(project.name, relative_input);
+    (void)read_relative_input_path(document);
+    replace_project_file_with_backup(project.project_file, document);
 }
 
 ProjectFile read_project_file(const std::filesystem::path &project_file)

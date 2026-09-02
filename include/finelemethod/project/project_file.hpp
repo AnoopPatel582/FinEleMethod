@@ -20,6 +20,9 @@ struct ProjectFile
                                          const std::string &project_name,
                                          const std::filesystem::path &abaqus_input_file);
 
+// Atomically writes the project JSON and retains the previous file as .bak.
+void save_project_file(const ProjectFile &project);
+
 // Reads and validates an existing protocol-version 1 FinEleMethod project.
 [[nodiscard]] ProjectFile read_project_file(const std::filesystem::path &project_file);
 } // namespace finelemethod::project

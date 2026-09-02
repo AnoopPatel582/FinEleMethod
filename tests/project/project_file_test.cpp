@@ -72,6 +72,36 @@ TEST_F(ProjectFileTest, ReaderRejectsMalformedOrUnsupportedProject)
     EXPECT_THROW((void)read_project_file(path), std::invalid_argument);
 }
 
+TEST_F(ProjectFileTest, SavesAtomicallyAndRetainsOnePreviousBackup)
+{
+    const ProjectFile project = create_project(root_, "SavedProject", input_file_);
+    std::ofstream(project.project_file, std::ios::trunc) << R"({"previous":true})";
+
+    save_project_file(project);
+
+    const ProjectFile reopened = read_project_file(project.project_file);
+    EXPECT_EQ(reopened.name, project.name);
+    const std::filesystem::path backup{project.project_file.string() + ".bak"};
+    ASSERT_TRUE(std::filesystem::is_regular_file(backup));
+    std::ifstream backup_stream(backup);
+    const auto backup_document = nlohmann::json::parse(backup_stream);
+    EXPECT_TRUE(backup_document.at("previous"));
+
+    save_project_file(project);
+    std::ifstream latest_backup_stream(backup);
+    const auto latest_backup = nlohmann::json::parse(latest_backup_stream);
+    EXPECT_EQ(latest_backup.at("schemaVersion"), 1);
+    EXPECT_EQ(latest_backup.at("name"), "SavedProject");
+}
+
+TEST_F(ProjectFileTest, SaveRejectsProjectFilePathThatDoesNotMatchItsName)
+{
+    ProjectFile project = create_project(root_, "MismatchedProject", input_file_);
+    project.project_file = project.project_directory / "Other.json";
+
+    EXPECT_THROW(save_project_file(project), std::invalid_argument);
+}
+
 TEST_F(ProjectFileTest, ReaderRejectsInputPathOutsideProject)
 {
     const auto directory = root_ / "UnsafeProject";
