@@ -1,0 +1,18 @@
+/**
+@mainpage FinEleMethod C++ API
+
+FinEleMethod is a from-scratch finite element solver with a reusable C++20
+engine, a command-line application, and a Windows workbench.
+
+@section api_layers Architecture
+
+- `finelemethod::model` stores nodes, elements, materials, and loads.
+- `finelemethod::element` evaluates Q4 and H8 element formulations.
+- `finelemethod::assembly` constructs global systems through COO and CSR data.
+- `finelemethod::solver` applies constraints and solves linear static systems.
+- `finelemethod::analysis` coordinates complete analysis workflows.
+- `finelemethod::output` writes results and analysis metadata.
+- `finelemethod::cli` exposes the solver engine without the GUI.
+
+The public headers under `include/finelemethod` are the primary API reference.
+*/

@@ -13,6 +13,20 @@ include(CTest)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(wxWidgets CONFIG REQUIRED)
 
+find_package(Doxygen QUIET)
+if(DOXYGEN_FOUND)
+    add_custom_target(
+        api-docs
+        COMMAND
+            ${CMAKE_COMMAND} -E env
+            "FINELEMETHOD_DOXYGEN_OUTPUT=${CMAKE_CURRENT_SOURCE_DIR}/out/docs/api"
+            ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating FinEleMethod API documentation"
+        VERBATIM
+    )
+endif()
+
 add_library(FinEleMethodCore STATIC
     src/assembly/coo_assembly.cpp
     src/assembly/h8_dof_mapping.cpp

@@ -143,6 +143,16 @@ cmake --preset windows-msvc-analysis
 cmake --build --preset windows-msvc-analysis
 ```
 
+Generate the searchable C++ API reference with the pinned Doxygen tool:
+
+```powershell
+.\cmake\BuildApiDocumentation.ps1
+```
+
+Open `out/docs/api/html/index.html` in a browser. The helper downloads Doxygen
+1.18.0 only when it is unavailable locally and verifies the official SHA-256
+checksum before use.
+
 Create a ZIP archive from the verified staged folder:
 
 ```powershell

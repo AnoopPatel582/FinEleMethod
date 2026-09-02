@@ -39,6 +39,10 @@ jobs:
       - name: Build documentation
         run: mkdocs build --strict
 
+      - name: Build C++ API documentation
+        shell: pwsh
+        run: .\cmake\BuildApiDocumentation.ps1
+
       - name: Fetch pinned vcpkg baseline
         shell: pwsh
         run: |
