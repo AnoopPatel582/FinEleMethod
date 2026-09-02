@@ -1,4 +1,5 @@
 #include "main_frame.hpp"
+#include "project_caption.hpp"
 
 #include "finelemethod/core/exit_code.hpp"
 #include "finelemethod/input/abaqus_input_file.hpp"
@@ -299,6 +300,7 @@ void MainFrame::save_project(wxCommandEvent &)
     try
     {
         const auto cleanup_warning = project::save_project_and_cleanup_autosave(*active_project_);
+        SetTitle(wxString::FromUTF8(project_caption(active_project_->name, false)));
         if (cleanup_warning)
         {
             SetStatusText("Project saved; recovery snapshot cleanup failed");
@@ -376,6 +378,7 @@ void MainFrame::recover_project_autosave(wxCommandEvent &)
             return;
         }
         activate_project(std::move(recovered));
+        SetTitle(wxString::FromUTF8(project_caption(active_project_->name, true)));
         SetStatusText("Autosave loaded; use Save Project to retain recovered metadata");
     }
     catch (const std::exception &exception)
@@ -410,6 +413,7 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
 
     selected_input_file_ = selected_input;
     active_project_.reset();
+    SetTitle(wxString::FromUTF8(project_caption("", false)));
     active_run_.reset();
     completed_summary_.reset();
     input_path_->SetValue(dialog.GetPath());
@@ -485,6 +489,7 @@ void MainFrame::activate_project(project::ProjectFile project)
     display_model_summary(project.input_file);
     selected_input_file_ = project.input_file;
     active_project_ = std::move(project);
+    SetTitle(wxString::FromUTF8(project_caption(active_project_->name, false)));
     active_run_.reset();
     completed_summary_.reset();
     input_path_->SetValue(wxString{active_project_->input_file.wstring()});

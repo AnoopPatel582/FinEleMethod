@@ -36,6 +36,8 @@ To recover project metadata:
 3. Confirm loading the validated snapshot. This also works when the main JSON
    is damaged or missing, provided the referenced input file and `runs/` directory exist.
 4. Choose **File → Save Project** (`Ctrl+S`) to retain the recovered metadata.
+   Until saving succeeds, the title shows **[recovered, not saved]**; starting an
+   analysis or refreshing history does not clear that marker.
    An existing main JSON is kept as `.json.bak`; a missing main JSON is recreated
    without replacing any existing backup. The autosave is then removed.
 
