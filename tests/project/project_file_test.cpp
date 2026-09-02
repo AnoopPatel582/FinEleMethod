@@ -260,6 +260,29 @@ TEST_F(ProjectFileTest, MissingMainRecoveryStillRejectsMissingInput)
     EXPECT_TRUE(std::filesystem::exists(project_autosave_path(project)));
 }
 
+TEST_F(ProjectFileTest, SelectedSnapshotRecoversMissingMainWithoutWritingUntilSaved)
+{
+    const ProjectFile project = create_project(root_, "DirectRecovery", input_file_);
+    write_project_autosave(project);
+    std::filesystem::remove(project.project_file);
+    const auto recovered = read_project_autosave_file(project_autosave_path(project));
+    EXPECT_EQ(recovered.project_file, project.project_file);
+    EXPECT_FALSE(std::filesystem::exists(project.project_file));
+    save_project_file(recovered);
+    EXPECT_EQ(read_project_file(project.project_file).input_file, project.input_file);
+}
+
+TEST_F(ProjectFileTest, SelectedSnapshotRejectsWrongSuffixAndRenamedIdentity)
+{
+    const ProjectFile project = create_project(root_, "DirectRecovery", input_file_);
+    write_project_autosave(project);
+    EXPECT_THROW((void)read_project_autosave_file(project.project_file), std::invalid_argument);
+    const auto renamed = project.project_directory / "Other.autosave.json";
+    std::filesystem::copy_file(project_autosave_path(project), renamed);
+    EXPECT_THROW((void)read_project_autosave_file(renamed), std::invalid_argument);
+    EXPECT_EQ(read_project_file(project.project_file).name, project.name);
+}
+
 TEST_F(ProjectFileTest, ReaderRejectsInputPathOutsideProject)
 {
     const auto directory = root_ / "UnsafeProject";

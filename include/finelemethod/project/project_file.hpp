@@ -33,6 +33,9 @@ void write_project_autosave(const ProjectFile &project);
 // Reads a snapshot without parsing the possibly damaged authoritative JSON.
 // The snapshot identity, input path, and on-disk project structure are validated.
 [[nodiscard]] ProjectFile read_project_autosave(const std::filesystem::path &project_file);
+// Reads an explicitly selected <ProjectName>.autosave.json, even if the main
+// <ProjectName>.json is missing. The snapshot must match its filename identity.
+[[nodiscard]] ProjectFile read_project_autosave_file(const std::filesystem::path &autosave_file);
 void remove_project_autosave(const ProjectFile &project);
 
 // Reads and validates an existing protocol-version 1 FinEleMethod project.

@@ -360,6 +360,18 @@ void remove_project_autosave(const ProjectFile &project)
     }
 }
 
+ProjectFile read_project_autosave_file(const std::filesystem::path &autosave_file)
+{
+    if (autosave_file.extension() != ".json" || autosave_file.stem().extension() != ".autosave")
+    {
+        throw std::invalid_argument("Select a <ProjectName>.autosave.json recovery snapshot.");
+    }
+    auto project_file = autosave_file;
+    project_file.replace_extension();
+    project_file.replace_extension(".json");
+    return read_project_autosave(project_file);
+}
+
 ProjectFile read_project_file(const std::filesystem::path &project_file)
 {
     return read_project_document(project_file, project_file);

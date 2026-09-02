@@ -336,8 +336,10 @@ void MainFrame::recover_project_autosave(wxCommandEvent &)
     {
         return;
     }
-    wxFileDialog dialog(this, "Select the main project JSON to recover", wxEmptyString,
-                        wxEmptyString, "FinEleMethod project files (*.json)|*.json",
+    wxFileDialog dialog(this, "Select an autosave snapshot or main project JSON", wxEmptyString,
+                        wxEmptyString,
+                        "Recovery snapshots (*.autosave.json)|*.autosave.json|"
+                        "FinEleMethod project files (*.json)|*.json",
                         wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     if (dialog.ShowModal() != wxID_OK)
     {
@@ -345,8 +347,10 @@ void MainFrame::recover_project_autosave(wxCommandEvent &)
     }
     try
     {
-        auto recovered =
-            project::read_project_autosave(std::filesystem::path{dialog.GetPath().ToStdWstring()});
+        const std::filesystem::path selected_file{dialog.GetPath().ToStdWstring()};
+        auto recovered = selected_file.stem().extension() == ".autosave"
+                             ? project::read_project_autosave_file(selected_file)
+                             : project::read_project_autosave(selected_file);
         if (wxMessageBox("Open the validated autosave snapshot? The main project JSON will not "
                          "change until you choose Save Project. Model files and results are not "
                          "restored by this operation.",

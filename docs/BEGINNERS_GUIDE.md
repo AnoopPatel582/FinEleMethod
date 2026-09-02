@@ -27,11 +27,13 @@ confirmation. Snapshot creation is unavailable while analysis is running.
 To recover project metadata:
 
 1. Choose **File → Recover Project Autosave...**.
-2. Select the main `<ProjectName>.json`, not the `.autosave.json` file.
+2. Select `<ProjectName>.autosave.json`. You can also select the main JSON using
+   the project-files filter when it still exists.
 3. Confirm loading the validated snapshot. This also works when the main JSON
-   is damaged, provided the referenced input file and `runs/` directory exist.
+   is damaged or missing, provided the referenced input file and `runs/` directory exist.
 4. Choose **File → Save Project** (`Ctrl+S`) to retain the recovered metadata.
-   The previous main JSON is kept as `.json.bak`; the autosave is then removed.
+   An existing main JSON is kept as `.json.bak`; a missing main JSON is recreated
+   without replacing any existing backup. The autosave is then removed.
 
 Cancel leaves the files unchanged. Invalid snapshots are rejected. Recovery
 does not restore missing or modified model contents or analysis results, so
