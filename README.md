@@ -138,7 +138,14 @@ Create a ZIP archive from the verified staged folder:
 ```
 
 The version-neutral archive name is temporary until the first formal release
-version is selected.
+version is selected. Packaging also creates
+`FinEleMethod-windows-x64.zip.sha256`; verify it with:
+
+```powershell
+.\cmake\VerifyWindowsArchiveChecksum.ps1 `
+  -ArchiveFile .\out\package\FinEleMethod-windows-x64.zip `
+  -ChecksumFile .\out\package\FinEleMethod-windows-x64.zip.sha256
+```
 
 After a successful Windows CI run, the same verified ZIP is available in the
 workflow run's **Artifacts** section as `FinEleMethod-windows-x64.zip`.

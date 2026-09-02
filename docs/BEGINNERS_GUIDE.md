@@ -133,6 +133,15 @@ To create a ZIP from the staged application, run:
   -OutputFile .\out\package\FinEleMethod-windows-x64.zip
 ```
 
+The command also creates a `.sha256` checksum beside the ZIP. Verify the
+download or local archive with:
+
+```powershell
+.\cmake\VerifyWindowsArchiveChecksum.ps1 `
+  -ArchiveFile .\out\package\FinEleMethod-windows-x64.zip `
+  -ChecksumFile .\out\package\FinEleMethod-windows-x64.zip.sha256
+```
+
 GitHub Actions also creates this verified ZIP automatically. Open a successful
 **Windows CI** workflow run and download `FinEleMethod-windows-x64.zip` from its
 **Artifacts** section.

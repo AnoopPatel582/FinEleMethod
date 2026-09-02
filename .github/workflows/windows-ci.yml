@@ -80,6 +80,9 @@ jobs:
       - name: Verify extracted Windows ZIP archive
         shell: pwsh
         run: |
+          .\cmake\VerifyWindowsArchiveChecksum.ps1 `
+            -ArchiveFile .\out\package\FinEleMethod-windows-x64.zip `
+            -ChecksumFile .\out\package\FinEleMethod-windows-x64.zip.sha256
           $archiveStage = Join-Path $env:RUNNER_TEMP "FinEleMethod-archive-verification"
           Expand-Archive `
             -LiteralPath .\out\package\FinEleMethod-windows-x64.zip `
@@ -92,5 +95,12 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           path: out/package/FinEleMethod-windows-x64.zip
+          if-no-files-found: error
+          archive: false
+
+      - name: Upload Windows ZIP checksum
+        uses: actions/upload-artifact@v7
+        with:
+          path: out/package/FinEleMethod-windows-x64.zip.sha256
           if-no-files-found: error
           archive: false

@@ -26,4 +26,8 @@ if (-not (Test-Path -LiteralPath $archive -PathType Leaf)) {
 }
 
 $archiveFile = Get-Item -LiteralPath $archive
+$checksumFile = "$archive.sha256"
+$checksum = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+Set-Content -LiteralPath $checksumFile -Value "$checksum  $($archiveFile.Name)" -Encoding ascii
 Write-Host "Created Windows application archive: $($archiveFile.FullName) ($($archiveFile.Length) bytes)"
+Write-Host "Created SHA-256 checksum: $checksumFile"
