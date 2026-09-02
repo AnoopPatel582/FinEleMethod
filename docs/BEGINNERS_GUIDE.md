@@ -19,6 +19,10 @@ Supported element types are:
 
 ## Project metadata recovery in the Windows workbench
 
+The workbench content is scrollable. On smaller displays or at higher Windows
+display scaling, scroll to reach controls below or to the right of the visible
+area rather than increasing the window beyond your screen.
+
 After opening or creating a project, choose **File → Create Recovery Snapshot**.
 This writes `<ProjectName>.autosave.json` beside the main project JSON without
 changing the main file or its backup. Replacing an existing snapshot requires

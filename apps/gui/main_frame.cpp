@@ -15,6 +15,7 @@
 #include <wx/msgdlg.h>
 #include <wx/panel.h>
 #include <wx/process.h>
+#include <wx/scrolwin.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
 #include <wx/stattext.h>
@@ -125,7 +126,10 @@ void MainFrame::create_menu_bar()
 
 void MainFrame::create_content()
 {
-    auto *panel = new wxPanel(this);
+    // Keep controls reachable when DPI scaling or a small display makes the
+    // content larger than the available client area.
+    auto *panel = new wxScrolledWindow(this, wxID_ANY);
+    panel->SetScrollRate(10, 10);
     auto *layout = new wxBoxSizer(wxVERTICAL);
 
     auto *title = new wxStaticText(panel, wxID_ANY, "FinEleMethod");
@@ -223,6 +227,7 @@ void MainFrame::create_content()
     layout->Add(bottom_buttons, 0, wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 28);
 
     panel->SetSizer(layout);
+    panel->FitInside();
 }
 
 void MainFrame::display_model_summary(const std::filesystem::path &input_file)
