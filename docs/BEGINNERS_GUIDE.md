@@ -282,6 +282,18 @@ syntax. Start from one of the files in `examples\abaqus` and change it gradually
 Select the dataset in the Pipeline Browser and click **Apply**. Then use **Reset
 Camera** if the model is outside the current view.
 
+## Build the browsable documentation
+
+Install the pinned documentation dependency and build the site:
+
+```powershell
+python -m pip install -r .\docs\requirements.txt
+mkdocs build --strict
+```
+
+Open `out\docs-site\index.html` in a browser. To preview edits with automatic
+reload while writing documentation, run `mkdocs serve`.
+
 ## Safe development workflow
 
 For every new feature:

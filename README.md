@@ -305,6 +305,17 @@ reaction recovery.
 New users can follow the complete Windows setup and first-analysis workflow in
 the [Beginner's Guide](docs/BEGINNERS_GUIDE.md).
 
+## Build the documentation site
+
+Install the pinned documentation tool and build the strict MkDocs site:
+
+```powershell
+python -m pip install -r .\docs\requirements.txt
+mkdocs build --strict
+```
+
+The generated site is written to `out\docs-site\index.html`.
+
 ## Licence status
 
 No open-source licence has been granted at this stage. All rights are reserved.

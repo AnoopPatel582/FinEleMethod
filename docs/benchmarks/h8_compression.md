@@ -15,7 +15,7 @@ uniaxial linear-elastic solution for a unit cube under uniform compression.
 
 The constraints prevent rigid-body motion while allowing the cube to expand
 laterally through the Poisson effect. The runnable input is
-[`examples/abaqus/h8_compression.inp`](../../examples/abaqus/h8_compression.inp).
+[`examples/abaqus/h8_compression.inp`](https://github.com/AnoopPatel582/FinEleMethod/blob/main/examples/abaqus/h8_compression.inp).
 
 ## Comparison
 

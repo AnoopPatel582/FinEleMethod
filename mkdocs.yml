@@ -1,0 +1,23 @@
+site_name: FinEleMethod
+site_description: Custom C++ finite element solver and Windows engineering workbench
+repo_url: https://github.com/AnoopPatel582/FinEleMethod
+docs_dir: docs
+site_dir: out/docs-site
+strict: true
+
+theme:
+  name: readthedocs
+
+nav:
+  - Home: index.md
+  - Beginner's Guide: BEGINNERS_GUIDE.md
+  - Architecture: ARCHITECTURE.md
+  - Project Decisions: PROJECT_DECISIONS.md
+  - Formulations:
+      - Q4 Element: formulations/Q4.md
+      - H8 Element: formulations/H8.md
+      - Global System and Sparse Solution: formulations/SYSTEM_SOLUTION.md
+  - Benchmarks:
+      - Cantilever Beam: benchmarks/cantilever_beam.md
+      - Plate with a Hole: benchmarks/plate_with_hole.md
+      - H8 Compression: benchmarks/h8_compression.md

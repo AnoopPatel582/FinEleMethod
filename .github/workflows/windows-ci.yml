@@ -26,6 +26,19 @@ jobs:
         shell: pwsh
         run: .\cmake\CheckFormatting.ps1
 
+      - name: Set up Python for documentation
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: docs/requirements.txt
+
+      - name: Install documentation dependency
+        run: python -m pip install -r .\docs\requirements.txt
+
+      - name: Build documentation
+        run: mkdocs build --strict
+
       - name: Fetch pinned vcpkg baseline
         shell: pwsh
         run: |

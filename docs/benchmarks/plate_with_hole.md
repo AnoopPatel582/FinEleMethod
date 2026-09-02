@@ -24,7 +24,7 @@ tractions avoids prescribing an approximate uniform traction on a circular
 truncation boundary.
 
 The runnable input is
-[`examples/abaqus/q4_plate_with_hole.inp`](../../examples/abaqus/q4_plate_with_hole.inp).
+[`examples/abaqus/q4_plate_with_hole.inp`](https://github.com/AnoopPatel582/FinEleMethod/blob/main/examples/abaqus/q4_plate_with_hole.inp).
 
 ## Comparison
 

@@ -16,7 +16,7 @@ Euler-Bernoulli cantilever solution.
   edge nodes
 
 The runnable input is
-[`examples/abaqus/q4_cantilever.inp`](../../examples/abaqus/q4_cantilever.inp).
+[`examples/abaqus/q4_cantilever.inp`](https://github.com/AnoopPatel582/FinEleMethod/blob/main/examples/abaqus/q4_cantilever.inp).
 
 ## Comparison
 
