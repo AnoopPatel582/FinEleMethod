@@ -45,6 +45,7 @@ constexpr int cancel_analysis_id = wxID_HIGHEST + 8;
 constexpr int run_history_id = wxID_HIGHEST + 9;
 constexpr int open_run_folder_id = wxID_HIGHEST + 10;
 constexpr int refresh_run_history_id = wxID_HIGHEST + 11;
+constexpr int save_project_id = wxID_HIGHEST + 12;
 } // namespace
 
 MainFrame::MainFrame()
@@ -63,6 +64,7 @@ void MainFrame::create_menu_bar()
 {
     auto *file_menu = new wxMenu;
     file_menu->Append(open_project_id, "&Open Project...\tCtrl+Shift+O");
+    file_menu->Append(save_project_id, "&Save Project\tCtrl+S");
     file_menu->AppendSeparator();
     file_menu->Append(open_input_id, "&Open ABAQUS Input...\tCtrl+O");
     file_menu->Append(create_project_id, "&Create Project...\tCtrl+Shift+N");
@@ -84,6 +86,7 @@ void MainFrame::create_menu_bar()
     menu_bar->Append(help_menu, "&Help");
     SetMenuBar(menu_bar);
     menu_bar->Enable(create_project_id, false);
+    menu_bar->Enable(save_project_id, false);
     menu_bar->Enable(run_analysis_id, false);
     menu_bar->Enable(cancel_analysis_id, false);
     menu_bar->Enable(open_result_id, false);
@@ -91,6 +94,7 @@ void MainFrame::create_menu_bar()
     menu_bar->Enable(refresh_run_history_id, false);
 
     Bind(wxEVT_MENU, &MainFrame::open_project, this, open_project_id);
+    Bind(wxEVT_MENU, &MainFrame::save_project, this, save_project_id);
     Bind(wxEVT_MENU, &MainFrame::choose_abaqus_input, this, open_input_id);
     Bind(wxEVT_MENU, &MainFrame::create_project, this, create_project_id);
     Bind(wxEVT_MENU, &MainFrame::run_analysis, this, run_analysis_id);
@@ -272,6 +276,27 @@ void MainFrame::open_project(wxCommandEvent &)
     }
 }
 
+void MainFrame::save_project(wxCommandEvent &)
+{
+    if (!active_project_ || solver_process_ != nullptr)
+    {
+        return;
+    }
+
+    try
+    {
+        project::save_project_file(*active_project_);
+        project::remove_project_autosave(*active_project_);
+        SetStatusText("Project saved");
+    }
+    catch (const std::exception &exception)
+    {
+        SetStatusText("Project could not be saved");
+        wxMessageBox(wxString::FromUTF8(exception.what()), "Could not save project",
+                     wxOK | wxICON_ERROR, this);
+    }
+}
+
 void MainFrame::choose_abaqus_input(wxCommandEvent &)
 {
     wxFileDialog dialog(this, "Select ABAQUS input file", wxEmptyString, wxEmptyString,
@@ -314,6 +339,7 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     open_result_button_->Disable();
     open_run_folder_button_->Disable();
     GetMenuBar()->Enable(create_project_id, true);
+    GetMenuBar()->Enable(save_project_id, false);
     GetMenuBar()->Enable(run_analysis_id, false);
     GetMenuBar()->Enable(open_result_id, false);
     GetMenuBar()->Enable(open_run_folder_id, false);
@@ -382,6 +408,7 @@ void MainFrame::activate_project(project::ProjectFile project)
     open_result_button_->Disable();
     open_run_folder_button_->Disable();
     GetMenuBar()->Enable(create_project_id, false);
+    GetMenuBar()->Enable(save_project_id, true);
     GetMenuBar()->Enable(run_analysis_id, true);
     GetMenuBar()->Enable(open_result_id, false);
     GetMenuBar()->Enable(open_run_folder_id, false);
@@ -578,6 +605,7 @@ void MainFrame::run_analysis(wxCommandEvent &)
         run_history_choice_->Disable();
         refresh_run_history_button_->Disable();
         GetMenuBar()->Enable(open_project_id, false);
+        GetMenuBar()->Enable(save_project_id, false);
         GetMenuBar()->Enable(open_input_id, false);
         GetMenuBar()->Enable(run_analysis_id, false);
         GetMenuBar()->Enable(cancel_analysis_id, true);
@@ -717,6 +745,7 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     run_history_choice_->Enable(!history_runs_.empty());
     refresh_run_history_button_->Enable(active_project_.has_value());
     GetMenuBar()->Enable(open_project_id, true);
+    GetMenuBar()->Enable(save_project_id, active_project_.has_value());
     GetMenuBar()->Enable(open_input_id, true);
     GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
     GetMenuBar()->Enable(cancel_analysis_id, false);

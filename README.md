@@ -27,6 +27,9 @@ summary and referenced VTU result pass validation; all other runs are labelled
 `not completed` without inferring a more specific cause.
 The history can be refreshed from the workbench or Analysis menu to discover
 run directories and completed outputs changed outside the application.
+An open project can be saved through **File → Save Project** or `Ctrl+S`; this
+uses the atomic project save, retains one backup, and removes a superseded
+autosave snapshot.
 
 The project-storage layer can create a new file-based project, copy its
 authoritative ABAQUS model into `input/`, create an initially empty `runs/`
