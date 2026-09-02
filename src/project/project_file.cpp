@@ -157,6 +157,16 @@ std::filesystem::path validate_project_for_save(const ProjectFile &project)
         project.input_file.lexically_relative(project.project_directory);
     const nlohmann::json document = project_document(project.name, relative_input);
     (void)read_relative_input_path(document);
+    if (!std::filesystem::is_regular_file(project.input_file))
+    {
+        throw std::invalid_argument("Project input file does not exist: " +
+                                    project.input_file.string());
+    }
+    if (project.runs_directory != project.project_directory / "runs" ||
+        !std::filesystem::is_directory(project.runs_directory))
+    {
+        throw std::invalid_argument("Project runs directory must be the existing runs/ directory.");
+    }
     return relative_input;
 }
 } // namespace

@@ -40,6 +40,8 @@ Project saves atomically replace the authoritative JSON while retaining its
 previous contents as `<ProjectName>.json.bak`. Autosave snapshots use the
 separate `<ProjectName>.autosave.json` file and can be validated or removed
 without changing either authoritative file.
+Save and autosave validate the referenced input file and canonical `runs/`
+directory before replacing any stored metadata.
 Each prepared analysis receives the next numbered directory (`run-0001`,
 `run-0002`, and so on), an immutable model snapshot, a validated request, and a
 dedicated results directory. Its versioned `analysis-state.json` atomically

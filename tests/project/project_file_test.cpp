@@ -102,6 +102,37 @@ TEST_F(ProjectFileTest, SaveRejectsProjectFilePathThatDoesNotMatchItsName)
     EXPECT_THROW(save_project_file(project), std::invalid_argument);
 }
 
+TEST_F(ProjectFileTest, SaveAndAutosaveRejectMissingInputWithoutReplacingFiles)
+{
+    ProjectFile project = create_project(root_, "MissingInput", input_file_);
+    write_project_autosave(project);
+    const auto original_input = project.input_file;
+    project.input_file = project.project_directory / "input" / "missing.inp";
+
+    EXPECT_THROW(save_project_file(project), std::invalid_argument);
+    EXPECT_THROW(write_project_autosave(project), std::invalid_argument);
+    EXPECT_EQ(read_project_file(project.project_file).input_file, original_input);
+    project.input_file = original_input;
+    EXPECT_EQ(read_project_autosave(project).input_file, original_input);
+    EXPECT_FALSE(std::filesystem::exists(project.project_file.string() + ".bak"));
+    EXPECT_FALSE(std::filesystem::exists(project.project_file.string() + ".tmp"));
+}
+
+TEST_F(ProjectFileTest, SaveAndAutosaveRejectMissingOrMismatchedRunsDirectory)
+{
+    ProjectFile project = create_project(root_, "InvalidRuns", input_file_);
+    const auto runs = project.runs_directory;
+    project.runs_directory = root_;
+    EXPECT_THROW(save_project_file(project), std::invalid_argument);
+    EXPECT_THROW(write_project_autosave(project), std::invalid_argument);
+    project.runs_directory = runs;
+    std::filesystem::remove(runs);
+    EXPECT_THROW(save_project_file(project), std::invalid_argument);
+    EXPECT_THROW(write_project_autosave(project), std::invalid_argument);
+    EXPECT_FALSE(std::filesystem::exists(project.project_file.string() + ".bak"));
+    EXPECT_FALSE(std::filesystem::exists(project_autosave_path(project)));
+}
+
 TEST_F(ProjectFileTest, WritesReadsAndRemovesSeparateAutosave)
 {
     const ProjectFile project = create_project(root_, "AutosavedProject", input_file_);
