@@ -35,6 +35,8 @@ class MainFrame final : public wxFrame
     void display_model_summary(const std::filesystem::path &input_file);
     void open_project(wxCommandEvent &event);
     void save_project(wxCommandEvent &event);
+    void create_recovery_snapshot(wxCommandEvent &event);
+    void recover_project_autosave(wxCommandEvent &event);
     void choose_abaqus_input(wxCommandEvent &event);
     void create_project(wxCommandEvent &event);
     void activate_project(project::ProjectFile project);

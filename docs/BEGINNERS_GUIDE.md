@@ -17,6 +17,27 @@ Supported element types are:
 | `CPE4` | Four-node Q4 plane strain |
 | `C3D8` | Eight-node H8 three-dimensional solid |
 
+## Project metadata recovery in the Windows workbench
+
+After opening or creating a project, choose **File → Create Recovery Snapshot**.
+This writes `<ProjectName>.autosave.json` beside the main project JSON without
+changing the main file or its backup. Replacing an existing snapshot requires
+confirmation. Snapshot creation is unavailable while analysis is running.
+
+To recover project metadata:
+
+1. Choose **File → Recover Project Autosave...**.
+2. Select the main `<ProjectName>.json`, not the `.autosave.json` file.
+3. Confirm loading the validated snapshot. This also works when the main JSON
+   is damaged, provided the referenced input file and `runs/` directory exist.
+4. Choose **File → Save Project** (`Ctrl+S`) to retain the recovered metadata.
+   The previous main JSON is kept as `.json.bak`; the autosave is then removed.
+
+Cancel leaves the files unchanged. Invalid snapshots are rejected. Recovery
+does not restore missing or modified model contents or analysis results, so
+keep separate backups of those files. Periodic autosave and model editing are
+not implemented yet.
+
 ## 1. Install the required tools
 
 Install these tools before building:

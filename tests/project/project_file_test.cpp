@@ -190,6 +190,22 @@ TEST_F(ProjectFileTest, PathBasedRecoveryRejectsMismatchedIdentityAndEscapingInp
     EXPECT_EQ(read_project_file(project.project_file).name, "Recovery");
 }
 
+TEST_F(ProjectFileTest, ExplicitSaveCommitsRecoveredMetadataAndRetainsDamagedJsonBackup)
+{
+    const ProjectFile project = create_project(root_, "Recovery", input_file_);
+    write_project_autosave(project);
+    std::ofstream(project.project_file, std::ios::trunc) << "damaged";
+    const auto recovered = read_project_autosave(project.project_file);
+    save_project_file(recovered);
+    remove_project_autosave(recovered);
+    EXPECT_EQ(read_project_file(project.project_file).input_file, project.input_file);
+    EXPECT_FALSE(std::filesystem::exists(project_autosave_path(project)));
+    std::ifstream backup(project.project_file.string() + ".bak");
+    std::string backup_text;
+    std::getline(backup, backup_text);
+    EXPECT_EQ(backup_text, "damaged");
+}
+
 TEST_F(ProjectFileTest, PathBasedRecoveryRejectsMissingSnapshotAndMissingInput)
 {
     const ProjectFile project = create_project(root_, "Recovery", input_file_);

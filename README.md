@@ -31,6 +31,14 @@ An open project can be saved through **File → Save Project** or `Ctrl+S`; this
 uses the atomic project save, retains one backup, and removes a superseded
 autosave snapshot.
 
+**File → Create Recovery Snapshot** writes a separate metadata snapshot after
+validating the open project. Replacing an existing snapshot requires confirmation.
+**File → Recover Project Autosave...** validates that snapshot independently of
+the main JSON and loads it only after confirmation. **Save Project** then commits
+the recovered metadata and retains the previous main JSON as a backup.
+Snapshots do not copy or restore ABAQUS model contents or result files. This is
+an explicit snapshot workflow, not timed autosaving of model edits.
+
 The project-storage layer can create a new file-based project, copy its
 authoritative ABAQUS model into `input/`, create an initially empty `runs/`
 directory, and write the versioned `<ProjectName>.json` project file.

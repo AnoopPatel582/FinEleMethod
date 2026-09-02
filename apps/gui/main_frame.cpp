@@ -46,6 +46,8 @@ constexpr int run_history_id = wxID_HIGHEST + 9;
 constexpr int open_run_folder_id = wxID_HIGHEST + 10;
 constexpr int refresh_run_history_id = wxID_HIGHEST + 11;
 constexpr int save_project_id = wxID_HIGHEST + 12;
+constexpr int snapshot_project_id = wxID_HIGHEST + 13;
+constexpr int recover_project_id = wxID_HIGHEST + 14;
 } // namespace
 
 MainFrame::MainFrame()
@@ -65,6 +67,8 @@ void MainFrame::create_menu_bar()
     auto *file_menu = new wxMenu;
     file_menu->Append(open_project_id, "&Open Project...\tCtrl+Shift+O");
     file_menu->Append(save_project_id, "&Save Project\tCtrl+S");
+    file_menu->Append(snapshot_project_id, "Create Recovery Snapshot");
+    file_menu->Append(recover_project_id, "Recover Project Autosave...");
     file_menu->AppendSeparator();
     file_menu->Append(open_input_id, "&Open ABAQUS Input...\tCtrl+O");
     file_menu->Append(create_project_id, "&Create Project...\tCtrl+Shift+N");
@@ -87,6 +91,7 @@ void MainFrame::create_menu_bar()
     SetMenuBar(menu_bar);
     menu_bar->Enable(create_project_id, false);
     menu_bar->Enable(save_project_id, false);
+    menu_bar->Enable(snapshot_project_id, false);
     menu_bar->Enable(run_analysis_id, false);
     menu_bar->Enable(cancel_analysis_id, false);
     menu_bar->Enable(open_result_id, false);
@@ -95,6 +100,8 @@ void MainFrame::create_menu_bar()
 
     Bind(wxEVT_MENU, &MainFrame::open_project, this, open_project_id);
     Bind(wxEVT_MENU, &MainFrame::save_project, this, save_project_id);
+    Bind(wxEVT_MENU, &MainFrame::create_recovery_snapshot, this, snapshot_project_id);
+    Bind(wxEVT_MENU, &MainFrame::recover_project_autosave, this, recover_project_id);
     Bind(wxEVT_MENU, &MainFrame::choose_abaqus_input, this, open_input_id);
     Bind(wxEVT_MENU, &MainFrame::create_project, this, create_project_id);
     Bind(wxEVT_MENU, &MainFrame::run_analysis, this, run_analysis_id);
@@ -297,6 +304,67 @@ void MainFrame::save_project(wxCommandEvent &)
     }
 }
 
+void MainFrame::create_recovery_snapshot(wxCommandEvent &)
+{
+    if (!active_project_ || solver_process_ != nullptr)
+    {
+        return;
+    }
+    try
+    {
+        if (std::filesystem::exists(project::project_autosave_path(*active_project_)) &&
+            wxMessageBox("Replace the existing recovery snapshot? This saves project metadata, "
+                         "not a copy of the model or results.",
+                         "Replace recovery snapshot", wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION,
+                         this) != wxYES)
+        {
+            return;
+        }
+        project::write_project_autosave(*active_project_);
+        SetStatusText("Project metadata recovery snapshot created");
+    }
+    catch (const std::exception &exception)
+    {
+        wxMessageBox(wxString::FromUTF8(exception.what()), "Could not create recovery snapshot",
+                     wxOK | wxICON_ERROR, this);
+    }
+}
+
+void MainFrame::recover_project_autosave(wxCommandEvent &)
+{
+    if (solver_process_ != nullptr)
+    {
+        return;
+    }
+    wxFileDialog dialog(this, "Select the main project JSON to recover", wxEmptyString,
+                        wxEmptyString, "FinEleMethod project files (*.json)|*.json",
+                        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    if (dialog.ShowModal() != wxID_OK)
+    {
+        return;
+    }
+    try
+    {
+        auto recovered =
+            project::read_project_autosave(std::filesystem::path{dialog.GetPath().ToStdWstring()});
+        if (wxMessageBox("Open the validated autosave snapshot? The main project JSON will not "
+                         "change until you choose Save Project. Model files and results are not "
+                         "restored by this operation.",
+                         "Recover project metadata", wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION,
+                         this) != wxYES)
+        {
+            return;
+        }
+        activate_project(std::move(recovered));
+        SetStatusText("Autosave loaded; use Save Project to retain recovered metadata");
+    }
+    catch (const std::exception &exception)
+    {
+        wxMessageBox(wxString::FromUTF8(exception.what()), "Could not recover project",
+                     wxOK | wxICON_ERROR, this);
+    }
+}
+
 void MainFrame::choose_abaqus_input(wxCommandEvent &)
 {
     wxFileDialog dialog(this, "Select ABAQUS input file", wxEmptyString, wxEmptyString,
@@ -340,6 +408,7 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     open_run_folder_button_->Disable();
     GetMenuBar()->Enable(create_project_id, true);
     GetMenuBar()->Enable(save_project_id, false);
+    GetMenuBar()->Enable(snapshot_project_id, false);
     GetMenuBar()->Enable(run_analysis_id, false);
     GetMenuBar()->Enable(open_result_id, false);
     GetMenuBar()->Enable(open_run_folder_id, false);
@@ -409,6 +478,7 @@ void MainFrame::activate_project(project::ProjectFile project)
     open_run_folder_button_->Disable();
     GetMenuBar()->Enable(create_project_id, false);
     GetMenuBar()->Enable(save_project_id, true);
+    GetMenuBar()->Enable(snapshot_project_id, true);
     GetMenuBar()->Enable(run_analysis_id, true);
     GetMenuBar()->Enable(open_result_id, false);
     GetMenuBar()->Enable(open_run_folder_id, false);
@@ -607,6 +677,8 @@ void MainFrame::run_analysis(wxCommandEvent &)
         refresh_run_history_button_->Disable();
         GetMenuBar()->Enable(open_project_id, false);
         GetMenuBar()->Enable(save_project_id, false);
+        GetMenuBar()->Enable(snapshot_project_id, false);
+        GetMenuBar()->Enable(recover_project_id, false);
         GetMenuBar()->Enable(open_input_id, false);
         GetMenuBar()->Enable(run_analysis_id, false);
         GetMenuBar()->Enable(cancel_analysis_id, true);
@@ -747,6 +819,8 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     refresh_run_history_button_->Enable(active_project_.has_value());
     GetMenuBar()->Enable(open_project_id, true);
     GetMenuBar()->Enable(save_project_id, active_project_.has_value());
+    GetMenuBar()->Enable(snapshot_project_id, active_project_.has_value());
+    GetMenuBar()->Enable(recover_project_id, true);
     GetMenuBar()->Enable(open_input_id, true);
     GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
     GetMenuBar()->Enable(cancel_analysis_id, false);
