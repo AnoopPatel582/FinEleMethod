@@ -27,3 +27,12 @@ foreach ($body in @('', "<DataArray Name='Displacement'/><DataArray Name='Displa
     if (-not $rejected) { throw 'Missing or duplicate field accepted.' }
 }
 Write-Host 'VTU field validation regression checks passed.'
+
+Assert-NearValues @(0.01, 10.0) @(0.01, 10.0) 'matching values'
+Assert-NearValues @(0.01 + 1e-10) @(0.01) 'roundoff'
+foreach ($actual in @(@(0.02), @([double]::NaN), @([double]::PositiveInfinity), @(0.01, 0.01))) {
+    $rejected = $false
+    try { Assert-NearValues $actual @(0.01) 'negative fixture' } catch { $rejected = $true }
+    if (-not $rejected) { throw 'Incorrect numerical result accepted.' }
+}
+Write-Host 'Analytical comparison regression checks passed.'

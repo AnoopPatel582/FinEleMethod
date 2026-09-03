@@ -96,5 +96,6 @@ foreach ($case in $cases) {
     }
     Read-VtuField $piece CellData PrincipalStress 1 3 | Out-Null
     Read-VtuField $piece CellData VonMises 1 1 | Out-Null
-    Write-Host "Verified packaged solve and output structure: $($case.Name)"
+    Assert-ExampleSolution $piece $case.Name
+    Write-Host "Verified packaged solve, output structure, and analytical values: $($case.Name)"
 }
