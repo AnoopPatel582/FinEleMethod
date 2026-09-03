@@ -26,6 +26,10 @@ jobs:
         shell: pwsh
         run: .\cmake\CheckFormatting.ps1
 
+      - name: Test archive safety
+        shell: pwsh
+        run: .\cmake\TestWindowsArchive.ps1
+
       - name: Set up Python for documentation
         uses: actions/setup-python@v7
         with:

@@ -185,6 +185,11 @@ download or local archive with:
   -ChecksumFile .\out\package\FinEleMethod-windows-x64.zip.sha256
 ```
 
+Archive creation refuses an existing ZIP or checksum instead of deleting it.
+For another build, choose a new filename and keep the output outside the staged
+application folder. The packaging regression checks can be run with
+`.\cmake\TestWindowsArchive.ps1` in PowerShell 7; CI runs them automatically.
+
 GitHub Actions also creates this verified ZIP automatically. Open a successful
 **Windows CI** workflow run and download `FinEleMethod-windows-x64.zip` from its
 **Artifacts** section.
