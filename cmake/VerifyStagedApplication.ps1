@@ -57,6 +57,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 & (Join-Path $PSScriptRoot "VerifyStagedSolver.ps1") -StageDirectory $stage
+& (Join-Path $PSScriptRoot "VerifyStagedRequest.ps1") -StageDirectory $stage
 
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
 $startInfo.FileName = $workbench
