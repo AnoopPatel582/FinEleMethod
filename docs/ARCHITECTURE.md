@@ -1,9 +1,10 @@
 # FinEleMethod Architecture
 
 This document describes the architecture currently implemented in FinEleMethod.
-The command-line solver is the first product interface. The future Windows GUI
-will use the command-line application as a separate analysis process rather than
-embedding FEM calculations in the user-interface code.
+The command-line solver is independently runnable. The implemented wxWidgets
+Windows workbench launches it as a separate analysis process rather than running
+the FEM solution on the user-interface thread. The GUI links the core library
+for model inspection, project storage, and protocol validation.
 
 ## Design goals
 
@@ -19,7 +20,13 @@ embedding FEM calculations in the user-interface code.
 
 ```mermaid
 flowchart LR
-    User[User or future Windows GUI] --> CLI[Command-line application]
+    User[User] --> GUI[Windows workbench]
+    User --> CLI[Command-line application]
+    GUI --> Project[Project and immutable run storage]
+    Project --> Request[analysis-request.json]
+    GUI -->|Launch separate process| CLI
+    Request --> CLI
+    CLI -->|JSON Lines progress| GUI
     CLI --> Input[ABAQUS input layer]
     Input --> Model[Validated model objects]
     Model --> Solver[Analysis orchestration]
@@ -34,7 +41,8 @@ flowchart LR
     Recovery --> VTK[VTU result writer]
     Recovery --> Summary[Versioned JSON summary]
     VTK --> ParaView[ParaView]
-    Summary --> User
+    Summary --> GUI
+    GUI -->|Open result through Windows association| ParaView
 ```
 
 ## Source-code layers
@@ -42,6 +50,8 @@ flowchart LR
 | Layer | Responsibility | Main directories |
 | --- | --- | --- |
 | Application | Starts the program and maps process arguments to stable exit codes | `apps/cli`, `src/cli`, `src/core` |
+| Workbench | Owns Windows controls, launches and monitors the solver, and displays run history | `apps/gui` |
+| Project storage | Validates project JSON, saves metadata, prepares run snapshots, and records lifecycle state | `src/project` |
 | Input | Reads ABAQUS text and constructs validated Q4 or H8 models | `src/input` |
 | Model | Stores nodes, elements, materials, loads, and degree-of-freedom mappings | `src/model` |
 | Mechanics | Creates isotropic elastic constitutive matrices and stress measures | `src/mechanics` |
@@ -137,13 +147,49 @@ iterative solution, and reaction-recovery process is documented in
 
 The command-line layer translates failures into the stable exit codes recorded
 in [PROJECT_DECISIONS.md](PROJECT_DECISIONS.md). Parsing, model validation,
-numerical solution, and result-writing errors remain distinguishable so a future
-GUI can show an accurate failure reason.
+numerical solution, and result-writing errors remain distinguishable. The GUI
+combines process exit codes, validated progress, standard error, and completion
+files when reporting the outcome. Exit code zero alone is not sufficient to
+accept a completed analysis.
 
-## Future GUI boundary
+## Implemented GUI boundary
 
-The planned wxWidgets application will prepare an analysis request and start the
-CLI solver in a background process. The GUI will not own element calculations or
-linear algebra. It will monitor the versioned process protocol, read the analysis
-summary, and open the produced VTU result in ParaView. This separation keeps the
-solver independently testable and allows command-line use without the GUI.
+`MainFrame` prepares a numbered run and starts the adjacent `FinEleMethod.exe`
+with `--request`. A wxWidgets timer drains redirected standard output and standard
+error while the GUI remains responsive. JSON Lines progress is parsed separately
+from human-readable error messages. A process-completion event triggers summary
+validation and restores the controls for another analysis.
+
+Only one analysis runs at a time. Cancellation writes a run-local flag; the solver
+checks it cooperatively. A cancellation is accepted when the exit code and valid
+progress agree. Closing normally is blocked while a solver process is active.
+
+The GUI checks summary paths against the active run and requires the result file
+to exist before enabling **Open Result**. It uses the Windows file association
+to open the VTU file; it does not embed ParaView or a VTK renderer.
+
+## Project and recovery lifecycle
+
+The main JSON stores project identity and a relative input path. The project
+layer validates the model location and `runs/` directory on disk. Each new run
+contains its own input snapshot, request, lifecycle state, and results paths.
+Run history is rediscovered from disk rather than stored in a database.
+
+Project saves are atomic and retain one backup. Explicit recovery snapshots are
+separate `.autosave.json` files containing metadata, not copies of model data or
+results. A recovered project is marked unsaved until the main JSON is saved.
+Normal close and project-switch operations request confirmation before leaving
+this state; declining preserves the current project. A successful save clears
+the marker even when snapshot cleanup reports a warning. A failed save does not.
+
+History labels use persisted lifecycle state where available. A `completed`
+state must also pass the project layer's completion checks. Missing or invalid
+state falls back to `completed` or `not completed` based on those checks; it
+does not establish that an old `executing` run still has a live process.
+
+## Verification boundary
+
+Unit and integration tests cover the numerical and file/protocol layers.
+Packaging checks validate DLL staging and workbench startup. Neither proves that
+all interactive GUI paths work. Use the [GUI acceptance checklist](GUI_ACCEPTANCE.md)
+to record interactive checks and outstanding release work separately.

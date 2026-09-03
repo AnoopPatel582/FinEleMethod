@@ -1,9 +1,8 @@
 # FinEleMethod
 
 FinEleMethod is a Windows finite element solver being developed from scratch in
-C++20. Development begins with a tested command-line solver engine; a Windows
-engineering GUI will be added after the corresponding solver capabilities are
-validated.
+C++20. A tested command-line solver engine and a native Windows engineering
+workbench are available; the solver remains independently runnable.
 
 The project is under active development. Its command-line engine can currently
 solve supported ABAQUS Q4 plane-stress, Q4 plane-strain, and H8 three-dimensional
@@ -22,9 +21,11 @@ run identifier. Its run selector lists the numbered history and displays the
 directory of a selected run. Selecting a completed run validates and restores
 its summary and makes its existing VTU result available to open again. The
 selected run directory can also be opened directly in Windows Explorer.
-Run-history entries are labelled `completed` only when both their versioned
-summary and referenced VTU result pass validation; all other runs are labelled
-`not completed` without inferring a more specific cause.
+Run-history entries use recorded lifecycle states when available. Entries are
+labelled `completed` only when their versioned summary and referenced VTU result
+pass the completion checks. Missing or invalid lifecycle state falls back to
+`completed` or `not completed`; an old `executing` label does not prove that its
+process is still running.
 The history can be refreshed from the workbench or Analysis menu to discover
 run directories and completed outputs changed outside the application.
 If reading the refreshed history fails, the last successfully loaded list and
@@ -366,6 +367,9 @@ reaction recovery.
 
 New users can follow the complete Windows setup and first-analysis workflow in
 the [Beginner's Guide](docs/BEGINNERS_GUIDE.md).
+
+The [GUI acceptance checklist](docs/GUI_ACCEPTANCE.md) records interactive
+verification separately from automated tests and tracks remaining release gates.
 
 ## Build the documentation site
 

@@ -17,3 +17,6 @@ Start with the [Beginner's Guide](BEGINNERS_GUIDE.md) to build and run the
 software. Read [Architecture](ARCHITECTURE.md) for the component and analysis
 workflow, then use the formulation and benchmark pages for the mathematical and
 validation details.
+
+Use [GUI Acceptance](GUI_ACCEPTANCE.md) to distinguish automated test coverage
+from interactive checks and remaining Windows release gates.
