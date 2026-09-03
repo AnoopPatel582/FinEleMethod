@@ -84,6 +84,11 @@ numbered project-run directories automatically.
 - Need to report a failure: retain the exact error, workflow run or commit,
   input model, and relevant run files. Review their contents before sharing.
 
+Use **Help → About FinEleMethod**, or run `.\FinEleMethod.exe --build-info`
+from the extracted folder, to obtain the build configuration, architecture, and
+compiler identifier. Include these diagnostics in a bug report. They are not a
+unique build ID or a release version; also retain the workflow run or ZIP checksum.
+
 The package's `docs` folder contains the beginner's guide, architecture,
 formulations, benchmark reports, and GUI acceptance checklist. Those documents
 also describe developer commands that require a source checkout; they are not

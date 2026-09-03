@@ -35,6 +35,7 @@ void write_help(std::ostream &stream)
     stream << application_name() << '\n'
            << "Usage:\n"
            << "  FinEleMethod --help\n"
+           << "  FinEleMethod --build-info\n"
            << "  FinEleMethod --inspect <model.inp>\n"
            << "  FinEleMethod --request <analysis-request.json>\n"
            << "  FinEleMethod --input <model.inp> --output <result.vtu> "
@@ -43,6 +44,7 @@ void write_help(std::ostream &stream)
            << "  FinEleMethod --example h8-compression --output <file.vtu>\n\n"
            << "Options:\n"
            << "  -h, --help  Show this help message.\n"
+           << "  --build-info  Show build configuration, architecture, and compiler.\n"
            << "  --inspect <model.inp>  Validate and summarize a supported ABAQUS model.\n"
            << "  --request <file.json>  Run a versioned analysis request.\n"
            << "  --input <model.inp>   Read and solve an ABAQUS CPS4, CPE4, or C3D8 model.\n"
@@ -81,6 +83,12 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
     if (arguments.size() == 1 && (arguments.front() == "--help" || arguments.front() == "-h"))
     {
         write_help(output);
+        return ExitCode::Success;
+    }
+
+    if (arguments.size() == 1 && arguments.front() == "--build-info")
+    {
+        output << application_build_info();
         return ExitCode::Success;
     }
 

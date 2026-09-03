@@ -119,6 +119,9 @@ add_library(FinEleMethodCore STATIC
 add_library(FinEleMethod::Core ALIAS FinEleMethodCore)
 
 target_compile_features(FinEleMethodCore PUBLIC cxx_std_20)
+target_compile_definitions(FinEleMethodCore PRIVATE
+    FINELEMETHOD_BUILD_CONFIGURATION="$<CONFIG>"
+)
 target_include_directories(FinEleMethodCore
     PUBLIC
         ${PROJECT_SOURCE_DIR}/include

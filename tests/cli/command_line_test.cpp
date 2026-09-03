@@ -1,4 +1,5 @@
 #include "finelemethod/cli/command_line.hpp"
+#include "finelemethod/core/application.hpp"
 
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
@@ -78,6 +79,26 @@ std::vector<nlohmann::json> parse_json_lines(const std::string &text)
 }
 } // namespace
 
+TEST(CommandLine, BuildInfoWritesSharedDiagnosticsAndSucceeds)
+{
+    constexpr std::array<std::string_view, 1> arguments{"--build-info"};
+    std::ostringstream output;
+    std::ostringstream error;
+    EXPECT_EQ(finelemethod::cli::run(arguments, output, error), finelemethod::ExitCode::Success);
+    EXPECT_EQ(output.str(), finelemethod::application_build_info());
+    EXPECT_TRUE(error.str().empty());
+}
+
+TEST(CommandLine, BuildInfoRejectsExtraArguments)
+{
+    constexpr std::array<std::string_view, 3> arguments{"--build-info", "--output", "unused.vtu"};
+    std::ostringstream output;
+    std::ostringstream error;
+    EXPECT_EQ(finelemethod::cli::run(arguments, output, error), finelemethod::ExitCode::UsageError);
+    EXPECT_TRUE(output.str().empty());
+    EXPECT_FALSE(error.str().empty());
+}
+
 TEST(CommandLine, HelpWritesUsageAndSucceeds)
 {
     constexpr std::array<std::string_view, 1> arguments{"--help"};
@@ -88,6 +109,7 @@ TEST(CommandLine, HelpWritesUsageAndSucceeds)
 
     EXPECT_EQ(exit_code, finelemethod::ExitCode::Success);
     EXPECT_NE(output.str().find("Usage:"), std::string::npos);
+    EXPECT_NE(output.str().find("--build-info"), std::string::npos);
     EXPECT_TRUE(error.str().empty());
 }
 

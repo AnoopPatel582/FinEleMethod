@@ -21,6 +21,14 @@ foreach ($required in @($solver) + @($cases | ForEach-Object {
     }
 }
 
+$buildInfo = & $solver --build-info
+if ($LASTEXITCODE -ne 0 -or
+    ($buildInfo -join "`n") -notmatch '(?m)^Configuration: Release\r?$' -or
+    ($buildInfo -join "`n") -notmatch '(?m)^Architecture: 64-bit\r?$') {
+    throw "Staged solver must report a Release, 64-bit build."
+}
+$buildInfo | ForEach-Object { Write-Host $_ }
+
 # Fresh output paths prevent stale results from making a broken executable pass.
 # Retain the small outputs for diagnosis; never write into the shipped package.
 $output = Join-Path ([System.IO.Path]::GetTempPath()) ("FinEleMethod solver check " + [guid]::NewGuid())

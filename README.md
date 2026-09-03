@@ -233,6 +233,11 @@ CTest execution step.
 
 ## Run
 
+For troubleshooting, run `FinEleMethod.exe --build-info` or open **Help → About
+FinEleMethod** in the workbench. Both use the same configuration, architecture,
+and compiler diagnostics. These do not identify a unique source commit or assign
+a release version; keep the workflow run or archive checksum with bug reports.
+
 ```powershell
 .\out\build\windows-msvc\Debug\FinEleMethod.exe --help
 ```

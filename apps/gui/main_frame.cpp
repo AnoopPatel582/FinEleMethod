@@ -2,6 +2,7 @@
 #include "analysis_completion.hpp"
 #include "project_caption.hpp"
 
+#include "finelemethod/core/application.hpp"
 #include "finelemethod/core/exit_code.hpp"
 #include "finelemethod/input/abaqus_input_file.hpp"
 #include "finelemethod/input/abaqus_model_summary.hpp"
@@ -120,8 +121,8 @@ void MainFrame::create_menu_bar()
     Bind(
         wxEVT_MENU,
         [this](wxCommandEvent &) {
-            wxMessageBox("FinEleMethod Windows engineering workbench\n"
-                         "C++20 finite element solver",
+            wxMessageBox(wxString::FromUTF8(application_build_info()) +
+                             "\nWindows engineering workbench and C++20 finite element solver",
                          "About FinEleMethod", wxOK | wxICON_INFORMATION, this);
         },
         wxID_ABOUT);
