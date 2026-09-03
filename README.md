@@ -151,8 +151,11 @@ removed from the process environment.
 Both staging and extracted-ZIP verification also solve the packaged Q4 plane-
 stress, Q4 plane-strain, and H8 examples with only `System32` on the solver's
 PATH. Checks require successful exit, matching JSON summary paths/model counts,
-and VTU mesh counts and result-field names. These are packaging smoke tests,
-not replacements for numerical benchmark comparisons or clean-machine testing.
+and VTU field counts, finite values, and analytical example results. Request-mode
+checks also cover progress, persisted state, pre-execution cancellation, and
+input/protocol failures. These do not replace mesh-dependent benchmarks,
+interactive GUI checks, or clean-machine testing. See
+[Release Validation](docs/RELEASE_VALIDATION.md) for commands and tolerances.
 Each check retains fresh diagnostic outputs in a uniquely named temporary
 folder printed in the log; it does not modify the package.
 
@@ -391,6 +394,9 @@ the [Beginner's Guide](docs/BEGINNERS_GUIDE.md).
 
 The [GUI acceptance checklist](docs/GUI_ACCEPTANCE.md) records interactive
 verification separately from automated tests and tracks remaining release gates.
+
+The [15-minute demonstration plan](docs/DEMONSTRATION.md) provides a rehearsal
+sequence for the final project video; recording remains a separate deliverable.
 
 ## Build the documentation site
 

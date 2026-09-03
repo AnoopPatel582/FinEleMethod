@@ -17,7 +17,8 @@ $example = Join-Path $stage "examples\abaqus\q4_tension.inp"
 $requiredDocuments = @(
     "START_HERE.md", "README.md", "docs\WINDOWS_QUICK_START.md",
     "docs\BEGINNERS_GUIDE.md", "docs\ARCHITECTURE.md", "docs\PROJECT_DECISIONS.md",
-    "docs\GUI_ACCEPTANCE.md", "docs\formulations\Q4.md", "docs\formulations\H8.md",
+    "docs\GUI_ACCEPTANCE.md", "docs\RELEASE_VALIDATION.md", "docs\DEMONSTRATION.md",
+    "docs\formulations\Q4.md", "docs\formulations\H8.md",
     "docs\formulations\SYSTEM_SOLUTION.md", "docs\benchmarks\cantilever_beam.md",
     "docs\benchmarks\plate_with_hole.md", "docs\benchmarks\h8_compression.md"
 )

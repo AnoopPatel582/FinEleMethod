@@ -83,6 +83,11 @@ was not reproduced during the original source review.
 
 ## Release gates beyond this checklist
 
+The current [release-validation procedure](RELEASE_VALIDATION.md) adds finite
+field/cardinality checks, analytical package comparisons, successful request
+lifecycles, and pre-execution cancellation and failure cases. These are automated
+CLI/process checks; they do not change the recorded interactive statuses above.
+
 The automated package check now runs all three supported analysis formulations
 from both the staged directory and extracted ZIP with developer paths removed
 from the solver environment. It checks exit status, summary identity/paths/counts,

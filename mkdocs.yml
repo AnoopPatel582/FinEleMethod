@@ -14,6 +14,8 @@ nav:
   - Beginner's Guide: BEGINNERS_GUIDE.md
   - Architecture: ARCHITECTURE.md
   - GUI Acceptance: GUI_ACCEPTANCE.md
+  - Release Validation: RELEASE_VALIDATION.md
+  - Demonstration Plan: DEMONSTRATION.md
   - Project Decisions: PROJECT_DECISIONS.md
   - Formulations:
       - Q4 Element: formulations/Q4.md
