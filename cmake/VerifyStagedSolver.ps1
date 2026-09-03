@@ -5,6 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'VtuVerification.ps1')
 
 $stage = (Resolve-Path -LiteralPath $StageDirectory).Path
 $solver = Join-Path $stage "FinEleMethod.exe"
@@ -83,14 +84,17 @@ foreach ($case in $cases) {
         throw "Unexpected packaged VTU mesh for $($case.Name)."
     }
     foreach ($field in @("Displacement", "ReactionForce")) {
-        if (-not $piece.SelectSingleNode("PointData/DataArray[@Name='$field']")) {
-            throw "Packaged VTU is missing point field $field for $($case.Name)."
-        }
+        Read-VtuField $piece PointData $field $case.Nodes 3 | Out-Null
     }
-    foreach ($field in @("Strain", "Stress", "VonMises", "PrincipalStress")) {
-        if (-not $piece.SelectSingleNode("CellData/DataArray[@Name='$field']")) {
-            throw "Packaged VTU is missing cell field $field for $($case.Name)."
-        }
+    $components = switch ($case.Type) {
+        'q4-plane-stress' { 3 }
+        'q4-plane-strain' { 4 }
+        'h8-three-dimensional' { 6 }
     }
+    foreach ($field in @('Stress', 'Strain')) {
+        Read-VtuField $piece CellData $field 1 $components | Out-Null
+    }
+    Read-VtuField $piece CellData PrincipalStress 1 3 | Out-Null
+    Read-VtuField $piece CellData VonMises 1 1 | Out-Null
     Write-Host "Verified packaged solve and output structure: $($case.Name)"
 }
