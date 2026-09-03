@@ -41,6 +41,8 @@ if ($LASTEXITCODE -ne 0) {
     throw "Staged command-line model inspection failed with exit code $LASTEXITCODE."
 }
 
+& (Join-Path $PSScriptRoot "VerifyStagedSolver.ps1") -StageDirectory $stage
+
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
 $startInfo.FileName = $workbench
 $startInfo.WorkingDirectory = $stage

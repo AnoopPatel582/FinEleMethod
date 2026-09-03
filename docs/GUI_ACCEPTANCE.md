@@ -83,6 +83,13 @@ was not reproduced during the original source review.
 
 ## Release gates beyond this checklist
 
+The automated package check now runs all three supported analysis formulations
+from both the staged directory and extracted ZIP with developer paths removed
+from the solver environment. It checks exit status, summary identity/paths/counts,
+and VTU mesh counts and field names. On 2026-09-03 these checks passed locally for
+a fresh Release build based on `ffb0932`; a package missing the H8 example was
+rejected. This is not an interactive G06 pass or a clean-machine qualification.
+
 - Successful Windows CI for the exact release commit, including staged and
   extracted-ZIP checks.
 - A Release-build interactive pass, including recovery, failure, and

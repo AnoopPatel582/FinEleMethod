@@ -143,6 +143,14 @@ Windows CI repeats this staging workflow and verifies the complete DLL set,
 command-line model inspection, and workbench startup with development paths
 removed from the process environment.
 
+Both staging and extracted-ZIP verification also solve the packaged Q4 plane-
+stress, Q4 plane-strain, and H8 examples with only `System32` on the solver's
+PATH. Checks require successful exit, matching JSON summary paths/model counts,
+and VTU mesh counts and result-field names. These are packaging smoke tests,
+not replacements for numerical benchmark comparisons or clean-machine testing.
+Each check retains fresh diagnostic outputs in a uniquely named temporary
+folder printed in the log; it does not modify the package.
+
 Check every tracked C++ source and header against `.clang-format`:
 
 ```powershell
