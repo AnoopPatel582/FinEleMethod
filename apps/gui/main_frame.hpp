@@ -1,5 +1,7 @@
 #pragma once
 
+#include "project_recovery_state.hpp"
+
 #include "finelemethod/output/analysis_summary.hpp"
 #include "finelemethod/project/analysis_run.hpp"
 #include "finelemethod/project/project_file.hpp"
@@ -31,6 +33,7 @@ class MainFrame final : public wxFrame
 
   private:
     void create_menu_bar();
+    [[nodiscard]] bool confirm_leaving_recovered_project();
     void create_content();
     void display_model_summary(const std::filesystem::path &input_file);
     void open_project(wxCommandEvent &event);
@@ -70,6 +73,7 @@ class MainFrame final : public wxFrame
     wxButton *open_run_folder_button_{};
     std::filesystem::path selected_input_file_;
     std::optional<project::ProjectFile> active_project_;
+    ProjectRecoveryState recovery_state_;
     std::optional<project::AnalysisRun> active_run_;
     std::vector<project::AnalysisRun> history_runs_;
     std::optional<output::AnalysisSummary> completed_summary_;

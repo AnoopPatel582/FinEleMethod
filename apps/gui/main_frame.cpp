@@ -261,6 +261,20 @@ void MainFrame::display_model_summary(const std::filesystem::path &input_file)
                          static_cast<unsigned long long>(summary.pressure_load_count)));
 }
 
+bool MainFrame::confirm_leaving_recovered_project()
+{
+    if (!recovery_state_.needs_confirmation())
+    {
+        return true;
+    }
+    return wxMessageBox("Recovered project metadata has not been saved to the main project "
+                        "JSON. Continue without saving?\n\n"
+                        "Choose No to stay and use Save Project. The recovery snapshot on "
+                        "disk will not be deleted.",
+                        "Unsaved recovered project", wxYES_NO | wxNO_DEFAULT | wxICON_WARNING,
+                        this) == wxYES;
+}
+
 void MainFrame::open_project(wxCommandEvent &)
 {
     if (solver_process_ != nullptr)
@@ -278,6 +292,10 @@ void MainFrame::open_project(wxCommandEvent &)
 
     try
     {
+        if (!confirm_leaving_recovered_project())
+        {
+            return;
+        }
         activate_project(
             project::read_project_file(std::filesystem::path{dialog.GetPath().ToStdWstring()}));
         SetStatusText("Project opened");
@@ -300,6 +318,7 @@ void MainFrame::save_project(wxCommandEvent &)
     try
     {
         const auto cleanup_warning = project::save_project_and_cleanup_autosave(*active_project_);
+        recovery_state_.saved();
         SetTitle(wxString::FromUTF8(project_caption(active_project_->name, false)));
         if (cleanup_warning)
         {
@@ -377,7 +396,12 @@ void MainFrame::recover_project_autosave(wxCommandEvent &)
         {
             return;
         }
+        if (!confirm_leaving_recovered_project())
+        {
+            return;
+        }
         activate_project(std::move(recovered));
+        recovery_state_.loaded(true);
         SetTitle(wxString::FromUTF8(project_caption(active_project_->name, true)));
         SetStatusText("Autosave loaded; use Save Project to retain recovered metadata");
     }
@@ -390,6 +414,10 @@ void MainFrame::recover_project_autosave(wxCommandEvent &)
 
 void MainFrame::choose_abaqus_input(wxCommandEvent &)
 {
+    if (solver_process_ != nullptr)
+    {
+        return;
+    }
     wxFileDialog dialog(this, "Select ABAQUS input file", wxEmptyString, wxEmptyString,
                         "ABAQUS input files (*.inp)|*.inp|All files (*.*)|*.*",
                         wxFD_OPEN | wxFD_FILE_MUST_EXIST);
@@ -399,6 +427,10 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
     }
 
     const std::filesystem::path selected_input{dialog.GetPath().ToStdWstring()};
+    if (!confirm_leaving_recovered_project())
+    {
+        return;
+    }
     try
     {
         display_model_summary(selected_input);
@@ -413,6 +445,7 @@ void MainFrame::choose_abaqus_input(wxCommandEvent &)
 
     selected_input_file_ = selected_input;
     active_project_.reset();
+    recovery_state_.loaded(false);
     SetTitle(wxString::FromUTF8(project_caption("", false)));
     active_run_.reset();
     completed_summary_.reset();
@@ -489,6 +522,7 @@ void MainFrame::activate_project(project::ProjectFile project)
     display_model_summary(project.input_file);
     selected_input_file_ = project.input_file;
     active_project_ = std::move(project);
+    recovery_state_.loaded(false);
     SetTitle(wxString::FromUTF8(project_caption(active_project_->name, false)));
     active_run_.reset();
     completed_summary_.reset();
@@ -968,6 +1002,11 @@ void MainFrame::close_window(wxCloseEvent &event)
     {
         wxMessageBox("Wait for the active analysis to finish before closing FinEleMethod.",
                      "Analysis running", wxOK | wxICON_WARNING, this);
+        event.Veto();
+        return;
+    }
+    if (event.CanVeto() && !confirm_leaving_recovered_project())
+    {
         event.Veto();
         return;
     }

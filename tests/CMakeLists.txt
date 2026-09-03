@@ -2,6 +2,7 @@ find_package(GTest CONFIG REQUIRED)
 
 add_executable(FinEleMethodTests
     gui/project_caption_test.cpp
+    gui/project_recovery_state_test.cpp
     assembly/coo_assembly_test.cpp
     assembly/h8_dof_mapping_test.cpp
     assembly/h8_pressure_assembly_test.cpp

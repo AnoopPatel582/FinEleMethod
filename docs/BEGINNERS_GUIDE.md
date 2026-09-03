@@ -45,6 +45,12 @@ If saving succeeds but autosave cleanup fails, the workbench reports **Project
 saved with a cleanup warning**. Your main JSON has been saved; the old snapshot
 may remain. A save failure does not remove the snapshot.
 
+While recovered metadata remains unsaved, closing the workbench, opening another
+project, selecting another input, or loading another recovery snapshot requires
+confirmation. **No** is the default: it keeps the current project open so you can
+use **Save Project**. **Yes** continues without saving and does not delete the
+snapshot. A forced Windows shutdown that cannot be vetoed bypasses this prompt.
+
 Cancel leaves the files unchanged. Invalid snapshots are rejected. Recovery
 does not restore missing or modified model contents or analysis results, so
 keep separate backups of those files. Periodic autosave and model editing are
