@@ -30,6 +30,9 @@ The history can be refreshed from the workbench or Analysis menu to discover
 run directories and completed outputs changed outside the application.
 If reading the refreshed history fails, the last successfully loaded list and
 selection remain available; the workbench reports the refresh error.
+If history refresh fails as an analysis finishes, the controls are restored and
+the solver outcome is still validated. The outcome dialog includes a separate
+history warning; the history area indicates stale entries until Refresh succeeds.
 An open project can be saved through **File → Save Project** or `Ctrl+S`; this
 uses the atomic project save, retains one backup, and removes a superseded
 autosave snapshot.

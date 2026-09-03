@@ -1,4 +1,5 @@
 #include "main_frame.hpp"
+#include "analysis_completion.hpp"
 #include "project_caption.hpp"
 
 #include "finelemethod/core/exit_code.hpp"
@@ -874,20 +875,31 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     consume_progress_lines(true);
     delete solver_process_;
     solver_process_ = nullptr;
-    refresh_run_history();
-    run_button_->Enable(active_project_.has_value());
-    cancel_button_->Disable();
-    browse_button_->Enable();
-    run_history_choice_->Enable(!history_runs_.empty());
-    refresh_run_history_button_->Enable(active_project_.has_value());
-    GetMenuBar()->Enable(open_project_id, true);
-    GetMenuBar()->Enable(save_project_id, active_project_.has_value());
-    GetMenuBar()->Enable(snapshot_project_id, active_project_.has_value());
-    GetMenuBar()->Enable(recover_project_id, true);
-    GetMenuBar()->Enable(open_input_id, true);
-    GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
-    GetMenuBar()->Enable(cancel_analysis_id, false);
-    GetMenuBar()->Enable(refresh_run_history_id, active_project_.has_value());
+    const auto history_warning = restore_after_analysis(
+        [this] {
+            run_button_->Enable(active_project_.has_value());
+            cancel_button_->Disable();
+            browse_button_->Enable();
+            run_history_choice_->Enable(!history_runs_.empty());
+            refresh_run_history_button_->Enable(active_project_.has_value());
+            GetMenuBar()->Enable(open_project_id, true);
+            GetMenuBar()->Enable(save_project_id, active_project_.has_value());
+            GetMenuBar()->Enable(snapshot_project_id, active_project_.has_value());
+            GetMenuBar()->Enable(recover_project_id, true);
+            GetMenuBar()->Enable(open_input_id, true);
+            GetMenuBar()->Enable(run_analysis_id, active_project_.has_value());
+            GetMenuBar()->Enable(cancel_analysis_id, false);
+            GetMenuBar()->Enable(refresh_run_history_id, active_project_.has_value());
+        },
+        [this] { refresh_run_history(); });
+    wxString history_notice;
+    if (history_warning)
+    {
+        run_history_text_->SetLabel("Run history: refresh failed; showing last loaded entries");
+        history_notice = "\n\nRun history could not be refreshed. The last loaded entries were "
+                         "retained. Use Refresh to retry.\n" +
+                         wxString::FromUTF8(*history_warning);
+    }
 
     if (event.GetExitCode() == static_cast<int>(ExitCode::Cancelled) &&
         progress_protocol_error_.empty() && cancellation_progress_received_)
@@ -900,7 +912,8 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
         summary_text_->SetLabel("Summary: analysis cancelled");
         wxMessageBox("The analysis was cancelled cooperatively.\n\nRun directory:\n" +
                          (active_run_ ? wxString{active_run_->run_directory.wstring()}
-                                      : wxString{"Unavailable"}),
+                                      : wxString{"Unavailable"}) +
+                         history_notice,
                      "Analysis cancelled", wxOK | wxICON_INFORMATION, this);
         return;
     }
@@ -934,7 +947,7 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
             GetMenuBar()->Enable(open_result_id, true);
             SetStatusText("Analysis completed");
             wxMessageBox("Analysis completed successfully.\n\nResult:\n" +
-                             wxString{active_run_->result_file.wstring()},
+                             wxString{active_run_->result_file.wstring()} + history_notice,
                          "FinEleMethod Analysis", wxOK | wxICON_INFORMATION, this);
             return;
         }
@@ -962,7 +975,8 @@ void MainFrame::analysis_finished(wxProcessEvent &event)
     wxMessageBox(wxString::Format("The solver exited with code %d.\n\n", event.GetExitCode()) +
                      details + "Run directory:\n" +
                      (active_run_ ? wxString{active_run_->run_directory.wstring()}
-                                  : wxString{"Unavailable"}),
+                                  : wxString{"Unavailable"}) +
+                     history_notice,
                  "Analysis failed", wxOK | wxICON_ERROR, this);
 }
 

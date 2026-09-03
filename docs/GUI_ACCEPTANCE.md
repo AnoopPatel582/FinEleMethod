@@ -67,13 +67,19 @@ Build: MSVC Debug, source commit `304db8d`.
 The isolated fixture is under `out/recovery-smoke-20260903/RecoveryCheck/` in
 the development checkout. It is generated test data and is not distributed.
 
-## Open finding from source review
+## Completion-history finding: code fix, interactive verification pending
 
-`MainFrame::analysis_finished` calls `refresh_run_history()` before restoring
-the controls, without catching its filesystem exceptions. The menu-driven
-refresh path does catch them. G21 needs a regression fix and verification:
-history read failure must not interrupt analysis completion handling. This
-finding is based on code inspection; a GUI crash was not reproduced.
+Source review found that `MainFrame::analysis_finished` refreshed history before
+restoring controls without catching filesystem exceptions. It now uses the
+tested `restore_after_analysis` boundary: controls are restored first, and a
+standard exception from history refresh is returned as a warning. Success,
+failure, and cancellation handling continue independently. The existing history
+list remains available; a stale-history label and the outcome dialog report the
+warning, and Refresh can retry the disk read.
+
+Automated regression tests exercise ordering and injected history failures.
+G21 still requires an interactive pass on the release candidate. A GUI crash
+was not reproduced during the original source review.
 
 ## Release gates beyond this checklist
 

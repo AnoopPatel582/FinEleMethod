@@ -1,6 +1,7 @@
 find_package(GTest CONFIG REQUIRED)
 
 add_executable(FinEleMethodTests
+    gui/analysis_completion_test.cpp
     gui/project_caption_test.cpp
     gui/project_recovery_state_test.cpp
     assembly/coo_assembly_test.cpp
