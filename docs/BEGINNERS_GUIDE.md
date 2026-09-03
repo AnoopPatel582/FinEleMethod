@@ -3,11 +3,15 @@
 This guide takes a new Windows user from the source repository to a solved
 finite element model. No commercial finite element software is required.
 
+If you downloaded the ready-built ZIP, use the
+[Windows ZIP Quick Start](WINDOWS_QUICK_START.md) instead of installing developer
+tools. In the extracted application folder it is also available as `START_HERE.md`.
+
 ## What the current application does
 
-FinEleMethod is currently a command-line solver. It reads supported ABAQUS
-`.inp` files, solves the model, and writes a `.vtu` result that can be viewed in
-ParaView.
+FinEleMethod includes a command-line solver and Windows workbench. It reads
+supported ABAQUS `.inp` files, solves the model, and writes a `.vtu` result that
+can be viewed in ParaView.
 
 Supported element types are:
 

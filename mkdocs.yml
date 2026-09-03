@@ -10,6 +10,7 @@ theme:
 
 nav:
   - Home: index.md
+  - Windows ZIP Quick Start: WINDOWS_QUICK_START.md
   - Beginner's Guide: BEGINNERS_GUIDE.md
   - Architecture: ARCHITECTURE.md
   - GUI Acceptance: GUI_ACCEPTANCE.md

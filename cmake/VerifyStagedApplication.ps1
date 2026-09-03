@@ -14,6 +14,21 @@ $solver = Join-Path $stage "FinEleMethod.exe"
 $workbench = Join-Path $stage "FinEleMethodGui.exe"
 $example = Join-Path $stage "examples\abaqus\q4_tension.inp"
 
+$requiredDocuments = @(
+    "START_HERE.md", "README.md", "docs\WINDOWS_QUICK_START.md",
+    "docs\BEGINNERS_GUIDE.md", "docs\ARCHITECTURE.md", "docs\PROJECT_DECISIONS.md",
+    "docs\GUI_ACCEPTANCE.md", "docs\formulations\Q4.md", "docs\formulations\H8.md",
+    "docs\formulations\SYSTEM_SOLUTION.md", "docs\benchmarks\cantilever_beam.md",
+    "docs\benchmarks\plate_with_hole.md", "docs\benchmarks\h8_compression.md"
+)
+foreach ($relativePath in $requiredDocuments) {
+    $document = Join-Path $stage $relativePath
+    if (-not (Test-Path -LiteralPath $document -PathType Leaf) -or
+        (Get-Item -LiteralPath $document).Length -eq 0) {
+        throw "Staged application is missing required documentation: $relativePath"
+    }
+}
+
 foreach ($requiredPath in @($solver, $workbench, $example, (Join-Path $stage "z.dll"))) {
     if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {
         throw "Staged application is missing required file: $requiredPath"

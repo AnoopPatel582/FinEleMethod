@@ -92,6 +92,11 @@ cancellation separately from solver failure.
 
 ## Prerequisites
 
+These are source-build prerequisites. For the ready-built ZIP, follow the
+[Windows ZIP Quick Start](docs/WINDOWS_QUICK_START.md), also installed as
+`START_HERE.md` beside the executables. The package includes the Markdown
+architecture, formulation, and benchmark documents under `docs/`.
+
 - Windows.
 - Visual Studio Community 2026 with the **Desktop development with C++**
   workload.
