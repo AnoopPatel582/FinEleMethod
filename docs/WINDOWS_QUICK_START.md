@@ -8,8 +8,10 @@ on them for engineering decisions.
 
 ## 1. Prepare the application
 
-1. Obtain the ZIP and matching `.sha256` file from the same successful Windows
-   CI run in the FinEleMethod repository. Do not mix files from different runs.
+1. Obtain the ZIP, matching `.sha256` file, and `.manifest.json` from the same
+   successful Windows CI run in the FinEleMethod repository. Do not mix files
+   from different runs. The manifest records the source commit, workflow run,
+   archive size, and verified checksum for that build.
 2. Optionally check the download in PowerShell using
    `Get-FileHash -Algorithm SHA256 -LiteralPath 'C:\Downloads\FinEleMethod-windows-x64.zip'`.
    Replace the example path with your actual download. Compare the hash with the

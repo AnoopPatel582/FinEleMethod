@@ -30,6 +30,10 @@ jobs:
         shell: pwsh
         run: .\cmake\TestWindowsArchive.ps1
 
+      - name: Test release manifest
+        shell: pwsh
+        run: .\cmake\TestWindowsReleaseManifest.ps1
+
       - name: Test packaged result validation
         shell: pwsh
         run: .\cmake\TestVtuVerification.ps1
@@ -117,6 +121,16 @@ jobs:
             -StageDirectory $archiveStage `
             -ReleaseDirectory .\out\build\windows-msvc\Release
 
+      - name: Create Windows release manifest
+        shell: pwsh
+        run: >-
+          .\cmake\CreateWindowsReleaseManifest.ps1
+          -ArchiveFile .\out\package\FinEleMethod-windows-x64.zip
+          -ChecksumFile .\out\package\FinEleMethod-windows-x64.zip.sha256
+          -SourceCommit ${{ github.sha }}
+          -WorkflowUrl "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          -OutputFile .\out\package\FinEleMethod-windows-x64.manifest.json
+
       - name: Upload Windows ZIP archive
         uses: actions/upload-artifact@v7
         with:
@@ -128,5 +142,12 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           path: out/package/FinEleMethod-windows-x64.zip.sha256
+          if-no-files-found: error
+          archive: false
+
+      - name: Upload Windows release manifest
+        uses: actions/upload-artifact@v7
+        with:
+          path: out/package/FinEleMethod-windows-x64.manifest.json
           if-no-files-found: error
           archive: false

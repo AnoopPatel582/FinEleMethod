@@ -14,6 +14,7 @@ the [interactive GUI checklist](GUI_ACCEPTANCE.md) or clean-machine testing.
 | Request-mode packaged solve | Unrelated working directory, paths with spaces, four ordered progress events, completed state and correct results |
 | Unsuccessful request | Pre-execution cancellation, missing input, and unsupported protocol return the expected exit/state without completion outputs |
 | App-local deployment | DLL-set comparison and workbench startup without developer paths |
+| Release identity | JSON manifest records the exact source commit, workflow run, archive size and verified SHA-256 |
 
 The finite-element implementation remains custom C++. The PowerShell analytical
 comparisons are test oracles for three fixed examples, not an alternative solver.
@@ -42,6 +43,13 @@ the same check again after ZIP creation, checksum verification, and extraction.
 The request tests retain `stdout.jsonl`, `stderr.txt`, and any run outputs under
 a unique temporary directory printed in the log. Failed tests throw, stopping
 the CI step; retain their output for diagnosis.
+
+After both staged and extracted-package checks pass, CI creates
+`FinEleMethod-windows-x64.manifest.json`. Download it with the ZIP and checksum.
+Its `sourceCommit` and `workflowRun` identify the exact build, while its archive
+name, size, and SHA-256 prevent evidence from different runs being mixed. The
+manifest reports only automated staged and extracted-archive validation; it is
+not evidence of interactive GUI or clean-machine qualification.
 
 ## Analytical package oracles
 
