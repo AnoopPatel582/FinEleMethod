@@ -131,6 +131,10 @@ Build: staged Windows acceptance executable in
 - **G12: Pass.** The user attempted to close the workbench while an analysis
   was active. The close was vetoed, the analysis remained active, and the
   controls recovered after cooperative cancellation.
+- **G13: Pass.** The user created a recovery snapshot, selected Create Recovery
+  Snapshot again, and chose No at the replacement confirmation. Before-and-after
+  checks showed the same 100-byte size, UTC modification timestamp, and SHA-256
+  hash, confirming that the existing snapshot remained unchanged.
 
 ## Release gates beyond this checklist
 
