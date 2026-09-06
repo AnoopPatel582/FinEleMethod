@@ -165,8 +165,8 @@ cmake --install .\out\build\windows-msvc `
 
 The staged application is then available under
 `out\install\windows-msvc-release\`. This development-stage folder assumes the
-Microsoft Visual C++ Runtime is installed; the future installer will manage that
-prerequisite.
+Microsoft Visual C++ Runtime is installed. The offline installer described in
+[Windows Installer](INSTALLER.md) bundles and manages that prerequisite.
 
 To create a ZIP from the staged application, run:
 

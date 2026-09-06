@@ -83,7 +83,10 @@ Detailed evidence and exact qualifications are maintained in
 - End users do not need Visual Studio, CMake, Git, vcpkg, or Inno Setup.
 - ParaView remains a separate download for result visualization.
 - The current installer is not code-signed, so Windows may show an unknown-publisher warning.
-- Successful Windows CI runs expose downloadable files in the run's **Artifacts** section.
+- The published [FinEleMethod 0.1.0 release](https://github.com/AnoopPatel582/FinEleMethod/releases/tag/v0.1.0)
+  provides the installer, portable ZIP, matching checksums, and release manifest.
+- Successful Windows CI runs also retain downloadable build files in the run's
+  **Artifacts** section.
 
 For end-user instructions, read:
 

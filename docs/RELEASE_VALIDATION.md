@@ -127,3 +127,24 @@ and shortcut, while the analysis project stored in Documents remained present.
 This proves the application install/uninstall path on that computer. It does not
 prove the VC++ runtime installation branch on a machine where the prerequisite is
 absent, nor does it replace the separate portable-ZIP clean-machine record above.
+
+## Published release: 2026-09-06
+
+FinEleMethod 0.1.0 is published as the repository's latest release:
+<https://github.com/AnoopPatel582/FinEleMethod/releases/tag/v0.1.0>.
+
+- Tag: `v0.1.0`.
+- Exact source commit: `63def64dbf539f687718c2cead2c9d83c42c1638`.
+- Successful Windows CI run:
+  <https://github.com/AnoopPatel582/FinEleMethod/actions/runs/34035211981>.
+- Installer asset SHA-256:
+  `0b93d773aaff6d0c657858f84cf2e34b34330959a9d00b149a72861d002e6a27`.
+- Portable ZIP asset SHA-256:
+  `b379564f5917685e54de8dc606fd7aeffca38a58c5d7b201044db87c44419bb5`.
+- The matching checksum files and 517-byte release manifest are attached to the
+  release alongside the installer and portable ZIP.
+
+GitHub displays all five uploaded files with the same SHA-256 digests as the
+verified CI artifacts. The release is a normal release, not a pre-release, and
+is marked **Latest**. The installer runtime-absent qualification described above
+remains outstanding and is stated in the public release notes.
