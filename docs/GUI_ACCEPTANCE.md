@@ -144,6 +144,12 @@ Build: staged Windows acceptance executable in
   the workbench and chose No; the window remained open with the recovered
   project and marker intact. The user repeated the close attempt and pressed
   Enter, confirming that the safe default No choice produced the same result.
+- **G16: Pass.** With `CancellationSymmetry` recovered and unsaved, the user
+  separately attempted to open another project, select another ABAQUS input,
+  and load another recovery snapshot. Choosing No at each leave warning kept
+  the current recovered project active and marked unsaved. Filesystem checks
+  confirmed that both recovery snapshots remained present and the current main
+  JSON remained missing.
 
 ## Release gates beyond this checklist
 
