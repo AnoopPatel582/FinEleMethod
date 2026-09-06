@@ -206,3 +206,8 @@ rejected. This is not an interactive G06 pass or a clean-machine qualification.
 The website, embedded visualization, model editing, and automatic unit
 conversion remain separate future work. They are not prerequisites for these
 initial Windows release checks.
+
+The clean-machine check for the `f0f010a` portable archive subsequently passed
+on 2026-09-06 as recorded in [Release Validation](RELEASE_VALIDATION.md). The
+exact Windows version and pre-existing Visual C++ Runtime state were not
+recorded, so installer prerequisite handling still requires its own test.

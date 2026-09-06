@@ -80,3 +80,18 @@ Record the source commit, workflow URL and result, ZIP checksum, build diagnosti
 test configuration/counts, and the exact cases run. Keep **Pass**, **Fail**,
 **Blocked**, and **Not run** distinct. A green CI run is not proof that every
 user interaction or engineering model is correct.
+
+## Recorded clean-machine check: 2026-09-06
+
+Candidate source commit: `f0f010a`. Portable archive:
+`FinEleMethod-clean-machine-f0f010a-windows-x64.zip`, 4,832,363 bytes, SHA-256
+`625cffd1a46e8e13ae029933dac5a560ecd901fe28c42d69cff7bc7f1c790132`.
+
+Before handoff, the staged folder and a fresh archive extraction passed the
+complete packaged-application checker with 12 app-local DLLs. The user then
+tested the archive on a separate friend's Windows laptop and reported all
+prescribed checks passed: checksum comparison, GUI launch without a missing-DLL
+error, Release x64 MSVC build information, model inspection, Q4 plane-stress,
+Q4 plane-strain, and H8 CLI solves with VTU creation, plus GUI project creation
+and successful analysis. The laptop's exact Windows version and whether the
+Microsoft Visual C++ Runtime was already installed were not recorded.
