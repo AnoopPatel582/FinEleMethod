@@ -1,7 +1,8 @@
 # Fifteen-minute demonstration plan
 
-This is a rehearsal and recording guide. It is not the required video itself,
-and it does not claim that the GUI acceptance cases have been completed.
+This is a rehearsal and recording guide, not the required video itself. The
+maintained GUI, clean-machine, and installer acceptance evidence should be cited
+from the validation documents rather than presented as part of this file.
 
 ## Prepare before recording
 
@@ -24,8 +25,8 @@ and it does not claim that the GUI acceptance cases have been completed.
 | 6:00-8:00 | Plane-strain and H8 runs | Formulation differences, pressure loading, axial compression and Poisson expansion |
 | 8:00-10:00 | Three benchmark reports | Analytical comparison, tolerances, mesh-dependent error, limitations of low-order elements |
 | 10:00-12:00 | Reopen history and recover a metadata snapshot | Saved runs, unsaved-recovery marker, confirmation before leaving; snapshots do not restore model contents |
-| 12:00-14:00 | Test/CI evidence and extracted ZIP layout | Automated numerical and package checks, build diagnostics, setup without developer tools |
-| 14:00-15:00 | Remaining work and conclusion | Clean-machine qualification, interactive checks, future unit conversion/editor/embedded visualization |
+| 12:00-14:00 | Test/CI evidence and Windows installer | Automated numerical/package checks, build diagnostics, setup without developer tools |
+| 14:00-15:00 | Limitations and conclusion | Linear static scope, consistent units, supported elements, and future unit conversion/editor/embedded visualization |
 
 ## Benchmark talking points
 

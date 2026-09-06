@@ -15,6 +15,7 @@ the [interactive GUI checklist](GUI_ACCEPTANCE.md) or clean-machine testing.
 | Unsuccessful request | Pre-execution cancellation, missing input, and unsupported protocol return the expected exit/state without completion outputs |
 | App-local deployment | DLL-set comparison and workbench startup without developer paths |
 | Release identity | JSON manifest records the exact source commit, workflow run, archive size and verified SHA-256 |
+| Installer creation | Verified staged input, Microsoft-signed VC++ runtime, setup version/publisher metadata, and matching SHA-256 |
 
 The finite-element implementation remains custom C++. The PowerShell analytical
 comparisons are test oracles for three fixed examples, not an alternative solver.
@@ -50,6 +51,19 @@ Its `sourceCommit` and `workflowRun` identify the exact build, while its archive
 name, size, and SHA-256 prevent evidence from different runs being mixed. The
 manifest reports only automated staged and extracted-archive validation; it is
 not evidence of interactive GUI or clean-machine qualification.
+
+Build and independently verify the Windows installer with:
+
+```powershell
+.\cmake\BuildWindowsInstaller.ps1
+.\cmake\VerifyWindowsInstaller.ps1 `
+  -InstallerFile .\out\installer\FinEleMethod-0.1.0-windows-x64-setup.exe `
+  -ChecksumFile .\out\installer\FinEleMethod-0.1.0-windows-x64-setup.exe.sha256
+```
+
+CI runs both commands after staged and ZIP verification, then uploads the setup
+executable and checksum as separate artifacts. Automated compilation does not
+replace interactive installation, shortcut, execution, and uninstallation tests.
 
 ## Analytical package oracles
 
@@ -95,3 +109,21 @@ error, Release x64 MSVC build information, model inspection, Q4 plane-stress,
 Q4 plane-strain, and H8 CLI solves with VTU creation, plus GUI project creation
 and successful analysis. The laptop's exact Windows version and whether the
 Microsoft Visual C++ Runtime was already installed were not recorded.
+
+## Recorded installer acceptance: 2026-09-06
+
+Candidate source commit: `b65de19`. Installer:
+`FinEleMethod-0.1.0-windows-x64-setup.exe`, 23,581,018 bytes, SHA-256
+`8b8ceaa123a0438023d1f73b175b0bb21e4aa1361728259f86a98167a78caf62`.
+The build helper verified the staged Release x64 application with 12 app-local
+DLLs and bundled Microsoft-signed Visual C++ x64 Runtime 14.51.36247.0.
+
+The user tested this installer interactively on the development computer and
+reported that installation under the default Program Files location, first GUI
+launch, version 0.1.0/Release/64-bit diagnostics, installed Q4 example loading,
+project creation and analysis, Start Menu launch, and Programs and Features
+version/publisher registration all passed. Uninstallation removed the application
+and shortcut, while the analysis project stored in Documents remained present.
+This proves the application install/uninstall path on that computer. It does not
+prove the VC++ runtime installation branch on a machine where the prerequisite is
+absent, nor does it replace the separate portable-ZIP clean-machine record above.
