@@ -128,6 +128,9 @@ Build: staged Windows acceptance executable in
   started an analysis, requested cancellation while it was active, and received
   both "Analysis cancelled" and confirmation that the analysis was cancelled
   cooperatively. This verifies the corrected GUI-to-CLI cancellation path.
+- **G12: Pass.** The user attempted to close the workbench while an analysis
+  was active. The close was vetoed, the analysis remained active, and the
+  controls recovered after cooperative cancellation.
 
 ## Release gates beyond this checklist
 
