@@ -160,6 +160,11 @@ Build: staged Windows acceptance executable in
   The GUI reported Project saved and cleared the recovered marker. Filesystem
   checks confirmed a valid main JSON, removal of the obsolete autosave, and a
   `.bak` file whose SHA-256 hash matches the pre-save main JSON.
+- **G19: Pass.** With recovered metadata unsaved, the disposable input
+  directory was temporarily moved aside and Save Project produced the expected
+  error. The recovered marker remained. Checks confirmed that the main JSON and
+  autosave hashes were unchanged and the autosave was retained. The input
+  directory was then restored successfully.
 
 ## Release gates beyond this checklist
 
