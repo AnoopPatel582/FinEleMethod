@@ -150,6 +150,11 @@ Build: staged Windows acceptance executable in
   the current recovered project active and marked unsaved. Filesystem checks
   confirmed that both recovery snapshots remained present and the current main
   JSON remained missing.
+- **G17: Pass.** The user confirmed leaving the unsaved recovered
+  `CancellationSymmetry` metadata and successfully switched to the alternate
+  `CancellationCheck` project. The recovered marker cleared. Hash checks
+  confirmed that the abandoned project's autosave and preserved original JSON
+  remained unchanged, while its main JSON remained missing as prepared.
 
 ## Release gates beyond this checklist
 
