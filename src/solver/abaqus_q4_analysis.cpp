@@ -6,7 +6,8 @@
 
 namespace finelemethod::solver
 {
-AbaqusQ4Solution analyze_abaqus_q4(const std::string_view input_text)
+AbaqusQ4Solution analyze_abaqus_q4(const std::string_view input_text,
+                                   const ConjugateGradientOptions &solver_options)
 {
     input::AbaqusQ4Model input_model = input::parse_abaqus_q4_model(input_text);
     const model::DofMap dof_map(input_model.nodes, model::SpatialDimension::two_dimensional);
@@ -16,13 +17,14 @@ AbaqusQ4Solution analyze_abaqus_q4(const std::string_view input_text)
         auto result = solve_q4_plane_stress_model(
             input_model.elements, input_model.nodes, input_model.materials, dof_map,
             input_model.point_loads, input_model.pressure_loads,
-            input_model.prescribed_displacements);
+            input_model.prescribed_displacements, solver_options);
         return AbaqusQ4Solution{std::move(input_model), std::move(result)};
     }
 
-    auto result = solve_q4_plane_strain_model(
-        input_model.elements, input_model.nodes, input_model.materials, dof_map,
-        input_model.point_loads, input_model.pressure_loads, input_model.prescribed_displacements);
+    auto result =
+        solve_q4_plane_strain_model(input_model.elements, input_model.nodes, input_model.materials,
+                                    dof_map, input_model.point_loads, input_model.pressure_loads,
+                                    input_model.prescribed_displacements, solver_options);
     return AbaqusQ4Solution{std::move(input_model), std::move(result)};
 }
 } // namespace finelemethod::solver

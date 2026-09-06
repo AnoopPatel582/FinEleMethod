@@ -39,6 +39,10 @@ ConjugateGradientResult solve_conjugate_gradient(const math::CsrMatrix &matrix,
             throw std::invalid_argument("Conjugate Gradient right-hand side must be finite.");
         }
     }
+    if (options.cancellation_requested && options.cancellation_requested())
+    {
+        throw AnalysisCancelled{};
+    }
 
     math::DenseVector solution(matrix.columns());
     math::DenseVector residual = right_hand_side;
@@ -55,6 +59,10 @@ ConjugateGradientResult solve_conjugate_gradient(const math::CsrMatrix &matrix,
 
     for (std::size_t iteration = 1; iteration <= options.maximum_iterations; ++iteration)
     {
+        if (options.cancellation_requested && options.cancellation_requested())
+        {
+            throw AnalysisCancelled{};
+        }
         const math::DenseVector matrix_direction = matrix * direction;
         const double curvature = math::dot(direction, matrix_direction);
         if (!std::isfinite(curvature) || curvature <= 0.0)

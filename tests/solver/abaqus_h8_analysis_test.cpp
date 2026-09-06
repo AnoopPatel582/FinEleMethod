@@ -9,7 +9,9 @@ namespace
 using finelemethod::model::DisplacementComponent;
 using finelemethod::model::DofMap;
 using finelemethod::model::SpatialDimension;
+using finelemethod::solver::AnalysisCancelled;
 using finelemethod::solver::analyze_abaqus_h8;
+using finelemethod::solver::ConjugateGradientOptions;
 using finelemethod::solver::solve_abaqus_h8;
 
 constexpr std::string_view compression_model = R"(*Node
@@ -87,5 +89,14 @@ TEST(AbaqusH8Analysis, RetainsModelAlongsideSolution)
     EXPECT_EQ(solution.model.materials.size(), 1U);
     EXPECT_NEAR(solution.result.displacements[dof_map.global_index(7, DisplacementComponent::z)],
                 -0.01, 1.0e-12);
+}
+
+TEST(AbaqusH8Analysis, PropagatesCancellationIntoNumericalSolve)
+{
+    ConjugateGradientOptions options;
+    options.cancellation_requested = [] { return true; };
+
+    EXPECT_THROW(static_cast<void>(analyze_abaqus_h8(compression_model, options)),
+                 AnalysisCancelled);
 }
 } // namespace

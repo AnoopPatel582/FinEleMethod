@@ -7,7 +7,8 @@
 
 namespace finelemethod::solver
 {
-AbaqusQ4PlaneStrainSolution analyze_abaqus_q4_plane_strain(const std::string_view input_text)
+AbaqusQ4PlaneStrainSolution analyze_abaqus_q4_plane_strain(
+    const std::string_view input_text, const ConjugateGradientOptions &solver_options)
 {
     input::AbaqusQ4Model input_model = input::parse_abaqus_q4_model(input_text);
     if (input_model.analysis_type != input::Q4AnalysisType::plane_strain)
@@ -16,15 +17,17 @@ AbaqusQ4PlaneStrainSolution analyze_abaqus_q4_plane_strain(const std::string_vie
     }
     const model::DofMap dof_map(input_model.nodes, model::SpatialDimension::two_dimensional);
 
-    auto result = solve_q4_plane_strain_model(
-        input_model.elements, input_model.nodes, input_model.materials, dof_map,
-        input_model.point_loads, input_model.pressure_loads, input_model.prescribed_displacements);
+    auto result =
+        solve_q4_plane_strain_model(input_model.elements, input_model.nodes, input_model.materials,
+                                    dof_map, input_model.point_loads, input_model.pressure_loads,
+                                    input_model.prescribed_displacements, solver_options);
     return AbaqusQ4PlaneStrainSolution{std::move(input_model), std::move(result)};
 }
 
-Q4PlaneStrainAnalysisResult solve_abaqus_q4_plane_strain(const std::string_view input_text)
+Q4PlaneStrainAnalysisResult solve_abaqus_q4_plane_strain(
+    const std::string_view input_text, const ConjugateGradientOptions &solver_options)
 {
-    auto solution = analyze_abaqus_q4_plane_strain(input_text);
+    auto solution = analyze_abaqus_q4_plane_strain(input_text, solver_options);
     return std::move(solution.result);
 }
 } // namespace finelemethod::solver

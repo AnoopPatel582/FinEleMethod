@@ -16,9 +16,10 @@ struct AbaqusQ4PlaneStressSolution
 // Parses supported ABAQUS input data and retains both the validated model and
 // its complete Q4 plane-stress solution.
 [[nodiscard]] AbaqusQ4PlaneStressSolution analyze_abaqus_q4_plane_stress(
-    std::string_view input_text);
+    std::string_view input_text, const ConjugateGradientOptions &solver_options = {});
 
 // Parses supported ABAQUS input data and runs a complete Q4 plane-stress
 // linear-static analysis.
-[[nodiscard]] Q4PlaneStressAnalysisResult solve_abaqus_q4_plane_stress(std::string_view input_text);
+[[nodiscard]] Q4PlaneStressAnalysisResult solve_abaqus_q4_plane_stress(
+    std::string_view input_text, const ConjugateGradientOptions &solver_options = {});
 } // namespace finelemethod::solver

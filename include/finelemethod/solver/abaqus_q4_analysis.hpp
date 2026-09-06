@@ -20,5 +20,6 @@ struct AbaqusQ4Solution
 
 // Parses the ABAQUS model once and dispatches CPS4 to plane stress or CPE4 to
 // plane strain according to the explicit element formulation.
-[[nodiscard]] AbaqusQ4Solution analyze_abaqus_q4(std::string_view input_text);
+[[nodiscard]] AbaqusQ4Solution analyze_abaqus_q4(
+    std::string_view input_text, const ConjugateGradientOptions &solver_options = {});
 } // namespace finelemethod::solver

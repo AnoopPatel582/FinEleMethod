@@ -15,9 +15,11 @@ struct AbaqusH8Solution
 
 // Parses supported ABAQUS C3D8 input data and retains both the validated model
 // and its complete H8 solution.
-[[nodiscard]] AbaqusH8Solution analyze_abaqus_h8(std::string_view input_text);
+[[nodiscard]] AbaqusH8Solution analyze_abaqus_h8(
+    std::string_view input_text, const ConjugateGradientOptions &solver_options = {});
 
 // Parses supported ABAQUS C3D8 input data and runs a complete H8 linear-static
 // analysis.
-[[nodiscard]] H8AnalysisResult solve_abaqus_h8(std::string_view input_text);
+[[nodiscard]] H8AnalysisResult solve_abaqus_h8(std::string_view input_text,
+                                               const ConjugateGradientOptions &solver_options = {});
 } // namespace finelemethod::solver

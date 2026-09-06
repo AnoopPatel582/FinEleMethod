@@ -219,6 +219,13 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
             write_progress(output::AnalysisState::cancelled, "Analysis cancelled by user.");
             return true;
         };
+        solver::ConjugateGradientOptions solver_options;
+        if (cancellation_directory)
+        {
+            solver_options.cancellation_requested = [&] {
+                return project::is_analysis_cancellation_requested(*cancellation_directory);
+            };
+        }
 
         write_progress(output::AnalysisState::preparing, "Reading input model.");
         if (cancellation_requested())
@@ -248,7 +255,7 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                 input::detect_abaqus_element_family(input_text);
             if (family == input::AbaqusElementFamily::h8)
             {
-                auto solution = solver::analyze_abaqus_h8(input_text);
+                auto solution = solver::analyze_abaqus_h8(input_text, solver_options);
                 const model::DofMap dof_map(solution.model.nodes,
                                             model::SpatialDimension::three_dimensional);
                 if (cancellation_requested())
@@ -297,7 +304,7 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                 return ExitCode::Success;
             }
 
-            auto solution = solver::analyze_abaqus_q4(input_text);
+            auto solution = solver::analyze_abaqus_q4(input_text, solver_options);
             const model::DofMap dof_map(solution.model.nodes,
                                         model::SpatialDimension::two_dimensional);
             if (cancellation_requested())
@@ -369,6 +376,11 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
             write_progress(output::AnalysisState::failed, exception.what());
             error << "Model validation error: " << exception.what() << '\n';
             return ExitCode::ModelValidationError;
+        }
+        catch (const solver::AnalysisCancelled &)
+        {
+            write_progress(output::AnalysisState::cancelled, "Analysis cancelled by user.");
+            return ExitCode::Cancelled;
         }
         catch (const std::runtime_error &exception)
         {

@@ -81,6 +81,44 @@ Automated regression tests exercise ordering and injected history failures.
 G21 still requires an interactive pass on the release candidate. A GUI crash
 was not reproduced during the original source review.
 
+## Recorded check: 2026-09-05 - active cancellation
+
+Build: staged Windows acceptance executable in
+`out/install/gui-acceptance-7c54a2f/`, source commit
+`7c54a2f70a5b3805da6cd44736e37961c7382d4f`.
+
+- **G11: Not passed; cancellation finding reproduced.** Using native GUI
+  control, started a disposable 160,000-element Q4 plane-stress analysis and
+  clicked Cancel Analysis while the run was active. The request flag was
+  written at 10:11:54 local time, but the terminal state was written at
+  10:12:07 as `failed`, with "Sparse static system did not converge within
+  the iteration limit." The GUI displayed Analysis failed, restored Run
+  Analysis, and kept Open Result disabled. No result file was produced.
+- Evidence: `out/gui-acceptance-fixtures/CancellationSymmetry/runs/run-0001/`
+  contains `cancellation-requested.flag` and `analysis-state.json`. Fixtures
+  are ignored development data, not distribution examples.
+- A standalone run of this large fixture also reached the iteration limit;
+  its nonconvergence is separate from the cancellation-handling finding.
+- Source inspection shows cancellation checks before and after the solver
+  call, not inside the numerical solve. An exception from that call reaches
+  failure handling before the post-solve cancellation check. Cancellation
+  during numerical execution needs remediation and an interactive retest;
+  this attempt must not be counted as a cancellation pass.
+- G12-G21 were not executed in this session. No solver code was changed.
+
+### G11 remediation implemented; GUI retest pending
+
+The numerical solver now accepts an optional cancellation callback and checks
+it before and between Conjugate Gradient iterations. Q4 and H8 analysis entry
+points propagate that callback, and the CLI maps its dedicated cancellation
+exception to the `cancelled` lifecycle state and exit code 6.
+
+Focused Q4, H8, Conjugate Gradient, and CLI regression tests pass. A direct
+process test using the same 160,000-element fixture placed the cancellation
+flag 1.5 seconds after launch and ended with exit code 6, terminal state
+`cancelled`, and no result or summary file. G11 remains **not passed** until the
+updated GUI package completes the interactive acceptance procedure.
+
 ## Release gates beyond this checklist
 
 The current [release-validation procedure](RELEASE_VALIDATION.md) adds finite

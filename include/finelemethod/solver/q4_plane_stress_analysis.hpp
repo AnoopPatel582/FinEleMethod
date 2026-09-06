@@ -31,5 +31,6 @@ struct Q4PlaneStressAnalysisResult
     const model::MaterialCollection &materials, const model::DofMap &dof_map,
     std::span<const model::PointLoad> point_loads,
     std::span<const model::Q4EdgePressureLoad> pressure_loads,
-    std::span<const PrescribedDisplacement> prescribed_displacements);
+    std::span<const PrescribedDisplacement> prescribed_displacements,
+    const ConjugateGradientOptions &solver_options = {});
 } // namespace finelemethod::solver

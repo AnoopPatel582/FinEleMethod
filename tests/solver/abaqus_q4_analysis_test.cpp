@@ -9,7 +9,9 @@
 namespace
 {
 using finelemethod::input::Q4AnalysisType;
+using finelemethod::solver::AnalysisCancelled;
 using finelemethod::solver::analyze_abaqus_q4;
+using finelemethod::solver::ConjugateGradientOptions;
 using finelemethod::solver::Q4PlaneStrainAnalysisResult;
 using finelemethod::solver::Q4PlaneStressAnalysisResult;
 
@@ -58,5 +60,14 @@ TEST(AbaqusQ4Analysis, DispatchesCpe4ToPlaneStrain)
     ASSERT_TRUE(std::holds_alternative<Q4PlaneStrainAnalysisResult>(solution.result));
     const auto &result = std::get<Q4PlaneStrainAnalysisResult>(solution.result);
     EXPECT_NEAR(result.displacements[2], 0.009375, 1.0e-12);
+}
+
+TEST(AbaqusQ4Analysis, PropagatesCancellationIntoNumericalSolve)
+{
+    ConjugateGradientOptions options;
+    options.cancellation_requested = [] { return true; };
+
+    EXPECT_THROW(static_cast<void>(analyze_abaqus_q4(input_with_type("CPS4"), options)),
+                 AnalysisCancelled);
 }
 } // namespace

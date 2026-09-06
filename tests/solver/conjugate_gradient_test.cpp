@@ -14,6 +14,7 @@ namespace
 using finelemethod::math::convert_to_csr;
 using finelemethod::math::CooMatrix;
 using finelemethod::math::DenseVector;
+using finelemethod::solver::AnalysisCancelled;
 using finelemethod::solver::ConjugateGradientOptions;
 using finelemethod::solver::solve_conjugate_gradient;
 
@@ -72,6 +73,24 @@ TEST(ConjugateGradient, ReportsIterationLimitWithoutThrowing)
     EXPECT_FALSE(result.converged);
     EXPECT_EQ(result.iterations, 1U);
     EXPECT_GT(result.residual_norm, 0.0);
+}
+
+TEST(ConjugateGradient, ChecksForCancellationBetweenIterations)
+{
+    CooMatrix coordinate_matrix(2, 2);
+    coordinate_matrix.add(0, 0, 4.0);
+    coordinate_matrix.add(0, 1, 1.0);
+    coordinate_matrix.add(1, 0, 1.0);
+    coordinate_matrix.add(1, 1, 3.0);
+    const auto matrix = convert_to_csr(coordinate_matrix);
+    const DenseVector right_hand_side(2, 1.0);
+    std::size_t cancellation_checks = 0;
+    ConjugateGradientOptions options;
+    options.cancellation_requested = [&] { return ++cancellation_checks == 2; };
+
+    EXPECT_THROW(static_cast<void>(solve_conjugate_gradient(matrix, right_hand_side, options)),
+                 AnalysisCancelled);
+    EXPECT_EQ(cancellation_checks, 2U);
 }
 
 TEST(ConjugateGradient, RejectsInvalidDimensions)

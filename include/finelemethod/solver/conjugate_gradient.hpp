@@ -4,14 +4,25 @@
 #include "finelemethod/math/dense_vector.hpp"
 
 #include <cstddef>
+#include <functional>
+#include <stdexcept>
 
 namespace finelemethod::solver
 {
+class AnalysisCancelled : public std::runtime_error
+{
+  public:
+    AnalysisCancelled() : std::runtime_error("Analysis cancelled by user.")
+    {
+    }
+};
+
 struct ConjugateGradientOptions
 {
     double relative_tolerance = 1.0e-10;
     double absolute_tolerance = 0.0;
     std::size_t maximum_iterations = 1000;
+    std::function<bool()> cancellation_requested;
 };
 
 struct ConjugateGradientResult

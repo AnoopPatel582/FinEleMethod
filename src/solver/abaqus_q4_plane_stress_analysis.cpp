@@ -9,7 +9,8 @@
 
 namespace finelemethod::solver
 {
-AbaqusQ4PlaneStressSolution analyze_abaqus_q4_plane_stress(const std::string_view input_text)
+AbaqusQ4PlaneStressSolution analyze_abaqus_q4_plane_stress(
+    const std::string_view input_text, const ConjugateGradientOptions &solver_options)
 {
     input::AbaqusQ4Model input_model = input::parse_abaqus_q4_model(input_text);
     if (input_model.analysis_type != input::Q4AnalysisType::plane_stress)
@@ -18,15 +19,17 @@ AbaqusQ4PlaneStressSolution analyze_abaqus_q4_plane_stress(const std::string_vie
     }
     const model::DofMap dof_map(input_model.nodes, model::SpatialDimension::two_dimensional);
 
-    auto result = solve_q4_plane_stress_model(
-        input_model.elements, input_model.nodes, input_model.materials, dof_map,
-        input_model.point_loads, input_model.pressure_loads, input_model.prescribed_displacements);
+    auto result =
+        solve_q4_plane_stress_model(input_model.elements, input_model.nodes, input_model.materials,
+                                    dof_map, input_model.point_loads, input_model.pressure_loads,
+                                    input_model.prescribed_displacements, solver_options);
     return AbaqusQ4PlaneStressSolution{std::move(input_model), std::move(result)};
 }
 
-Q4PlaneStressAnalysisResult solve_abaqus_q4_plane_stress(const std::string_view input_text)
+Q4PlaneStressAnalysisResult solve_abaqus_q4_plane_stress(
+    const std::string_view input_text, const ConjugateGradientOptions &solver_options)
 {
-    auto solution = analyze_abaqus_q4_plane_stress(input_text);
+    auto solution = analyze_abaqus_q4_plane_stress(input_text, solver_options);
     return std::move(solution.result);
 }
 } // namespace finelemethod::solver

@@ -14,15 +14,16 @@ H8AnalysisResult solve_h8_model(
     const model::MaterialCollection &materials, const model::DofMap &dof_map,
     const std::span<const model::PointLoad> point_loads,
     const std::span<const model::H8FacePressureLoad> pressure_loads,
-    const std::span<const PrescribedDisplacement> prescribed_displacements)
+    const std::span<const PrescribedDisplacement> prescribed_displacements,
+    const ConjugateGradientOptions &solver_options)
 {
     const math::CooMatrix stiffness_matrix =
         assembly::assemble_h8_stiffness_coo(elements, nodes, materials, dof_map);
     math::DenseVector load_vector = assembly::assemble_point_load_vector(dof_map, point_loads);
     load_vector +=
         assembly::assemble_h8_face_pressure_loads(elements, nodes, dof_map, pressure_loads);
-    auto static_result =
-        solve_sparse_static_system(stiffness_matrix, load_vector, prescribed_displacements);
+    auto static_result = solve_sparse_static_system(stiffness_matrix, load_vector,
+                                                    prescribed_displacements, solver_options);
     auto element_results = postprocessing::recover_h8_model_results(
         elements, nodes, materials, dof_map, static_result.displacements);
 
