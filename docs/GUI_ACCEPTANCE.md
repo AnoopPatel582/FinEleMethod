@@ -140,6 +140,10 @@ Build: staged Windows acceptance executable in
   and confirmed the `[recovered, not saved]` title and recovery status message.
   A filesystem check confirmed that the main JSON remained missing while the
   autosave, original JSON, model input, and runs remained intact.
+- **G15: Pass.** With recovered metadata unsaved, the user attempted to close
+  the workbench and chose No; the window remained open with the recovered
+  project and marker intact. The user repeated the close attempt and pressed
+  Enter, confirming that the safe default No choice produced the same result.
 
 ## Release gates beyond this checklist
 
