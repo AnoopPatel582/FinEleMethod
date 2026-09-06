@@ -41,7 +41,8 @@ $installerScript = Resolve-ExistingFile `
 if ([string]::IsNullOrWhiteSpace($InnoCompiler)) {
     $compilerCandidates = @(
         (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 6\ISCC.exe"),
-        (Join-Path $env:ProgramFiles "Inno Setup 6\ISCC.exe")
+        (Join-Path $env:ProgramFiles "Inno Setup 6\ISCC.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe")
     )
     $InnoCompiler = $compilerCandidates |
         Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |

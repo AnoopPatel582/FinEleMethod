@@ -131,6 +131,21 @@ jobs:
           -WorkflowUrl "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           -OutputFile .\out\package\FinEleMethod-windows-x64.manifest.json
 
+      - name: Build Windows installer
+        shell: pwsh
+        run: >-
+          .\cmake\BuildWindowsInstaller.ps1
+          -StageDirectory .\out\install\windows-msvc-release-ci
+          -ReleaseDirectory .\out\build\windows-msvc\Release
+          -OutputDirectory .\out\installer
+
+      - name: Verify Windows installer
+        shell: pwsh
+        run: >-
+          .\cmake\VerifyWindowsInstaller.ps1
+          -InstallerFile .\out\installer\FinEleMethod-0.1.0-windows-x64-setup.exe
+          -ChecksumFile .\out\installer\FinEleMethod-0.1.0-windows-x64-setup.exe.sha256
+
       - name: Upload Windows ZIP archive
         uses: actions/upload-artifact@v7
         with:
@@ -149,5 +164,19 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           path: out/package/FinEleMethod-windows-x64.manifest.json
+          if-no-files-found: error
+          archive: false
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v7
+        with:
+          path: out/installer/FinEleMethod-0.1.0-windows-x64-setup.exe
+          if-no-files-found: error
+          archive: false
+
+      - name: Upload Windows installer checksum
+        uses: actions/upload-artifact@v7
+        with:
+          path: out/installer/FinEleMethod-0.1.0-windows-x64-setup.exe.sha256
           if-no-files-found: error
           archive: false

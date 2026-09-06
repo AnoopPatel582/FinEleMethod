@@ -144,6 +144,8 @@ transitive dependencies such as `z.dll` are not omitted. It intentionally
 excludes test binaries and development libraries. The ZIP does not install the
 Microsoft Visual C++ Runtime prerequisite. The offline Inno Setup installer
 described in [Windows Installer](docs/INSTALLER.md) bundles and manages it.
+Windows CI publishes the setup executable and its SHA-256 checksum as separate
+downloadable artifacts after the same staged application passes verification.
 
 Windows CI repeats this staging workflow and verifies the complete DLL set,
 command-line model inspection, and workbench startup with development paths

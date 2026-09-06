@@ -35,6 +35,11 @@ environment, checks that the application version is 0.1.0, verifies the
 Microsoft signature and version of the bundled redistributable, compiles the
 installer, and writes its SHA-256 checksum under `out\installer`.
 
+Windows CI repeats this build, verifies the generated checksum and versioned
+publisher metadata, and uploads the setup executable and checksum alongside the
+portable ZIP release artifacts. The pinned Windows runner image already
+provides Inno Setup; it is a CI build tool rather than an end-user dependency.
+
 Optional parameters allow release automation to provide explicit staged,
 Release, compiler, redistributable, output, and version paths. The application
 version and installer version must match.
