@@ -155,6 +155,11 @@ Build: staged Windows acceptance executable in
   `CancellationCheck` project. The recovered marker cleared. Hash checks
   confirmed that the abandoned project's autosave and preserved original JSON
   remained unchanged, while its main JSON remained missing as prepared.
+- **G18: Pass.** After restoring the preserved original JSON to exercise the
+  backup path, the user reloaded the autosave and saved the recovered metadata.
+  The GUI reported Project saved and cleared the recovered marker. Filesystem
+  checks confirmed a valid main JSON, removal of the obsolete autosave, and a
+  `.bak` file whose SHA-256 hash matches the pre-save main JSON.
 
 ## Release gates beyond this checklist
 
