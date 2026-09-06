@@ -1,135 +1,134 @@
 # FinEleMethod
 
-FinEleMethod is a Windows finite element solver being developed from scratch in
-C++20. A tested command-line solver engine and a native Windows engineering
-workbench are available; the solver remains independently runnable.
+FinEleMethod is a custom finite element solver and native Windows engineering
+workbench developed from scratch in C++20.
 
-The project is under active development. Its command-line engine can currently
-solve supported ABAQUS Q4 plane-stress, Q4 plane-strain, and H8 three-dimensional
-models and write ParaView results.
+## Project status
 
-A native wxWidgets Windows workbench shell is also available. It establishes the
-GUI application boundary while the solver remains an independent command-line
-process. The current shell can select an existing ABAQUS `.inp` model and display
-its path, create or reopen a file-based FinEleMethod project, and launch the
-command-line solver asynchronously for one analysis at a time. Validated
-solver lifecycle messages are displayed while the analysis is running. After a
-validated completion summary is received, model and solver statistics are shown
-and the VTU result can be opened with the Windows-associated application. The
-project area also reports the number of prepared analysis runs and the latest
-run identifier. Its run selector lists the numbered history and displays the
-directory of a selected run. Selecting a completed run validates and restores
-its summary and makes its existing VTU result available to open again. The
-selected run directory can also be opened directly in Windows Explorer.
-Run-history entries use recorded lifecycle states when available. Entries are
-labelled `completed` only when their versioned summary and referenced VTU result
-pass the completion checks. Missing or invalid lifecycle state falls back to
-`completed` or `not completed`; an old `executing` label does not prove that its
-process is still running.
-The history can be refreshed from the workbench or Analysis menu to discover
-run directories and completed outputs changed outside the application.
-If reading the refreshed history fails, the last successfully loaded list and
-selection remain available; the workbench reports the refresh error.
-If history refresh fails as an analysis finishes, the controls are restored and
-the solver outcome is still validated. The outcome dialog includes a separate
-history warning; the history area indicates stale entries until Refresh succeeds.
-An open project can be saved through **File → Save Project** or `Ctrl+S`; this
-uses the atomic project save, retains one backup, and removes a superseded
-autosave snapshot.
-
-**File → Create Recovery Snapshot** writes a separate metadata snapshot after
-validating the open project. Replacing an existing snapshot requires confirmation.
-**File → Recover Project Autosave...** validates that snapshot independently of
-the main JSON and loads it only after confirmation. **Save Project** then commits
-the recovered metadata and retains the previous main JSON as a backup.
-Select the `.autosave.json` directly if the main JSON is missing; saving recreates
-the main JSON without replacing any existing backup. If the save succeeds but
-snapshot cleanup fails, the workbench reports a cleanup warning rather than a
-save failure. A failed save leaves the snapshot untouched.
-Snapshots do not copy or restore ABAQUS model contents or result files. This is
-an explicit snapshot workflow, not timed autosaving of model edits.
-
-The project-storage layer can create a new file-based project, copy its
-authoritative ABAQUS model into `input/`, create an initially empty `runs/`
-directory, and write the versioned `<ProjectName>.json` project file.
-Existing project files can be reopened after their schema, identity, relative
-input path, authoritative model, and run directory are validated.
-Project saves atomically replace the authoritative JSON while retaining its
-previous contents as `<ProjectName>.json.bak`. Autosave snapshots use the
-separate `<ProjectName>.autosave.json` file and can be validated or removed
-without changing either authoritative file.
-Save and autosave validate the referenced input file and canonical `runs/`
-directory before replacing any stored metadata.
-Each prepared analysis receives the next numbered directory (`run-0001`,
-`run-0002`, and so on), an immutable model snapshot, a validated request, and a
-dedicated results directory. Its versioned `analysis-state.json` atomically
-records the latest preparing, executing, result-writing, completed, failed, or
-cancelled lifecycle event. The project layer can rediscover these runs in
-ascending numerical order, providing the storage foundation for workbench run
-history.
-Cooperative analysis cancellation uses a run-local
-`cancellation-requested.flag` rather than forcibly terminating the solver. In
-request mode, the CLI checks this flag at safe lifecycle boundaries, reports the
-`cancelled` state, and exits with code `6` without writing completion outputs.
-The workbench exposes the same mechanism through **Cancel Analysis** and reports
-cancellation separately from solver failure.
+- Current version: **0.1.0**.
+- Target platform: **Windows 10 or later, x64**.
+- Toolchain: **MSVC, CMake, and vcpkg manifest mode**.
+- GUI toolkit: **wxWidgets**.
+- Numerical and FEM implementation: **custom C++**.
+- Solver engine: independently runnable command-line application.
+- Desktop application: tested Windows GUI that launches the solver as a separate process.
+- Distribution: portable ZIP and offline Inno Setup installer workflows.
+- Validation: automated tests, analytical benchmarks, GUI acceptance, package
+  verification, portable clean-machine testing, and local installer acceptance.
+- Remaining submission deliverable: record the planned 15-minute demonstration video.
+- Important limitation: results must be independently validated before engineering use.
 
 ## Current capabilities
 
-- C++20 command-line executable built with MSVC and CMake.
-- Reproducible dependencies managed with a vcpkg manifest.
-- Automated tests using GoogleTest and CTest.
-- ABAQUS `.inp` parsing for nodes, CPS4, CPE4, and C3D8 elements, isotropic
-  materials, solid sections, nodal displacement constraints, and concentrated
-  nodal loads.
-- Sparse linear-static Q4 plane-stress, Q4 plane-strain, and H8 solutions with
-  displacement, reaction, strain, stress, von Mises, and principal-stress
-  recovery.
-- ASCII `.vtu` output for ParaView.
-- Optional versioned JSON analysis summaries for application integration.
-- Reusable validated model summaries for Q4 and H8 workbench inspection.
-- Workbench model inspection showing formulation, model sizes, constraints, and loads before solve.
+### Finite element analysis
 
-## Prerequisites
+- Linear-static solid mechanics with isotropic linear-elastic materials.
+- Multiple materials in one model.
+- Q4 plane-stress elements from ABAQUS `CPS4` input.
+- Q4 plane-strain elements from ABAQUS `CPE4` input.
+- H8 three-dimensional solid elements from ABAQUS `C3D8` input.
+- Prescribed displacements, concentrated nodal loads, and element pressure loads.
+- Direct elimination for displacement boundary conditions.
+- Element-matrix assembly into COO storage, conversion to CSR, and solution with
+  the Conjugate Gradient method.
+- Displacement, reaction force, strain, stress, von Mises stress, and principal
+  stress recovery.
+- Consistent units supplied by the user; automatic unit conversion is not implemented.
 
-These are source-build prerequisites. For the ready-built ZIP, follow the
-[Windows ZIP Quick Start](docs/WINDOWS_QUICK_START.md), also installed as
-`START_HERE.md` beside the executables. The package includes the Markdown
-architecture, formulation, and benchmark documents under `docs/`.
+### Input and output
 
-- Windows.
-- Visual Studio Community 2026 with the **Desktop development with C++**
-  workload.
+- ABAQUS `.inp` parsing for supported nodes, elements, node/element sets,
+  materials, solid sections, boundary conditions, concentrated loads, and pressures.
+- ASCII `.vtu` result files for ParaView and other VTK-compatible visualizers.
+- Versioned JSON analysis requests, lifecycle progress, completion summaries,
+  and project files.
+- Supplied Q4 plane-stress, Q4 plane-strain, H8 compression, cantilever,
+  plate-with-a-hole, and multiple-material examples.
+
+### Windows workbench
+
+- Inspect a supported ABAQUS model before solving it.
+- Create, save, reopen, and recover file-based FinEleMethod projects.
+- Launch one solver process asynchronously and display validated progress.
+- Request cooperative cancellation without forcibly terminating the solver.
+- Store immutable input snapshots and results in numbered `run-0001`,
+  `run-0002`, and later directories.
+- Refresh, select, validate, and reopen completed run history.
+- Open VTU results through the Windows-associated application.
+- Preserve user projects independently from application installation and removal.
+
+## Validation status
+
+- **511 C++ tests:** passing in the latest local Release test run.
+- **Q4 cantilever benchmark:** compared with beam theory using the documented mesh tolerance.
+- **Q4 plate-with-a-hole benchmark:** compared with the Kirsch hoop-stress solution.
+- **H8 compression benchmark:** compared with the analytical uniaxial solution.
+- **GUI acceptance:** completed through the maintained interactive checklist.
+- **Portable clean-machine check:** passed on a separate Windows laptop.
+- **Installer acceptance:** install, launch, solve, shortcuts, Windows registration,
+  uninstall, and user-project preservation passed on the development computer.
+- **Windows CI:** builds, analyzes, tests, stages, verifies, and publishes the ZIP,
+  manifest, installer, and their checksums.
+- **Known installer gap:** the bundled VC++ runtime installation branch still needs
+  a clean-machine test where no equal or newer runtime is already installed.
+
+Detailed evidence and exact qualifications are maintained in
+[Release Validation](docs/RELEASE_VALIDATION.md) and
+[GUI Acceptance](docs/GUI_ACCEPTANCE.md).
+
+## Downloadable application
+
+- The portable ZIP requires the Microsoft Visual C++ x64 Runtime to be installed separately.
+- The offline installer bundles the matching Microsoft Visual C++ x64 Redistributable.
+- End users do not need Visual Studio, CMake, Git, vcpkg, or Inno Setup.
+- ParaView remains a separate download for result visualization.
+- The current installer is not code-signed, so Windows may show an unknown-publisher warning.
+- Successful Windows CI runs expose downloadable files in the run's **Artifacts** section.
+
+For end-user instructions, read:
+
+- [Windows ZIP Quick Start](docs/WINDOWS_QUICK_START.md)
+- [Windows Installer](docs/INSTALLER.md)
+- [Beginner's Guide](docs/BEGINNERS_GUIDE.md)
+
+## Source-build prerequisites
+
+- Windows x64.
+- Visual Studio Community 2026 with **Desktop development with C++**.
 - CMake and vcpkg components installed through Visual Studio.
 - Git.
+- Inno Setup 6 only when building the installer.
 
-The supplied CMake preset uses the `VCPKG_ROOT` environment variable rather
-than a computer-specific absolute path.
+## Configure, build, and test
 
-## Configure
-
-Open **Developer PowerShell for Visual Studio 2026**, move to the repository,
-and set `VCPKG_ROOT` for the current terminal session:
+Open **Developer PowerShell for Visual Studio 2026** in the repository:
 
 ```powershell
 $env:VCPKG_ROOT = "C:\Program Files\Microsoft Visual Studio\18\Community\VC\vcpkg"
 cmake --preset windows-msvc
+cmake --build --preset windows-msvc-debug
+ctest --preset windows-msvc-debug
 ```
 
-Validate and inspect a supported ABAQUS model without solving it:
-
-```powershell
-.\out\build\windows-msvc\Debug\FinEleMethod.exe --inspect .\examples\abaqus\q4_tension.inp
-```
-
-Create optimized Windows binaries with the Release preset:
+Build and test the optimized Release configuration:
 
 ```powershell
 cmake --build --preset windows-msvc-release
 ctest --preset windows-msvc-release
 ```
 
-Stage a distributable application folder after the Release build:
+Additional quality checks:
+
+```powershell
+.\cmake\CheckFormatting.ps1
+.\cmake\CheckClangTidy.ps1
+cmake --preset windows-msvc-analysis
+cmake --build --preset windows-msvc-analysis
+```
+
+## Stage and package the application
+
+Stage the Release application:
 
 ```powershell
 cmake --install .\out\build\windows-msvc `
@@ -137,62 +136,15 @@ cmake --install .\out\build\windows-msvc `
   --prefix .\out\install\windows-msvc-release
 ```
 
-The staged folder contains the command-line solver, workbench, required
-app-local runtime DLLs, documentation, and ABAQUS examples. Runtime staging
-copies the complete DLL set placed beside the Release applications by vcpkg so
-transitive dependencies such as `z.dll` are not omitted. It intentionally
-excludes test binaries and development libraries. The ZIP does not install the
-Microsoft Visual C++ Runtime prerequisite. The offline Inno Setup installer
-described in [Windows Installer](docs/INSTALLER.md) bundles and manages it.
-Windows CI publishes the setup executable and its SHA-256 checksum as separate
-downloadable artifacts after the same staged application passes verification.
-
-Windows CI repeats this staging workflow and verifies the complete DLL set,
-command-line model inspection, and workbench startup with development paths
-removed from the process environment.
-
-Both staging and extracted-ZIP verification also solve the packaged Q4 plane-
-stress, Q4 plane-strain, and H8 examples with only `System32` on the solver's
-PATH. Checks require successful exit, matching JSON summary paths/model counts,
-and VTU field counts, finite values, and analytical example results. Request-mode
-checks also cover progress, persisted state, pre-execution cancellation, and
-input/protocol failures. These do not replace mesh-dependent benchmarks,
-interactive GUI checks, or clean-machine testing. See
-[Release Validation](docs/RELEASE_VALIDATION.md) for commands and tolerances.
-Each check retains fresh diagnostic outputs in a uniquely named temporary
-folder printed in the log; it does not modify the package.
-
-Check every tracked C++ source and header against `.clang-format`:
+Verify the staged solver, GUI, examples, documentation, and 12 app-local DLLs:
 
 ```powershell
-.\cmake\CheckFormatting.ps1
+.\cmake\VerifyStagedApplication.ps1 `
+  -StageDirectory .\out\install\windows-msvc-release `
+  -ReleaseDirectory .\out\build\windows-msvc\Release
 ```
 
-After configuring the MSVC build, run the approved static analysis rules across
-all production source files:
-
-```powershell
-.\cmake\CheckClangTidy.ps1
-```
-
-Run MSVC native code analysis as an independent warning-as-error build:
-
-```powershell
-cmake --preset windows-msvc-analysis
-cmake --build --preset windows-msvc-analysis
-```
-
-Generate the searchable C++ API reference with the pinned Doxygen tool:
-
-```powershell
-.\cmake\BuildApiDocumentation.ps1
-```
-
-Open `out/docs/api/html/index.html` in a browser. The helper downloads Doxygen
-1.18.0 only when it is unavailable locally and verifies the official SHA-256
-checksum before use.
-
-Create a ZIP archive from the verified staged folder:
+Create the portable ZIP and checksum:
 
 ```powershell
 .\cmake\CreateWindowsArchive.ps1 `
@@ -200,62 +152,34 @@ Create a ZIP archive from the verified staged folder:
   -OutputFile .\out\package\FinEleMethod-windows-x64.zip
 ```
 
-The version-neutral archive name is temporary until the first formal release
-version is selected. Packaging also creates
-`FinEleMethod-windows-x64.zip.sha256`; verify it with:
+Create the offline Windows installer and checksum:
 
 ```powershell
-.\cmake\VerifyWindowsArchiveChecksum.ps1 `
-  -ArchiveFile .\out\package\FinEleMethod-windows-x64.zip `
-  -ChecksumFile .\out\package\FinEleMethod-windows-x64.zip.sha256
+.\cmake\BuildWindowsInstaller.ps1
 ```
 
-After a successful Windows CI run, the same verified ZIP is available in the
-workflow run's **Artifacts** section as `FinEleMethod-windows-x64.zip`.
+## Run FinEleMethod
 
-If Visual Studio or vcpkg is installed elsewhere, set `VCPKG_ROOT` to the
-directory containing `vcpkg.exe` and the `scripts` directory.
-
-The first configuration downloads and builds the dependencies declared in
-`vcpkg.json`. Later configurations reuse the local package cache.
-
-## Build
-
-```powershell
-cmake --build --preset windows-msvc-debug
-```
-
-## Test
-
-```powershell
-ctest --preset windows-msvc-debug
-```
-
-GoogleTest discovery allows up to 60 seconds for the newly linked test executable
-to start and enumerate its tests on Windows CI. This replaces CMake's five-second
-default after a hosted-runner discovery timeout; it does not skip tests or relax
-their assertions. A discovery timeout is reported during the build, before the
-CTest execution step.
-
-## Run
-
-For troubleshooting, run `FinEleMethod.exe --build-info` or open **Help → About
-FinEleMethod** in the workbench. Both use the same configuration, architecture,
-and compiler diagnostics. These do not identify a unique source commit or assign
-a release version; keep the workflow run or archive checksum with bug reports.
-
-```powershell
-.\out\build\windows-msvc\Debug\FinEleMethod.exe --help
-```
-
-Launch the current Windows workbench shell with:
+Launch the development workbench:
 
 ```powershell
 .\out\build\windows-msvc\Debug\FinEleMethodGui.exe
 ```
 
-Run the supplied Q4 uniaxial-tension verification model from the repository
-root:
+Display version and build diagnostics:
+
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethod.exe --build-info
+```
+
+Inspect a model without solving:
+
+```powershell
+.\out\build\windows-msvc\Debug\FinEleMethod.exe `
+  --inspect .\examples\abaqus\q4_tension.inp
+```
+
+Solve a model and write a ParaView result:
 
 ```powershell
 .\out\build\windows-msvc\Debug\FinEleMethod.exe `
@@ -263,155 +187,47 @@ root:
   --output .\out\q4_tension.vtu
 ```
 
-Open `out\q4_tension.vtu` in ParaView. The analytical solution has a right-edge
-X displacement of `0.01`, X reactions of `-5.0` at nodes 1 and 4, and uniform
-X stress and von Mises stress of `10.0`.
+Supported verification and benchmark inputs:
 
-Run the supplied Q4 plane-strain verification model:
+- `examples\abaqus\q4_tension.inp`
+- `examples\abaqus\q4_plane_strain_tension.inp`
+- `examples\abaqus\h8_compression.inp`
+- `examples\abaqus\q4_cantilever.inp`
+- `examples\abaqus\q4_plate_with_hole.inp`
+- `examples\abaqus\q4_multiple_materials.inp`
 
-```powershell
-.\out\build\windows-msvc\Debug\FinEleMethod.exe `
-  --input .\examples\abaqus\q4_plane_strain_tension.inp `
-  --output .\out\q4_plane_strain_tension.vtu
+## Architecture and documentation
+
+- [Architecture](docs/ARCHITECTURE.md): component boundaries and data flow.
+- [Project Decisions](docs/PROJECT_DECISIONS.md): confirmed scope and design decisions.
+- [Q4 Formulation](docs/formulations/Q4.md): plane-stress and plane-strain mathematics.
+- [H8 Formulation](docs/formulations/H8.md): three-dimensional element mathematics.
+- [System Solution](docs/formulations/SYSTEM_SOLUTION.md): assembly, constraints,
+  CSR storage, Conjugate Gradient, and reaction recovery.
+- [Benchmarks](docs/benchmarks): analytical comparisons and tolerances.
+- [Release Validation](docs/RELEASE_VALIDATION.md): package and acceptance evidence.
+- [Demonstration Plan](docs/DEMONSTRATION.md): timed 15-minute video sequence.
+
+The implemented numerical flow is:
+
+```text
+ABAQUS input -> validated model -> element matrices -> COO assembly -> CSR
+-> direct displacement elimination -> Conjugate Gradient solve
+-> displacement/reaction/stress/strain recovery -> VTU and JSON results
 ```
 
-Its analytical solution has a right-edge X displacement of `0.009375`, a
-top-edge Y displacement of `-0.003125`, uniform X stress of `10.0`, and
-constrained out-of-plane stress of `2.5`.
-
-Run the supplied H8 three-dimensional block-compression verification model:
-
-```powershell
-.\out\build\windows-msvc\Debug\FinEleMethod.exe `
-  --input .\examples\abaqus\h8_compression.inp `
-  --output .\out\h8_compression.vtu
-```
-
-Its analytical solution has a top-face Z displacement of `-0.01`, transverse
-X and Y strains of `0.0025`, uniform Z stress of `-10.0`, von Mises stress of
-`10.0`, and a total bottom-face Z reaction of `10.0`. See
-[the H8 compression benchmark report](docs/benchmarks/h8_compression.md).
-
-Run the supplied Q4 cantilever-beam benchmark:
-
-```powershell
-.\out\build\windows-msvc\Debug\FinEleMethod.exe `
-  --input .\examples\abaqus\q4_cantilever.inp `
-  --output .\out\q4_cantilever.vtu
-```
-
-The automated benchmark compares its tip displacement and support reaction
-with beam theory. See [the cantilever benchmark report](docs/benchmarks/cantilever_beam.md).
-
-Run the supplied Q4 plate-with-a-circular-hole benchmark:
-
-```powershell
-.\out\build\windows-msvc\Debug\FinEleMethod.exe `
-  --input .\examples\abaqus\q4_plate_with_hole.inp `
-  --output .\out\q4_plate_with_hole.vtu
-```
-
-The automated benchmark compares the recovered hoop stress near the hole with
-the analytical Kirsch solution. See
-[the plate-with-a-hole benchmark report](docs/benchmarks/plate_with_hole.md).
-
-Run the supplied Q4 multiple-material verification model:
-
-```powershell
-.\out\build\windows-msvc\Debug\FinEleMethod.exe `
-  --input .\examples\abaqus\q4_multiple_materials.inp `
-  --output .\out\q4_multiple_materials.vtu
-```
-
-Its two elements carry the same axial stress but use elastic moduli of `1000`
-and `2000`, producing exact axial strains of `0.01` and `0.005`, respectively.
-
-Add `--summary` to an ABAQUS analysis when a machine-readable completion record
-is needed by another application:
-
-```powershell
-.\out\build\windows-msvc\Debug\FinEleMethod.exe `
-  --input .\examples\abaqus\q4_tension.inp `
-  --output .\out\q4_tension.vtu `
-  --summary .\out\q4_tension-summary.json
-```
-
-The JSON document uses `protocolVersion` `1` and records the completion status,
-analysis type, input and result paths, model sizes, solver iteration count, and
-final residual norm. Application integrations validate this summary before
-accepting a run as successfully completed.
-
-Add `--json-progress` after the other ABAQUS options to make standard output a
-JSON Lines stream for application integration. Each line reports a versioned
-analysis lifecycle event; human-readable errors remain on standard error. The
-integration layer validates each incoming record before using its state or
-message.
-
-The GUI integration layer can write the same validated `analysis-request.json`
-used by the CLI. Its version-1 format is:
-
-```json
-{
-  "protocolVersion": 1,
-  "inputFile": "input/model.inp",
-  "resultFile": "results/model.vtu",
-  "summaryFile": "results/analysis-summary.json"
-}
-```
-
-All paths are relative to the request file's directory. Run it with:
-
-```powershell
-.\out\build\windows-msvc\Debug\FinEleMethod.exe `
-  --request .\path\to\analysis-request.json
-```
-
-Request mode writes JSON Lines progress automatically and creates both the VTU
-result and JSON summary at the requested locations. Parent directories must
-already exist.
-
-The ABAQUS reader accepts direct node IDs and explicit-list or `GENERATE`
-`*NSET` names in both `*BOUNDARY` and `*CLOAD`. Uniform Q4 edge pressures use
-`*DLOAD` with `P1` through `P4` and direct element IDs or element-set names.
-H8 face pressures use `*DLOAD` with `P1` through `P6` and direct element IDs or
-element-set names. Other element types will be added in later increments.
-
-## Project decisions
-
-Read [docs/PROJECT_DECISIONS.md](docs/PROJECT_DECISIONS.md) before proposing
-architectural or implementation changes. It records the confirmed scope,
-toolchain, FEM roadmap, numerical approach, storage model, and future GUI
-protocol.
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the implemented component
-architecture, solver workflow, numerical data flow, and future GUI boundary.
-The [Q4 formulation](docs/formulations/Q4.md) documents the implemented plane-
-stress and plane-strain mathematics. The [H8 formulation](docs/formulations/H8.md)
-documents the implemented three-dimensional solid mechanics.
-The [global-system formulation](docs/formulations/SYSTEM_SOLUTION.md) explains
-COO assembly, displacement elimination, CSR storage, Conjugate Gradient, and
-reaction recovery.
-
-New users can follow the complete Windows setup and first-analysis workflow in
-the [Beginner's Guide](docs/BEGINNERS_GUIDE.md).
-
-The [GUI acceptance checklist](docs/GUI_ACCEPTANCE.md) records interactive
-verification separately from automated tests and tracks remaining release gates.
-
-The [15-minute demonstration plan](docs/DEMONSTRATION.md) provides a rehearsal
-sequence for the final project video; recording remains a separate deliverable.
-
-## Build the documentation site
-
-Install the pinned documentation tool and build the strict MkDocs site:
+Build the strict documentation site with:
 
 ```powershell
 python -m pip install -r .\docs\requirements.txt
 mkdocs build --strict
 ```
 
-The generated site is written to `out\docs-site\index.html`.
+- Generated site: `out\docs-site\index.html`.
+- Generated C++ API reference: run `.\cmake\BuildApiDocumentation.ps1` and open
+  `out\docs\api\html\index.html`.
 
 ## Licence status
 
-No open-source licence has been granted at this stage. All rights are reserved.
+- No open-source licence has been granted at this stage.
+- All rights are reserved.
