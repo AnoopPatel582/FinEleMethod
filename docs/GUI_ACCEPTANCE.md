@@ -135,6 +135,11 @@ Build: staged Windows acceptance executable in
   Snapshot again, and chose No at the replacement confirmation. Before-and-after
   checks showed the same 100-byte size, UTC modification timestamp, and SHA-256
   hash, confirming that the existing snapshot remained unchanged.
+- **G14: Pass.** The disposable main project JSON was moved to a preserved
+  evidence directory before recovery. The user loaded the standalone autosave
+  and confirmed the `[recovered, not saved]` title and recovery status message.
+  A filesystem check confirmed that the main JSON remained missing while the
+  autosave, original JSON, model input, and runs remained intact.
 
 ## Release gates beyond this checklist
 
