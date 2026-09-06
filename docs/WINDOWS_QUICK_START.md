@@ -2,9 +2,8 @@
 
 This guide is for the Windows x64 ZIP application, not for building the source.
 You do not need Visual Studio, CMake, Git, or vcpkg to run the packaged binaries.
-This is a development build; clean-machine and full interactive release
-qualification are still pending. Independently validate results before relying
-on them for engineering decisions.
+The initial clean-machine and interactive GUI acceptance procedures have passed.
+Independently validate results before relying on them for engineering decisions.
 
 ## 1. Prepare the application
 
@@ -91,7 +90,8 @@ from the extracted folder, to obtain the build configuration, architecture, and
 compiler identifier. Include these diagnostics in a bug report. They are not a
 unique build ID or a release version; also retain the workflow run or ZIP checksum.
 
-The package's `docs` folder contains the beginner's guide, architecture,
+For the installer workflow, see [Windows installer](INSTALLER.md). The package's
+`docs` folder contains the beginner's guide, architecture,
 formulations, benchmark reports, and GUI acceptance checklist. Those documents
 also describe developer commands that require a source checkout; they are not
 prerequisites for using this ZIP. The root `README.md` is the repository overview.

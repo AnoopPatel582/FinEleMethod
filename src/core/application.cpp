@@ -7,6 +7,10 @@
 #define FINELEMETHOD_BUILD_CONFIGURATION "unspecified"
 #endif
 
+#ifndef FINELEMETHOD_VERSION
+#define FINELEMETHOD_VERSION "unspecified"
+#endif
+
 namespace finelemethod
 {
 std::string_view application_name() noexcept
@@ -17,7 +21,7 @@ std::string_view application_name() noexcept
 std::string application_build_info()
 {
     std::ostringstream output;
-    output << "FinEleMethod development build\n"
+    output << "FinEleMethod " << FINELEMETHOD_VERSION << '\n'
            << "Configuration: " << FINELEMETHOD_BUILD_CONFIGURATION << '\n'
            << "Architecture: " << sizeof(void *) * CHAR_BIT << "-bit\n";
 #ifdef _MSC_FULL_VER

@@ -15,6 +15,7 @@ nav:
   - Architecture: ARCHITECTURE.md
   - GUI Acceptance: GUI_ACCEPTANCE.md
   - Release Validation: RELEASE_VALIDATION.md
+  - Windows Installer: INSTALLER.md
   - Demonstration Plan: DEMONSTRATION.md
   - Project Decisions: PROJECT_DECISIONS.md
   - Formulations:

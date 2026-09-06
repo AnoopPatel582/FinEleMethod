@@ -160,3 +160,16 @@ solutions where appropriate.
 When a confirmed decision changes, do not silently rewrite history. Create an
 ADR explaining the context, selected option, consequences, and the decision it
 supersedes, then update this summary to point to that ADR.
+
+## 13. Windows installer
+
+- Initial application version: **0.1.0**.
+- Installer technology: **Inno Setup**.
+- Install scope: per-machine x64 under `Program Files`, requiring Windows
+  administrator approval.
+- Bundle the matching Microsoft Visual C++ x64 Redistributable for offline
+  prerequisite installation.
+- Always create a Start Menu shortcut. Offer an unchecked desktop-shortcut task
+  and an optional post-install launch action.
+- Publisher shown in Windows Installed Apps: **Anoop Patel**.
+- See [ADR 0001](adr/0001-windows-installer.md) for context and consequences.

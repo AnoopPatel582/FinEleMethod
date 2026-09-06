@@ -141,8 +141,9 @@ The staged folder contains the command-line solver, workbench, required
 app-local runtime DLLs, documentation, and ABAQUS examples. Runtime staging
 copies the complete DLL set placed beside the Release applications by vcpkg so
 transitive dependencies such as `z.dll` are not omitted. It intentionally
-excludes test binaries and development libraries. The Microsoft Visual C++
-Runtime prerequisite will be handled by the future installer.
+excludes test binaries and development libraries. The ZIP does not install the
+Microsoft Visual C++ Runtime prerequisite. The offline Inno Setup installer
+described in [Windows Installer](docs/INSTALLER.md) bundles and manages it.
 
 Windows CI repeats this staging workflow and verifies the complete DLL set,
 command-line model inspection, and workbench startup with development paths
