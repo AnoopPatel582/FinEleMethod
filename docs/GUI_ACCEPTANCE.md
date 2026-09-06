@@ -172,6 +172,13 @@ Build: staged Windows acceptance executable in
   main JSON was valid and its backup existed while the blocking directory
   remained. The blocker and original autosave were retained as ignored evidence,
   leaving the active autosave path clean after the test.
+- **G21: Pass.** A watcher waited until `run-0009` entered execution, then moved
+  an older run's `analysis-request.json` into evidence storage. When the active
+  run reached its numerical iteration limit, the workbench reported that run
+  history could not be refreshed, retained its last loaded entries, remained
+  responsive, and restored Run, Cancel, and Refresh controls correctly. After
+  the request file was restored and validated, manual Refresh succeeded without
+  an error and reported that analysis run history was refreshed.
 
 ## Release gates beyond this checklist
 
