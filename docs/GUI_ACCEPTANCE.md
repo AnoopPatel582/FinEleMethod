@@ -119,6 +119,16 @@ flag 1.5 seconds after launch and ended with exit code 6, terminal state
 `cancelled`, and no result or summary file. G11 remains **not passed** until the
 updated GUI package completes the interactive acceptance procedure.
 
+### G11 interactive retest: pass on 2026-09-06
+
+Build: staged Windows acceptance executable in
+`out/install/gui-acceptance-c4a343b/`, source commit `c4a343b`.
+
+- **G11: Pass.** The user opened the repaired `CancellationSymmetry` fixture,
+  started an analysis, requested cancellation while it was active, and received
+  both "Analysis cancelled" and confirmation that the analysis was cancelled
+  cooperatively. This verifies the corrected GUI-to-CLI cancellation path.
+
 ## Release gates beyond this checklist
 
 The current [release-validation procedure](RELEASE_VALIDATION.md) adds finite
