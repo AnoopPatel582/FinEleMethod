@@ -165,6 +165,13 @@ Build: staged Windows acceptance executable in
   error. The recovered marker remained. Checks confirmed that the main JSON and
   autosave hashes were unchanged and the autosave was retained. The input
   directory was then restored successfully.
+- **G20: Pass.** The loaded autosave was preserved and its expected path was
+  temporarily occupied by a controlled non-empty directory. Save Project
+  reported "Project saved with a cleanup warning", cleared the recovered
+  marker, and displayed the cleanup-failure status. Checks confirmed that the
+  main JSON was valid and its backup existed while the blocking directory
+  remained. The blocker and original autosave were retained as ignored evidence,
+  leaving the active autosave path clean after the test.
 
 ## Release gates beyond this checklist
 
