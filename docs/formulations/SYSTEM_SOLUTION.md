@@ -104,9 +104,9 @@ The resulting compressed-sparse-row matrix stores three arrays:
 For row $i$, its entries occupy indices
 
 $$
-\text{row\_offsets}[i]
+\operatorname{rowOffsets}[i]
 \leq k <
-\text{row\_offsets}[i+1].
+\operatorname{rowOffsets}[i+1].
 $$
 
 CSR supports the repeated matrix-vector products required by the iterative
