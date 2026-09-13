@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$ChecksumFile,
 
-    [string]$ExpectedVersion = "0.1.0.0",
+    [string]$ExpectedVersion = "0.2.0.0",
     [string]$ExpectedPublisher = "Anoop Patel"
 )
 

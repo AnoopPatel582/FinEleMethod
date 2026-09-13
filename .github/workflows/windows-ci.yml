@@ -143,8 +143,8 @@ jobs:
         shell: pwsh
         run: >-
           .\cmake\VerifyWindowsInstaller.ps1
-          -InstallerFile .\out\installer\FinEleMethod-0.1.0-windows-x64-setup.exe
-          -ChecksumFile .\out\installer\FinEleMethod-0.1.0-windows-x64-setup.exe.sha256
+          -InstallerFile .\out\installer\FinEleMethod-0.2.0-windows-x64-setup.exe
+          -ChecksumFile .\out\installer\FinEleMethod-0.2.0-windows-x64-setup.exe.sha256
 
       - name: Upload Windows ZIP archive
         uses: actions/upload-artifact@v7
@@ -170,13 +170,13 @@ jobs:
       - name: Upload Windows installer
         uses: actions/upload-artifact@v7
         with:
-          path: out/installer/FinEleMethod-0.1.0-windows-x64-setup.exe
+          path: out/installer/FinEleMethod-0.2.0-windows-x64-setup.exe
           if-no-files-found: error
           archive: false
 
       - name: Upload Windows installer checksum
         uses: actions/upload-artifact@v7
         with:
-          path: out/installer/FinEleMethod-0.1.0-windows-x64-setup.exe.sha256
+          path: out/installer/FinEleMethod-0.2.0-windows-x64-setup.exe.sha256
           if-no-files-found: error
           archive: false

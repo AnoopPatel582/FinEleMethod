@@ -57,8 +57,8 @@ Build and independently verify the Windows installer with:
 ```powershell
 .\cmake\BuildWindowsInstaller.ps1
 .\cmake\VerifyWindowsInstaller.ps1 `
-  -InstallerFile .\out\installer\FinEleMethod-0.1.0-windows-x64-setup.exe `
-  -ChecksumFile .\out\installer\FinEleMethod-0.1.0-windows-x64-setup.exe.sha256
+  -InstallerFile .\out\installer\FinEleMethod-0.2.0-windows-x64-setup.exe `
+  -ChecksumFile .\out\installer\FinEleMethod-0.2.0-windows-x64-setup.exe.sha256
 ```
 
 CI runs both commands after staged and ZIP verification, then uploads the setup
