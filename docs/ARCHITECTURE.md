@@ -32,7 +32,7 @@ flowchart LR
     Import --> Model[Validated model objects]
     Model --> Solver[Analysis orchestration]
 
-    Solver --> Elements[Q4 and H8 formulations]
+    Solver --> Elements[T3, Q4, T4, and H8 formulations]
     Solver --> Assembly[COO assembly]
     Assembly --> Constraints[Direct displacement elimination]
     Constraints --> CSR[CSR sparse system]
@@ -56,7 +56,7 @@ flowchart LR
 | Input | Reads flat or supported single-part CAE decks, resolves scoped sets and surfaces, and constructs canonical imported models | `src/input` |
 | Model | Stores nodes, elements, materials, loads, and degree-of-freedom mappings | `src/model` |
 | Mechanics | Creates isotropic elastic constitutive matrices and stress measures | `src/mechanics` |
-| Elements | Implements Q4 and H8 interpolation, Jacobians, stiffness, pressure, and recovery | `src/elements` |
+| Elements | Implements T3, Q4, T4, and H8 stiffness, pressure, and recovery | `src/elements` |
 | Assembly | Maps element contributions and loads into the global sparse system | `src/assembly` |
 | Solver | Applies constraints, solves the linear system, and recovers reactions | `src/solver` |
 | Post-processing | Produces strains, stresses, von Mises values, and principal stresses | `src/postprocessing` |
@@ -135,31 +135,29 @@ The input element type selects the analysis path automatically:
 | `CPS4` | Q4 plane stress | 2 |
 | `CPE4` | Q4 plane strain | 2 |
 | `C3D8` | H8 three-dimensional solid | 3 |
-
-The Stage 1 importer also recognizes these planned analysis paths:
-
-| ABAQUS type | FinEleMethod formulation | Spatial degrees of freedom per node |
-| --- | --- | ---: |
 | `CPS3` | T3 plane stress | 2 |
 | `CPS4R` | Q4 reduced-integration plane stress | 2 |
 | `C3D4` | T4 three-dimensional solid | 3 |
 | `C3D8R` | H8 reduced-integration solid | 3 |
 
-Inspection and canonical import are implemented for these four types. Solver
-dispatch remains disabled until their Stage 2 formulations are validated.
+All seven types are inspectable and directly solvable. The four instructor
+types use the canonical CAE importer, generic COO assembly, shared sparse
+solution, element-specific recovery, and element-aware VTU writer.
 
 The current CAE profile supports one part and one untransformed instance. It
 resolves part and assembly set scopes, separate element sets, element-based
 surfaces, `*DSLOAD`, and default section data. Broader Abaqus structures are
 rejected explicitly rather than approximated.
 
-The three currently implemented solver paths share the sparse assembly,
+The seven implemented solver paths share the sparse assembly,
 constraint, linear-solution, reaction, and output concepts. Their element
 formulation and result-recovery code remains separate so each formulation can
 be tested independently.
 
-The mathematical details are documented in the [Q4 formulation](formulations/Q4.md)
-and [H8 formulation](formulations/H8.md). Their shared assembly, constraint,
+The mathematical details are documented in the
+[T3 and T4 formulations](formulations/T3_T4.md),
+[Q4 formulation](formulations/Q4.md), and
+[H8 formulation](formulations/H8.md). Their shared assembly, constraint,
 iterative solution, and reaction-recovery process is documented in
 [Global System and Sparse Solution](formulations/SYSTEM_SOLUTION.md).
 

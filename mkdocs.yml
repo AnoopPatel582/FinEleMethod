@@ -32,6 +32,7 @@ nav:
       - H8 Element: formulations/H8.md
       - Global System and Sparse Solution: formulations/SYSTEM_SOLUTION.md
   - Benchmarks:
+      - Instructor Models: benchmarks/instructor_models.md
       - Cantilever Beam: benchmarks/cantilever_beam.md
       - Plate with a Hole: benchmarks/plate_with_hole.md
       - H8 Compression: benchmarks/h8_compression.md

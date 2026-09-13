@@ -90,6 +90,7 @@ add_executable(FinEleMethodTests
     solver/abaqus_q4_analysis_test.cpp
     solver/abaqus_q4_multiple_material_analysis_test.cpp
     solver/abaqus_h8_analysis_test.cpp
+    solver/abaqus_imported_analysis_test.cpp
     solver/abaqus_q4_plane_strain_analysis_test.cpp
     solver/abaqus_q4_plane_stress_analysis_test.cpp
     solver/boundary_conditions_test.cpp

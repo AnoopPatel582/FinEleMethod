@@ -9,6 +9,7 @@
 #include "finelemethod/input/abaqus_parse_error.hpp"
 #include "finelemethod/input/analysis_request.hpp"
 #include "finelemethod/model/dof_map.hpp"
+#include "finelemethod/output/abaqus_imported_vtu.hpp"
 #include "finelemethod/output/analysis_progress.hpp"
 #include "finelemethod/output/analysis_summary.hpp"
 #include "finelemethod/output/h8_analysis_vtu.hpp"
@@ -16,6 +17,7 @@
 #include "finelemethod/project/analysis_run.hpp"
 #include "finelemethod/project/cancellation_flag.hpp"
 #include "finelemethod/solver/abaqus_h8_analysis.hpp"
+#include "finelemethod/solver/abaqus_imported_analysis.hpp"
 #include "finelemethod/solver/abaqus_q4_analysis.hpp"
 
 #include <array>
@@ -47,7 +49,8 @@ void write_help(std::ostream &stream)
            << "  --build-info  Show build configuration, architecture, and compiler.\n"
            << "  --inspect <model.inp>  Validate and summarize a supported ABAQUS model.\n"
            << "  --request <file.json>  Run a versioned analysis request.\n"
-           << "  --input <model.inp>   Read and solve an ABAQUS CPS4, CPE4, or C3D8 model.\n"
+           << "  --input <model.inp>   Solve ABAQUS CPS3, CPS4, CPS4R, CPE4, C3D4, C3D8, "
+              "or C3D8R.\n"
            << "  --example q4-tension  Run the built-in Q4 uniaxial-tension example.\n"
            << "  --example h8-compression  Run the built-in H8 block-compression example.\n"
            << "  --output <file.vtu>   Write analysis results to an ASCII VTU file.\n";
@@ -75,6 +78,31 @@ std::string_view analysis_type_name(const input::AbaqusAnalysisType analysis_typ
         return "H8 reduced-integration three-dimensional (C3D8R)";
     }
     throw std::invalid_argument("Unsupported ABAQUS analysis type.");
+}
+
+bool uses_canonical_imported_solver(const input::AbaqusElementFamily family)
+{
+    return family == input::AbaqusElementFamily::t3 ||
+           family == input::AbaqusElementFamily::q4_reduced ||
+           family == input::AbaqusElementFamily::t4 ||
+           family == input::AbaqusElementFamily::h8_reduced;
+}
+
+std::string_view imported_analysis_identifier(const input::AbaqusElementType type)
+{
+    switch (type)
+    {
+    case input::AbaqusElementType::cps3:
+        return "t3-plane-stress";
+    case input::AbaqusElementType::cps4r:
+        return "q4-reduced-plane-stress";
+    case input::AbaqusElementType::c3d4:
+        return "t4-three-dimensional";
+    case input::AbaqusElementType::c3d8r:
+        return "h8-reduced-three-dimensional";
+    default:
+        throw std::invalid_argument("Unsupported canonical imported analysis type.");
+    }
 }
 } // namespace
 
@@ -261,6 +289,55 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
             write_progress(output::AnalysisState::executing, "Solving finite element model.");
             const input::AbaqusElementFamily family =
                 input::detect_abaqus_element_family(input_text);
+            if (uses_canonical_imported_solver(family))
+            {
+                auto solution = solver::analyze_abaqus_imported_model(input_text, solver_options);
+                if (cancellation_requested())
+                {
+                    return ExitCode::Cancelled;
+                }
+                try
+                {
+                    write_progress(output::AnalysisState::writing_results,
+                                   "Writing analysis results.");
+                    output::write_abaqus_imported_vtu(output_path, solution);
+                    if (summary_path)
+                    {
+                        output::write_analysis_summary(
+                            *summary_path,
+                            output::AnalysisSummary{
+                                .analysis_type = std::string(
+                                    imported_analysis_identifier(solution.model.element_type)),
+                                .input_path = input_path,
+                                .result_path = output_path,
+                                .node_count = solution.model.nodes.size(),
+                                .element_count = solution.model.elements.size(),
+                                .solver_iterations = solution.solver_iterations,
+                                .residual_norm = solution.residual_norm,
+                            });
+                    }
+                }
+                catch (const std::exception &exception)
+                {
+                    write_progress(output::AnalysisState::failed, exception.what());
+                    error << "Result-writing error: " << exception.what() << '\n';
+                    return ExitCode::ResultWritingError;
+                }
+                write_progress(output::AnalysisState::completed, "Analysis completed.");
+                if (!has_json_progress)
+                {
+                    output << "Completed ABAQUS "
+                           << imported_analysis_identifier(solution.model.element_type)
+                           << " analysis.\n"
+                           << "Input model: " << input_path.string() << '\n'
+                           << "VTU result: " << output_path.string() << '\n';
+                    if (summary_path)
+                    {
+                        output << "Analysis summary: " << summary_path->string() << '\n';
+                    }
+                }
+                return ExitCode::Success;
+            }
             if (family == input::AbaqusElementFamily::h8)
             {
                 auto solution = solver::analyze_abaqus_h8(input_text, solver_options);
@@ -310,13 +387,6 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                     }
                 }
                 return ExitCode::Success;
-            }
-
-            if (family != input::AbaqusElementFamily::q4)
-            {
-                throw input::AbaqusParseError(
-                    "The ABAQUS element type is recognized, but its solver formulation is not "
-                    "implemented yet.");
             }
 
             auto solution = solver::analyze_abaqus_q4(input_text, solver_options);

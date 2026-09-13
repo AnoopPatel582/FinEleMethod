@@ -25,8 +25,12 @@ workbench developed from scratch in C++20.
 - Linear-static solid mechanics with isotropic linear-elastic materials.
 - Multiple materials in one model.
 - Q4 plane-stress elements from ABAQUS `CPS4` input.
+- T3 plane-stress elements from ABAQUS `CPS3` input.
+- Stabilized reduced-integration Q4 plane-stress elements from ABAQUS `CPS4R` input.
 - Q4 plane-strain elements from ABAQUS `CPE4` input.
+- T4 three-dimensional solid elements from ABAQUS `C3D4` input.
 - H8 three-dimensional solid elements from ABAQUS `C3D8` input.
+- Stabilized reduced-integration H8 solid elements from ABAQUS `C3D8R` input.
 - Prescribed displacements, concentrated nodal loads, and element pressure loads.
 - Direct elimination for displacement boundary conditions.
 - Element-matrix assembly into COO storage, conversion to CSR, and solution with
@@ -41,8 +45,8 @@ workbench developed from scratch in C++20.
   materials, solid sections, boundary conditions, concentrated loads, and pressures.
 - Structured inspection of single-part, single-untransformed-instance Abaqus/CAE
   files, including scoped sets, separate element sets, element surfaces, and `*DSLOAD`.
-- Inspection recognizes upcoming `CPS3`, `CPS4R`, `C3D4`, and `C3D8R` paths;
-  their numerical solution remains Stage 2 work and is not claimed in version 0.1.0.
+- Direct inspection and solution of the instructor-provided `CPS3`, `CPS4R`,
+  `C3D4`, and `C3D8R` Abaqus/CAE model profile.
 - ASCII `.vtu` result files for ParaView and other VTK-compatible visualizers.
 - Versioned JSON analysis requests, lifecycle progress, completion summaries,
   and project files.
@@ -63,7 +67,9 @@ workbench developed from scratch in C++20.
 
 ## Validation status
 
-- **511 C++ tests:** passing in the latest local Release test run.
+- **527 C++ tests:** passing in the latest local Debug test run.
+- **Four unchanged instructor models:** `CPS3`, `CPS4R`, `C3D4`, and `C3D8R`
+  completed with equilibrium and cross-discretization checks.
 - **Q4 cantilever benchmark:** compared with beam theory using the documented mesh tolerance.
 - **Q4 plate-with-a-hole benchmark:** compared with the Kirsch hoop-stress solution.
 - **H8 compression benchmark:** compared with the analytical uniaxial solution.

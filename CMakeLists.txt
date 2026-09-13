@@ -97,6 +97,7 @@ add_library(FinEleMethodCore STATIC
     src/model/q4_element.cpp
     src/model/q4_element_collection.cpp
     src/output/h8_analysis_vtu.cpp
+    src/output/abaqus_imported_vtu.cpp
     src/output/analysis_progress.cpp
     src/output/analysis_summary.cpp
     src/output/q4_analysis_vtu.cpp
@@ -108,6 +109,7 @@ add_library(FinEleMethodCore STATIC
     src/project/cancellation_flag.cpp
     src/project/project_file.cpp
     src/solver/abaqus_q4_analysis.cpp
+    src/solver/abaqus_imported_analysis.cpp
     src/solver/abaqus_h8_analysis.cpp
     src/solver/abaqus_q4_plane_strain_analysis.cpp
     src/solver/abaqus_q4_plane_stress_analysis.cpp

@@ -183,7 +183,11 @@ supersedes, then update this summary to point to that ADR.
 - The importer resolves part/assembly set scopes, separate element sets,
   element-based surfaces, `*DSLOAD`, and default section data.
 - `CPS3`, `CPS4R`, `C3D4`, and `C3D8R` are recognized during inspection.
-- Their numerical formulations are implemented separately in the next stage;
+- The same four element types are directly solved through the canonical imported-model path.
+- Their result files contain displacement, reaction, strain, stress, von Mises,
+  and principal-stress arrays using native VTK triangle, quadrilateral,
+  tetrahedron, and hexahedron cell types.
+- Their numerical formulations remain separate and independently tested;
   reduced-integration elements are not aliases for full integration.
 - See [ADR 0002](adr/0002-abaqus-cae-import-profile.md) for context and
   consequences.
