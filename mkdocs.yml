@@ -27,6 +27,7 @@ nav:
   - Demonstration Plan: DEMONSTRATION.md
   - Project Decisions: PROJECT_DECISIONS.md
   - Formulations:
+      - T3 and T4 Elements: formulations/T3_T4.md
       - Q4 Element: formulations/Q4.md
       - H8 Element: formulations/H8.md
       - Global System and Sparse Solution: formulations/SYSTEM_SOLUTION.md

@@ -42,6 +42,7 @@ add_library(FinEleMethodCore STATIC
     src/elements/h8_jacobian.cpp
     src/elements/h8_physical_derivatives.cpp
     src/elements/h8_recovery.cpp
+    src/elements/h8_reduced_stiffness.cpp
     src/elements/h8_shape_functions.cpp
     src/elements/h8_stiffness.cpp
     src/elements/h8_strain_displacement.cpp
@@ -53,8 +54,11 @@ add_library(FinEleMethodCore STATIC
     src/elements/q4_plane_strain_stiffness.cpp
     src/elements/q4_plane_stress_stiffness.cpp
     src/elements/q4_plane_stress_recovery.cpp
+    src/elements/q4_reduced_stiffness.cpp
     src/elements/q4_shape_functions.cpp
     src/elements/q4_strain_displacement.cpp
+    src/elements/t3.cpp
+    src/elements/t4.cpp
     src/examples/h8_compression_example.cpp
     src/examples/q4_tension_example.cpp
     src/input/abaqus_boundary_parser.cpp

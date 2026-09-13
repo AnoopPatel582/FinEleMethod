@@ -28,8 +28,8 @@ struct DataRow
 struct KeywordBlock
 {
     std::string keyword;
-    std::unordered_map<std::string, std::string> parameters;
-    std::unordered_set<std::string> flags;
+    std::vector<std::pair<std::string, std::string>> parameters;
+    std::vector<std::string> flags;
     std::vector<DataRow> rows;
     std::size_t line_number{};
     std::string part_name;
@@ -53,15 +53,29 @@ std::string uppercase_copy(const std::string_view text)
     return result;
 }
 
+const std::string *find_parameter(const KeywordBlock &block, const std::string_view name)
+{
+    const std::string normalized = uppercase_copy(name);
+    const auto parameter = std::ranges::find_if(
+        block.parameters, [&](const auto &entry) { return entry.first == normalized; });
+    return parameter == block.parameters.end() ? nullptr : &parameter->second;
+}
+
+bool has_flag(const KeywordBlock &block, const std::string_view name)
+{
+    const std::string normalized = uppercase_copy(name);
+    return std::ranges::find(block.flags, normalized) != block.flags.end();
+}
+
 std::string require_parameter(const KeywordBlock &block, const std::string_view name)
 {
-    const auto parameter = block.parameters.find(uppercase_copy(name));
-    if (parameter == block.parameters.end() || parameter->second.empty())
+    const std::string *parameter = find_parameter(block, name);
+    if (parameter == nullptr || parameter->empty())
     {
         throw AbaqusParseError("ABAQUS *" + block.keyword + " requires " + std::string(name) +
                                " on line " + std::to_string(block.line_number) + ".");
     }
-    return parameter->second;
+    return *parameter;
 }
 
 KeywordBlock parse_keyword(const std::string_view line, const std::size_t line_number,
@@ -78,12 +92,21 @@ KeywordBlock parse_keyword(const std::string_view line, const std::size_t line_n
         const std::size_t equals = fields[index].find('=');
         if (equals == std::string_view::npos)
         {
-            block.flags.insert(uppercase_copy(detail::trim(fields[index])));
+            block.flags.push_back(uppercase_copy(detail::trim(fields[index])));
             continue;
         }
         const std::string name = uppercase_copy(detail::trim(fields[index].substr(0, equals)));
         const std::string value(detail::trim(fields[index].substr(equals + 1)));
-        block.parameters.insert_or_assign(name, value);
+        const auto existing = std::ranges::find_if(
+            block.parameters, [&](const auto &entry) { return entry.first == name; });
+        if (existing == block.parameters.end())
+        {
+            block.parameters.emplace_back(name, value);
+        }
+        else
+        {
+            existing->second = value;
+        }
     }
     return block;
 }
@@ -256,7 +279,7 @@ std::vector<Id> parse_set_ids(const KeywordBlock &block, const std::string_view 
         throw AbaqusParseError("ABAQUS *" + block.keyword + " on line " +
                                std::to_string(block.line_number) + " contains no IDs.");
     }
-    if (!block.flags.contains("GENERATE"))
+    if (!has_flag(block, "GENERATE"))
     {
         return values;
     }
@@ -504,11 +527,11 @@ AbaqusImportedModel import_abaqus_cae_model(const std::string_view input_text)
                 model.elements.push_back(std::move(element));
                 block_element_ids.push_back(id);
             }
-            const auto inline_set = block.parameters.find("ELSET");
-            if (inline_set != block.parameters.end())
+            const std::string *inline_set = find_parameter(block, "ELSET");
+            if (inline_set != nullptr)
             {
-                append_unique(element_sets, block_scope_key(block, inline_set->second),
-                              block_element_ids, block.line_number);
+                append_unique(element_sets, block_scope_key(block, *inline_set), block_element_ids,
+                              block.line_number);
             }
         }
         else if (block.keyword == "NSET")
@@ -700,9 +723,8 @@ AbaqusImportedModel import_abaqus_cae_model(const std::string_view input_text)
         {
             continue;
         }
-        const auto surface_type = block.parameters.find("TYPE");
-        if (surface_type == block.parameters.end() ||
-            !detail::equals_case_insensitive(surface_type->second, "ELEMENT"))
+        const std::string *surface_type = find_parameter(block, "TYPE");
+        if (surface_type == nullptr || !detail::equals_case_insensitive(*surface_type, "ELEMENT"))
         {
             throw AbaqusParseError("Only element-based ABAQUS surfaces are supported.");
         }
