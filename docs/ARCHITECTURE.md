@@ -27,8 +27,9 @@ flowchart LR
     GUI -->|Launch separate process| CLI
     Request --> CLI
     CLI -->|JSON Lines progress| GUI
-    CLI --> Input[ABAQUS input layer]
-    Input --> Model[Validated model objects]
+    CLI --> Input[ABAQUS keyword reader]
+    Input --> Import[Scoped CAE import and normalization]
+    Import --> Model[Validated model objects]
     Model --> Solver[Analysis orchestration]
 
     Solver --> Elements[Q4 and H8 formulations]
@@ -52,7 +53,7 @@ flowchart LR
 | Application | Starts the program and maps process arguments to stable exit codes | `apps/cli`, `src/cli`, `src/core` |
 | Workbench | Owns Windows controls, launches and monitors the solver, and displays run history | `apps/gui` |
 | Project storage | Validates project JSON, saves metadata, prepares run snapshots, and records lifecycle state | `src/project` |
-| Input | Reads ABAQUS text and constructs validated Q4 or H8 models | `src/input` |
+| Input | Reads flat or supported single-part CAE decks, resolves scoped sets and surfaces, and constructs canonical imported models | `src/input` |
 | Model | Stores nodes, elements, materials, loads, and degree-of-freedom mappings | `src/model` |
 | Mechanics | Creates isotropic elastic constitutive matrices and stress measures | `src/mechanics` |
 | Elements | Implements Q4 and H8 interpolation, Jacobians, stiffness, pressure, and recovery | `src/elements` |
@@ -70,9 +71,10 @@ Public declarations are stored under the matching folders in
 flowchart TD
     Start([Start]) --> Arguments[Validate command-line arguments]
     Arguments --> Read[Read ABAQUS input file]
-    Read --> Detect[Detect CPS4, CPE4, or C3D8]
-    Detect --> Parse[Parse nodes, elements, materials, sections, constraints, and loads]
-    Parse --> Validate{Model valid?}
+    Read --> Detect[Detect supported or planned element type]
+    Detect --> Parse[Read keyword blocks and their part or assembly scope]
+    Parse --> Normalize[Resolve instances, sets, sections, surfaces, constraints, and loads]
+    Normalize --> Validate{Model valid?}
     Validate -- No --> ModelError[Return model or input error]
     Validate -- Yes --> ElementLoop[Calculate each element stiffness and load contribution]
     ElementLoop --> COO[Assemble global COO matrix and load vector]
@@ -134,9 +136,27 @@ The input element type selects the analysis path automatically:
 | `CPE4` | Q4 plane strain | 2 |
 | `C3D8` | H8 three-dimensional solid | 3 |
 
-All three paths share the sparse assembly, constraint, linear-solution, reaction,
-and output concepts. Their element formulation and result-recovery code remains
-separate so each formulation can be tested independently.
+The Stage 1 importer also recognizes these planned analysis paths:
+
+| ABAQUS type | FinEleMethod formulation | Spatial degrees of freedom per node |
+| --- | --- | ---: |
+| `CPS3` | T3 plane stress | 2 |
+| `CPS4R` | Q4 reduced-integration plane stress | 2 |
+| `C3D4` | T4 three-dimensional solid | 3 |
+| `C3D8R` | H8 reduced-integration solid | 3 |
+
+Inspection and canonical import are implemented for these four types. Solver
+dispatch remains disabled until their Stage 2 formulations are validated.
+
+The current CAE profile supports one part and one untransformed instance. It
+resolves part and assembly set scopes, separate element sets, element-based
+surfaces, `*DSLOAD`, and default section data. Broader Abaqus structures are
+rejected explicitly rather than approximated.
+
+The three currently implemented solver paths share the sparse assembly,
+constraint, linear-solution, reaction, and output concepts. Their element
+formulation and result-recovery code remains separate so each formulation can
+be tested independently.
 
 The mathematical details are documented in the [Q4 formulation](formulations/Q4.md)
 and [H8 formulation](formulations/H8.md). Their shared assembly, constraint,

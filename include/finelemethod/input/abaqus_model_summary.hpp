@@ -7,9 +7,13 @@ namespace finelemethod::input
 {
 enum class AbaqusAnalysisType
 {
+    t3_plane_stress,
     q4_plane_stress,
+    q4_reduced_plane_stress,
     q4_plane_strain,
+    t4_three_dimensional,
     h8_three_dimensional,
+    h8_reduced_three_dimensional,
 };
 
 struct AbaqusModelSummary

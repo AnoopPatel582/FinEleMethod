@@ -59,12 +59,20 @@ std::string_view analysis_type_name(const input::AbaqusAnalysisType analysis_typ
 {
     switch (analysis_type)
     {
+    case input::AbaqusAnalysisType::t3_plane_stress:
+        return "T3 plane stress (CPS3)";
     case input::AbaqusAnalysisType::q4_plane_stress:
         return "Q4 plane stress";
+    case input::AbaqusAnalysisType::q4_reduced_plane_stress:
+        return "Q4 reduced-integration plane stress (CPS4R)";
     case input::AbaqusAnalysisType::q4_plane_strain:
         return "Q4 plane strain";
+    case input::AbaqusAnalysisType::t4_three_dimensional:
+        return "T4 three-dimensional (C3D4)";
     case input::AbaqusAnalysisType::h8_three_dimensional:
         return "H8 three-dimensional";
+    case input::AbaqusAnalysisType::h8_reduced_three_dimensional:
+        return "H8 reduced-integration three-dimensional (C3D8R)";
     }
     throw std::invalid_argument("Unsupported ABAQUS analysis type.");
 }
@@ -302,6 +310,13 @@ ExitCode run(const std::span<const std::string_view> arguments, std::ostream &ou
                     }
                 }
                 return ExitCode::Success;
+            }
+
+            if (family != input::AbaqusElementFamily::q4)
+            {
+                throw input::AbaqusParseError(
+                    "The ABAQUS element type is recognized, but its solver formulation is not "
+                    "implemented yet.");
             }
 
             auto solution = solver::analyze_abaqus_q4(input_text, solver_options);

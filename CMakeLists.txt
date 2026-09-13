@@ -58,6 +58,7 @@ add_library(FinEleMethodCore STATIC
     src/examples/h8_compression_example.cpp
     src/examples/q4_tension_example.cpp
     src/input/abaqus_boundary_parser.cpp
+    src/input/abaqus_cae_importer.cpp
     src/input/abaqus_cload_parser.cpp
     src/input/abaqus_dload_parser.cpp
     src/input/abaqus_element_parser.cpp

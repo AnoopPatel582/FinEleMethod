@@ -129,10 +129,18 @@ TEST(AbaqusElementParser, H8RejectsInputWithOnlyUnsupportedElementTypes)
 
 TEST(AbaqusElementParser, DetectsSupportedElementFamilies)
 {
+    EXPECT_EQ(detect_abaqus_element_family("*Element, type=CPS3\n1,1,2,3\n"),
+              AbaqusElementFamily::t3);
     EXPECT_EQ(detect_abaqus_element_family("*Element, type=CPS4\n1,1,2,3,4\n"),
               AbaqusElementFamily::q4);
+    EXPECT_EQ(detect_abaqus_element_family("*Element, type=CPS4R\n1,1,2,3,4\n"),
+              AbaqusElementFamily::q4_reduced);
+    EXPECT_EQ(detect_abaqus_element_family("*Element, type=C3D4\n1,1,2,3,4\n"),
+              AbaqusElementFamily::t4);
     EXPECT_EQ(detect_abaqus_element_family("*ELEMENT, ELSET=block, TYPE = C3D8\n"),
               AbaqusElementFamily::h8);
+    EXPECT_EQ(detect_abaqus_element_family("*Element, type=C3D8R\n1,1,2,3,4,5,6,7,8\n"),
+              AbaqusElementFamily::h8_reduced);
 }
 
 TEST(AbaqusElementParser, RejectsMixedSupportedElementFamilies)

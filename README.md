@@ -39,6 +39,10 @@ workbench developed from scratch in C++20.
 
 - ABAQUS `.inp` parsing for supported nodes, elements, node/element sets,
   materials, solid sections, boundary conditions, concentrated loads, and pressures.
+- Structured inspection of single-part, single-untransformed-instance Abaqus/CAE
+  files, including scoped sets, separate element sets, element surfaces, and `*DSLOAD`.
+- Inspection recognizes upcoming `CPS3`, `CPS4R`, `C3D4`, and `C3D8R` paths;
+  their numerical solution remains Stage 2 work and is not claimed in version 0.1.0.
 - ASCII `.vtu` result files for ParaView and other VTK-compatible visualizers.
 - Versioned JSON analysis requests, lifecycle progress, completion summaries,
   and project files.

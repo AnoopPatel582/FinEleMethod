@@ -173,3 +173,17 @@ supersedes, then update this summary to point to that ADR.
   and an optional post-install launch action.
 - Publisher shown in Windows Installed Apps: **Anoop Patel**.
 - See [ADR 0001](adr/0001-windows-installer.md) for context and consequences.
+
+## 14. Abaqus/CAE compatibility expansion
+
+- Instructor verification files remain unchanged; compatibility is implemented
+  in FinEleMethod.
+- The first structured CAE import profile supports one part and one
+  untransformed instance.
+- The importer resolves part/assembly set scopes, separate element sets,
+  element-based surfaces, `*DSLOAD`, and default section data.
+- `CPS3`, `CPS4R`, `C3D4`, and `C3D8R` are recognized during inspection.
+- Their numerical formulations are implemented separately in the next stage;
+  reduced-integration elements are not aliases for full integration.
+- See [ADR 0002](adr/0002-abaqus-cae-import-profile.md) for context and
+  consequences.
