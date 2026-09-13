@@ -6,6 +6,8 @@ namespace finelemethod::mechanics
 {
 math::DenseMatrix plane_stress_constitutive_matrix(const model::IsotropicElasticMaterial &material)
 {
+    // Isotropic Hooke matrix for [sigma_x, sigma_y, tau_xy] with
+    // engineering strain [epsilon_x, epsilon_y, gamma_xy].
     const double youngs_modulus = material.youngs_modulus();
     const double poisson_ratio = material.poisson_ratio();
     const double factor = youngs_modulus / (1.0 - poisson_ratio * poisson_ratio);
@@ -22,6 +24,8 @@ math::DenseMatrix plane_stress_constitutive_matrix(const model::IsotropicElastic
 
 math::DenseMatrix plane_strain_constitutive_matrix(const model::IsotropicElasticMaterial &material)
 {
+    // Plane strain retains the three in-plane engineering-strain components;
+    // the suppressed out-of-plane strain is accounted for by this D matrix.
     const double youngs_modulus = material.youngs_modulus();
     const double poisson_ratio = material.poisson_ratio();
     const double factor = youngs_modulus / ((1.0 + poisson_ratio) * (1.0 - 2.0 * poisson_ratio));
@@ -39,6 +43,8 @@ math::DenseMatrix plane_strain_constitutive_matrix(const model::IsotropicElastic
 math::DenseMatrix solid_isotropic_constitutive_matrix(
     const model::IsotropicElasticMaterial &material)
 {
+    // Three-dimensional isotropic Hooke law in Voigt order
+    // [xx, yy, zz, xy, yz, zx], using engineering shear strains.
     const double youngs_modulus = material.youngs_modulus();
     const double poisson_ratio = material.poisson_ratio();
     const double shear_modulus = youngs_modulus / (2.0 * (1.0 + poisson_ratio));

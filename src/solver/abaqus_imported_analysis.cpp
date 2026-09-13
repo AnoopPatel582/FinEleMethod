@@ -325,6 +325,8 @@ AbaqusImportedElementResult recover_result(const input::AbaqusImportedElement &e
 AbaqusImportedAnalysisSolution analyze_abaqus_imported_model(
     const std::string_view input_text, const ConjugateGradientOptions &solver_options)
 {
+    // Convert the ABAQUS deck into the solver's canonical nodes, elements,
+    // materials, loads, and prescribed displacements before numerical work.
     input::AbaqusImportedModel model = input::import_abaqus_cae_model(input_text);
     if (!is_supported_solver_type(model.element_type))
     {
@@ -334,6 +336,7 @@ AbaqusImportedAnalysisSolution analyze_abaqus_imported_model(
     const AnalysisContext context = build_context(model, input_text);
     const std::size_t dof_count = model.nodes.size() * context.dimension;
     math::CooMatrix stiffness(dof_count, dof_count);
+    // Form each element stiffness matrix and scatter it into the global COO system.
     for (const auto &element : model.elements)
     {
         const auto dofs = element_dofs(element, context);
@@ -341,6 +344,7 @@ AbaqusImportedAnalysisSolution analyze_abaqus_imported_model(
                                             dofs);
     }
 
+    // Assemble nodal point loads and equivalent nodal forces from pressures.
     math::DenseVector load(dof_count);
     for (const auto &point_load : model.point_loads)
     {
@@ -355,6 +359,7 @@ AbaqusImportedAnalysisSolution analyze_abaqus_imported_model(
                        element_dofs(element, context));
     }
 
+    // Map ABAQUS node/component constraints to zero-based global DOF indices.
     std::vector<PrescribedDisplacement> constraints;
     constraints.reserve(model.prescribed_displacements.size());
     for (const auto &constraint : model.prescribed_displacements)
@@ -364,6 +369,7 @@ AbaqusImportedAnalysisSolution analyze_abaqus_imported_model(
                                constraint.value});
     }
 
+    // Solve K*u=F, then recover element strains, stresses, and derived measures.
     SparseStaticSolution static_solution =
         solve_sparse_static_system(stiffness, load, constraints, solver_options);
     std::vector<AbaqusImportedElementResult> results;

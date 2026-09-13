@@ -14,6 +14,8 @@ Q4StrainDisplacement q4_strain_displacement_matrix(const Q4NodeCoordinates &coor
         q4_shape_function_physical_derivatives(coordinates, xi, eta);
     math::DenseMatrix matrix(3, 8);
 
+    // Assemble epsilon = B*u in engineering-strain order
+    // [epsilon_x, epsilon_y, gamma_xy].
     for (std::size_t node = 0; node < coordinates.size(); ++node)
     {
         const std::size_t x_dof = 2 * node;

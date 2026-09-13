@@ -37,6 +37,8 @@ void apply_prescribed_displacement_unchecked(math::DenseMatrix &stiffness_matrix
                                              const std::size_t degree_of_freedom,
                                              const double prescribed_value)
 {
+    // Direct elimination preserves symmetry: move K(:,dof)*u_bar to the
+    // right-hand side, clear the constrained row/column, then insert u=u_bar.
     for (math::DenseMatrix::size_type row = 0; row < stiffness_matrix.rows(); ++row)
     {
         if (row == degree_of_freedom)
@@ -131,6 +133,8 @@ SparseConstrainedSystem apply_prescribed_displacements(
 
     math::CooMatrix constrained_stiffness(stiffness_matrix.rows(), stiffness_matrix.columns());
     math::DenseVector constrained_load = load_vector;
+    // Apply the same symmetric direct-elimination operation while filtering
+    // COO entries, avoiding conversion of the sparse system to a dense matrix.
     for (const math::CooEntry &entry : stiffness_matrix.entries())
     {
         if (!constrained[entry.row] && constrained[entry.column])

@@ -22,6 +22,8 @@ math::DenseMatrix q4_plane_stress_stiffness_matrix(const Q4NodeCoordinates &coor
     const math::DenseMatrix constitutive = mechanics::plane_stress_constitutive_matrix(material);
     math::DenseMatrix stiffness(8, 8);
 
+    // Evaluate Ke = integral(B^T D B * thickness * det(J)) over the parent
+    // square using full 2x2 Gauss integration.
     for (const Q4GaussPoint &point : q4_gauss_quadrature_2x2())
     {
         const Q4StrainDisplacement strain_displacement =

@@ -49,6 +49,8 @@ std::span<const double> CsrMatrix::values() const noexcept
 
 CsrMatrix convert_to_csr(const CooMatrix &matrix)
 {
+    // Row-major sorting makes identical (row, column) entries adjacent. Those
+    // duplicates are the normal result of assembling neighboring FEM elements.
     std::vector<CooEntry> sorted_entries(matrix.entries().begin(), matrix.entries().end());
     std::sort(sorted_entries.begin(), sorted_entries.end(),
               [](const CooEntry &left, const CooEntry &right) {
@@ -74,6 +76,7 @@ CsrMatrix convert_to_csr(const CooMatrix &matrix)
         {
             const std::size_t column = sorted_entries[entry_index].column;
             double assembled_value = 0.0;
+            // Sum all element contributions to this global matrix location.
             while (entry_index < sorted_entries.size() && sorted_entries[entry_index].row == row &&
                    sorted_entries[entry_index].column == column)
             {

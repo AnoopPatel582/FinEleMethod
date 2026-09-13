@@ -44,6 +44,9 @@ ConjugateGradientResult solve_conjugate_gradient(const math::CsrMatrix &matrix,
         throw AnalysisCancelled{};
     }
 
+    // Start from x0=0, hence r0=b and the first search direction is p0=r0.
+    // CG is valid here because the constrained elastic stiffness is symmetric
+    // positive definite after rigid-body modes are removed.
     math::DenseVector solution(matrix.columns());
     math::DenseVector residual = right_hand_side;
     math::DenseVector direction = residual;
@@ -71,6 +74,7 @@ ConjugateGradientResult solve_conjugate_gradient(const math::CsrMatrix &matrix,
                 "Conjugate Gradient encountered a nonpositive or nonfinite curvature.");
         }
 
+        // alpha_k = (r_k^T r_k)/(p_k^T A p_k).
         const double step = residual_squared / curvature;
         if (!std::isfinite(step))
         {
@@ -90,6 +94,7 @@ ConjugateGradientResult solve_conjugate_gradient(const math::CsrMatrix &matrix,
             return ConjugateGradientResult{std::move(solution), iteration, residual_norm, true};
         }
 
+        // beta_k = (r_{k+1}^T r_{k+1})/(r_k^T r_k).
         const double direction_scale = next_residual_squared / residual_squared;
         direction = residual + direction_scale * direction;
         residual_squared = next_residual_squared;

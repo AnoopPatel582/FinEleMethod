@@ -14,6 +14,8 @@ math::DenseMatrix h8_stiffness_matrix(const H8NodeCoordinates &coordinates,
     const math::DenseMatrix constitutive = mechanics::solid_isotropic_constitutive_matrix(material);
     math::DenseMatrix stiffness(24, 24);
 
+    // Evaluate Ke = integral(B^T D B * det(J)) over the parent cube using
+    // full 2x2x2 Gauss integration.
     for (const H8GaussPoint &point : h8_gauss_quadrature_2x2x2())
     {
         const H8StrainDisplacement strain_displacement =

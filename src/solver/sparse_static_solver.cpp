@@ -12,6 +12,8 @@ SparseStaticSolution solve_sparse_static_system(
     const std::span<const PrescribedDisplacement> prescribed_displacements,
     const ConjugateGradientOptions &options)
 {
+    // Solver pipeline: impose essential boundary conditions in COO form,
+    // compress to CSR, then solve the symmetric system with Conjugate Gradient.
     const SparseConstrainedSystem constrained =
         apply_prescribed_displacements(stiffness_matrix, load_vector, prescribed_displacements);
     const math::CsrMatrix constrained_stiffness =
@@ -24,6 +26,8 @@ SparseStaticSolution solve_sparse_static_system(
             "Sparse static system did not converge within the iteration limit.");
     }
 
+    // Reactions must use the original, unconstrained equilibrium equation
+    // R = K_original*u - F_original.
     math::DenseVector reactions =
         math::convert_to_csr(stiffness_matrix) * iterative_solution.solution - load_vector;
     return SparseStaticSolution{std::move(iterative_solution.solution), std::move(reactions),

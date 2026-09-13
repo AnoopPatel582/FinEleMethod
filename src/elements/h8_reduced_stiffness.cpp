@@ -22,9 +22,12 @@ math::DenseMatrix h8_reduced_stiffness_matrix(const H8NodeCoordinates &coordinat
 
     const H8StrainDisplacement center = h8_strain_displacement_matrix(coordinates, 0.0, 0.0, 0.0);
     const math::DenseMatrix constitutive = mechanics::solid_isotropic_constitutive_matrix(material);
+    // One center point represents the parent-cube volume of eight.
     const math::DenseMatrix reduced = transpose(center.matrix) * constitutive * center.matrix *
                                       (8.0 * center.jacobian_determinant);
     const math::DenseMatrix full = h8_stiffness_matrix(coordinates, material);
+    // Stabilize only the stiffness modes missed by one-point integration:
+    // Ke = Ke_reduced + alpha * (Ke_full - Ke_reduced).
     return reduced + (full - reduced) * stabilization_fraction;
 }
 } // namespace finelemethod::elements

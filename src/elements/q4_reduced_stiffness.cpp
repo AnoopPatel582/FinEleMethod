@@ -27,10 +27,13 @@ math::DenseMatrix q4_reduced_plane_stress_stiffness_matrix(
 
     const Q4StrainDisplacement center = q4_strain_displacement_matrix(coordinates, 0.0, 0.0);
     const math::DenseMatrix constitutive = mechanics::plane_stress_constitutive_matrix(material);
+    // One center point represents the parent-square area of four.
     const math::DenseMatrix reduced = transpose(center.matrix) * constitutive * center.matrix *
                                       (4.0 * center.jacobian_determinant * thickness);
     const math::DenseMatrix full =
         q4_plane_stress_stiffness_matrix(coordinates, material, thickness);
+    // Stabilize only the stiffness modes missed by one-point integration:
+    // Ke = Ke_reduced + alpha * (Ke_full - Ke_reduced).
     return reduced + (full - reduced) * stabilization_fraction;
 }
 } // namespace finelemethod::elements

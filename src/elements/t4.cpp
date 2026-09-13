@@ -66,6 +66,8 @@ void validate_coordinates(const T4NodeCoordinates &coordinates)
 T4StrainDisplacement t4_strain_displacement_matrix(const T4NodeCoordinates &coordinates)
 {
     validate_coordinates(coordinates);
+    // The affine map from the reference tetrahedron makes all physical shape-
+    // function derivatives, and therefore B, constant within a T4 element.
     math::DenseMatrix jacobian(3, 3);
     for (std::size_t column = 0; column < 3; ++column)
     {
@@ -134,6 +136,7 @@ math::DenseMatrix t4_stiffness_matrix(const T4NodeCoordinates &coordinates,
 {
     const T4StrainDisplacement strain_displacement = t4_strain_displacement_matrix(coordinates);
     const math::DenseMatrix constitutive = mechanics::solid_isotropic_constitutive_matrix(material);
+    // Ke = B^T D B * volume; exact for the constant-strain tetrahedron.
     return transpose(strain_displacement.matrix) * constitutive * strain_displacement.matrix *
            strain_displacement.volume;
 }

@@ -15,6 +15,8 @@ H8StrainDisplacement h8_strain_displacement_matrix(const H8NodeCoordinates &coor
         h8_shape_function_physical_derivatives(coordinates, xi, eta, zeta);
     math::DenseMatrix matrix(6, 24);
 
+    // Assemble epsilon = B*u in Voigt order [xx, yy, zz, xy, yz, zx].
+    // The final three rows contain engineering shear strains.
     for (std::size_t node = 0; node < coordinates.size(); ++node)
     {
         const std::size_t x_dof = 3 * node;

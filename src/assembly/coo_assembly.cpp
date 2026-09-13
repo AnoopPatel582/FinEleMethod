@@ -37,6 +37,9 @@ void add_element_matrix_to_coo(math::CooMatrix &global_matrix,
         }
     }
 
+    // Scatter-add Ke(local_row, local_column) into K(global_row, global_column).
+    // COO deliberately retains duplicate coordinates; CSR conversion later sums
+    // contributions from elements that share global degrees of freedom.
     for (std::size_t local_row = 0; local_row < global_dof_indices.size(); ++local_row)
     {
         for (std::size_t local_column = 0; local_column < global_dof_indices.size(); ++local_column)

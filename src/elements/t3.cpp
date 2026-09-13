@@ -45,6 +45,8 @@ T3StrainDisplacement t3_strain_displacement_matrix(const T3NodeCoordinates &coor
 {
     validate_coordinates(coordinates);
     const double area_twice = signed_area_twice(coordinates);
+    // Linear-triangle shape functions have constant physical derivatives,
+    // so the strain-displacement matrix is constant over the element.
     const std::array<double, 3> derivative_x{{
         (coordinates[1][1] - coordinates[2][1]) / area_twice,
         (coordinates[2][1] - coordinates[0][1]) / area_twice,
@@ -77,6 +79,8 @@ math::DenseMatrix t3_plane_stress_stiffness_matrix(const T3NodeCoordinates &coor
     }
     const T3StrainDisplacement strain_displacement = t3_strain_displacement_matrix(coordinates);
     const math::DenseMatrix constitutive = mechanics::plane_stress_constitutive_matrix(material);
+    // Ke = B^T D B * area * thickness; no numerical quadrature is needed
+    // because B is constant for a linear triangle.
     return transpose(strain_displacement.matrix) * constitutive * strain_displacement.matrix *
            (strain_displacement.area * thickness);
 }
@@ -109,6 +113,8 @@ math::DenseVector t3_uniform_edge_pressure_load(const T3NodeCoordinates &coordin
     const double delta_x = coordinates[second][0] - coordinates[first][0];
     const double delta_y = coordinates[second][1] - coordinates[first][1];
 
+    // Integrating a uniform traction on a linear edge divides the resultant
+    // equally between its two nodes. The rotated edge vector supplies the normal.
     math::DenseVector load(6);
     const double force_x = -pressure * thickness * delta_y / 2.0;
     const double force_y = pressure * thickness * delta_x / 2.0;
