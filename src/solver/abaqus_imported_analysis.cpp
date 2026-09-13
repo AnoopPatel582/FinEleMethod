@@ -35,6 +35,12 @@ namespace
 {
 struct AnalysisContext
 {
+    AnalysisContext() = default;
+    AnalysisContext(const AnalysisContext &) = delete;
+    AnalysisContext &operator=(const AnalysisContext &) = delete;
+    AnalysisContext(AnalysisContext &&) noexcept(false) = default;
+    AnalysisContext &operator=(AnalysisContext &&) noexcept(false) = default;
+
     std::size_t dimension{};
     std::unordered_map<model::NodeId, std::size_t> node_indices;
     std::vector<model::IsotropicElasticMaterial> materials;
