@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(FinEleMethod VERSION 0.1.0 LANGUAGES CXX)
+project(FinEleMethod VERSION 0.2.0 LANGUAGES CXX)
 
 option(
     FINELEMETHOD_ENABLE_MSVC_ANALYSIS

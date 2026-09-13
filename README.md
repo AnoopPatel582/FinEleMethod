@@ -5,7 +5,7 @@ workbench developed from scratch in C++20.
 
 ## Project status
 
-- Current version: **0.1.0**.
+- Current source version: **0.2.0**.
 - Target platform: **Windows 10 or later, x64**.
 - Toolchain: **MSVC, CMake, and vcpkg manifest mode**.
 - GUI toolkit: **wxWidgets**.
