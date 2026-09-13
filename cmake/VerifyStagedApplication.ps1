@@ -58,6 +58,39 @@ if ($LASTEXITCODE -ne 0) {
     throw "Staged command-line model inspection failed with exit code $LASTEXITCODE."
 }
 
+$solverBuildInfo = ((& $solver --build-info) -join "`n").TrimEnd([char[]]"`r`n")
+if ($LASTEXITCODE -ne 0) {
+    throw "Staged solver build-information query failed with exit code $LASTEXITCODE."
+}
+
+$buildInfoStartInfo = [System.Diagnostics.ProcessStartInfo]::new()
+$buildInfoStartInfo.FileName = $workbench
+$buildInfoStartInfo.Arguments = "--build-info"
+$buildInfoStartInfo.WorkingDirectory = $stage
+$buildInfoStartInfo.UseShellExecute = $false
+$buildInfoStartInfo.CreateNoWindow = $true
+$buildInfoStartInfo.RedirectStandardOutput = $true
+$buildInfoStartInfo.RedirectStandardError = $true
+
+$buildInfoProcess = [System.Diagnostics.Process]::Start($buildInfoStartInfo)
+try {
+    $workbenchBuildInfo = $buildInfoProcess.StandardOutput.ReadToEnd().TrimEnd([char[]]"`r`n")
+    $workbenchBuildInfo = $workbenchBuildInfo.Replace("`r`n", "`n")
+    $buildInfoError = $buildInfoProcess.StandardError.ReadToEnd()
+    $buildInfoProcess.WaitForExit()
+    if ($buildInfoProcess.ExitCode -ne 0) {
+        throw "Staged workbench build-information query failed with exit code " +
+            "$($buildInfoProcess.ExitCode): $buildInfoError"
+    }
+    if ($workbenchBuildInfo -ne $solverBuildInfo) {
+        throw "Staged workbench build information does not match the staged solver.`n" +
+            "Solver:`n$solverBuildInfo`nWorkbench:`n$workbenchBuildInfo"
+    }
+}
+finally {
+    $buildInfoProcess.Dispose()
+}
+
 & (Join-Path $PSScriptRoot "VerifyStagedSolver.ps1") -StageDirectory $stage
 & (Join-Path $PSScriptRoot "VerifyStagedRequest.ps1") -StageDirectory $stage
 
