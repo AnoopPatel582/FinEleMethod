@@ -18,8 +18,12 @@ enum class Q4AnalysisType
 
 enum class AbaqusElementFamily
 {
+    t3,
     q4,
+    q4_reduced,
+    t4,
     h8,
+    h8_reduced,
 };
 
 struct AbaqusQ4Element
@@ -45,7 +49,7 @@ struct AbaqusH8Element
 // ABAQUS solid-section definitions.
 [[nodiscard]] std::vector<AbaqusH8Element> parse_abaqus_h8_elements(std::string_view input_text);
 
-// Identifies the supported element family from *ELEMENT keywords. A model that
-// mixes supported 2D and 3D element families is rejected.
+// Identifies an implemented or planned element family from *ELEMENT keywords.
+// A model that mixes element types is rejected.
 [[nodiscard]] AbaqusElementFamily detect_abaqus_element_family(std::string_view input_text);
 } // namespace finelemethod::input

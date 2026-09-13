@@ -241,14 +241,26 @@ void MainFrame::display_model_summary(const std::filesystem::path &input_file)
     wxString analysis_type;
     switch (summary.analysis_type)
     {
+    case input::AbaqusAnalysisType::t3_plane_stress:
+        analysis_type = "T3 plane stress (CPS3)";
+        break;
     case input::AbaqusAnalysisType::q4_plane_stress:
         analysis_type = "Q4 plane stress";
+        break;
+    case input::AbaqusAnalysisType::q4_reduced_plane_stress:
+        analysis_type = "Q4 reduced-integration plane stress (CPS4R)";
         break;
     case input::AbaqusAnalysisType::q4_plane_strain:
         analysis_type = "Q4 plane strain";
         break;
+    case input::AbaqusAnalysisType::t4_three_dimensional:
+        analysis_type = "T4 three-dimensional (C3D4)";
+        break;
     case input::AbaqusAnalysisType::h8_three_dimensional:
         analysis_type = "H8 three-dimensional";
+        break;
+    case input::AbaqusAnalysisType::h8_reduced_three_dimensional:
+        analysis_type = "H8 reduced-integration three-dimensional (C3D8R)";
         break;
     }
 

@@ -267,8 +267,7 @@ std::vector<AbaqusH8Element> parse_abaqus_h8_elements(const std::string_view inp
 
 AbaqusElementFamily detect_abaqus_element_family(const std::string_view input_text)
 {
-    bool found_q4 = false;
-    bool found_h8 = false;
+    std::optional<AbaqusElementFamily> found_family;
     std::size_t line_number = 0;
     std::size_t line_start = 0;
 
@@ -308,9 +307,41 @@ AbaqusElementFamily detect_abaqus_element_family(const std::string_view input_te
                     {
                         continue;
                     }
-                    found_q4 = found_q4 || detail::equals_case_insensitive(value, "CPS4") ||
-                               detail::equals_case_insensitive(value, "CPE4");
-                    found_h8 = found_h8 || detail::equals_case_insensitive(value, "C3D8");
+                    std::optional<AbaqusElementFamily> family;
+                    if (detail::equals_case_insensitive(value, "CPS3"))
+                    {
+                        family = AbaqusElementFamily::t3;
+                    }
+                    else if (detail::equals_case_insensitive(value, "CPS4") ||
+                             detail::equals_case_insensitive(value, "CPE4"))
+                    {
+                        family = AbaqusElementFamily::q4;
+                    }
+                    else if (detail::equals_case_insensitive(value, "CPS4R"))
+                    {
+                        family = AbaqusElementFamily::q4_reduced;
+                    }
+                    else if (detail::equals_case_insensitive(value, "C3D4"))
+                    {
+                        family = AbaqusElementFamily::t4;
+                    }
+                    else if (detail::equals_case_insensitive(value, "C3D8"))
+                    {
+                        family = AbaqusElementFamily::h8;
+                    }
+                    else if (detail::equals_case_insensitive(value, "C3D8R"))
+                    {
+                        family = AbaqusElementFamily::h8_reduced;
+                    }
+                    if (family.has_value())
+                    {
+                        if (found_family.has_value() && *found_family != *family)
+                        {
+                            throw AbaqusParseError(
+                                "ABAQUS model cannot mix element types in one analysis.");
+                        }
+                        found_family = family;
+                    }
                 }
             }
         }
@@ -322,17 +353,9 @@ AbaqusElementFamily detect_abaqus_element_family(const std::string_view input_te
         line_start = line_end + 1;
     }
 
-    if (found_q4 && found_h8)
+    if (found_family.has_value())
     {
-        throw AbaqusParseError("ABAQUS model cannot mix supported Q4 and H8 element families.");
-    }
-    if (found_h8)
-    {
-        return AbaqusElementFamily::h8;
-    }
-    if (found_q4)
-    {
-        return AbaqusElementFamily::q4;
+        return *found_family;
     }
     throw AbaqusParseError("ABAQUS input does not contain a supported element family.");
 }

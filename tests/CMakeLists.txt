@@ -28,6 +28,7 @@ add_executable(FinEleMethodTests
     elements/h8_shape_functions_test.cpp
     elements/h8_stiffness_test.cpp
     elements/h8_strain_displacement_test.cpp
+    elements/instructor_element_formulations_test.cpp
     elements/q4_edge_pressure_test.cpp
     elements/q4_gauss_quadrature_test.cpp
     elements/q4_jacobian_test.cpp
@@ -41,6 +42,7 @@ add_executable(FinEleMethodTests
     elements/q4_shape_functions_test.cpp
     elements/q4_strain_displacement_test.cpp
     input/abaqus_boundary_parser_test.cpp
+    input/abaqus_cae_importer_test.cpp
     input/abaqus_cload_parser_test.cpp
     input/abaqus_dload_parser_test.cpp
     input/abaqus_element_parser_test.cpp
@@ -88,6 +90,7 @@ add_executable(FinEleMethodTests
     solver/abaqus_q4_analysis_test.cpp
     solver/abaqus_q4_multiple_material_analysis_test.cpp
     solver/abaqus_h8_analysis_test.cpp
+    solver/abaqus_imported_analysis_test.cpp
     solver/abaqus_q4_plane_strain_analysis_test.cpp
     solver/abaqus_q4_plane_stress_analysis_test.cpp
     solver/boundary_conditions_test.cpp
